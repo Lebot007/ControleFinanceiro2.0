@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/receitas', icon: <TrendingUp size={20} />, label: 'Receitas' },
     { path: '/despesas', icon: <TrendingDown size={20} />, label: 'Despesas' },
     { path: '/tipos-despesa', icon: <Tags size={20} />, label: 'Tipos de Despesa' },
-    { path: '/alertas', icon: <Bell size={20} />, label: 'Alertas', badge: alertasNaoLidos },
+    { path: '/alertas', icon: <Bell size={20} />, label: 'Alertas', badge: alertasNaoLidos > 0 ? alertasNaoLidos : undefined },
     { path: '/metas', icon: <Target size={20} />, label: 'Metas' },
     { path: '/configuracoes', icon: <Settings size={20} />, label: 'Configurações' },
   ];

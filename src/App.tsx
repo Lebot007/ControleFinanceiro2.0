@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { FinancasProvider } from './context/FinancasContext';
 
 import Layout from './components/Layout';
@@ -24,7 +24,7 @@ function App() {
             <Route path="/alertas" element={<AlertasPage />} />
             <Route path="/metas" element={<MetasPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
       </Router>

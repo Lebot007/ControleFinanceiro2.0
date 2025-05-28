@@ -13,7 +13,7 @@ const FormularioReceita: React.FC<FormularioReceitaProps> = ({
   onCancelar 
 }) => {
   const [descricao, setDescricao] = useState(receita?.descricao || '');
-  const [valor, setValor] = useState(receita?.valor || 0);
+  const [valor, setValor] = useState(receita?.valor === undefined ? '' : receita.valor.toString());
   const [data, setData] = useState(receita?.data || new Date().toISOString().split('T')[0]);
   const [erro, setErro] = useState('');
 
@@ -26,7 +26,7 @@ const FormularioReceita: React.FC<FormularioReceitaProps> = ({
       return;
     }
     
-    if (valor <= 0) {
+    if (valor === '' || Number(valor) <= 0) {
       setErro('O valor deve ser maior que zero');
       return;
     }
@@ -41,20 +41,20 @@ const FormularioReceita: React.FC<FormularioReceitaProps> = ({
       onSalvar({
         ...receita,
         descricao,
-        valor,
+        valor: Number(valor),
         data
       });
     } else {
       onSalvar({
-        descricao,
-        valor,
+        descricao: descricao.trim(),
+        valor: Number(valor),
         data
       });
     }
     
     // Limpar formulário
     setDescricao('');
-    setValor(0);
+    setValor('');
     setData(new Date().toISOString().split('T')[0]);
     setErro('');
   };
@@ -96,7 +96,7 @@ const FormularioReceita: React.FC<FormularioReceitaProps> = ({
           min="0"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={valor}
-          onChange={(e) => setValor(Number(e.target.value))}
+          onChange={(e) => setValor(e.target.value)}
         />
       </div>
       

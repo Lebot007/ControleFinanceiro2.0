@@ -15,7 +15,7 @@ const FormularioDespesa: React.FC<FormularioDespesaProps> = ({
   onCancelar 
 }) => {
   const [descricao, setDescricao] = useState(despesa?.descricao || '');
-  const [valor, setValor] = useState(despesa?.valor || 0);
+  const [valor, setValor] = useState(despesa?.valor === undefined ? '' : despesa.valor.toString());
   const [data, setData] = useState(despesa?.data || new Date().toISOString().split('T')[0]);
   const [tipoDespesaId, setTipoDespesaId] = useState(despesa?.tipoDespesaId || tiposDespesa[0]?.id || '');
   const [pago, setPago] = useState(despesa?.pago || false);
@@ -31,7 +31,7 @@ const FormularioDespesa: React.FC<FormularioDespesaProps> = ({
       return;
     }
     
-    if (valor <= 0) {
+    if (valor === '' || Number(valor) <= 0) {
       setErro('O valor deve ser maior que zero');
       return;
     }
@@ -48,12 +48,12 @@ const FormularioDespesa: React.FC<FormularioDespesaProps> = ({
     
     // Enviar dados
     const dadosSalvar = {
-      descricao,
-      valor,
+      descricao: descricao.trim(),
+      valor: Number(valor),
       data,
       tipoDespesaId,
       pago,
-      vencimento: vencimento || undefined
+      vencimento: vencimento || undefined,
     };
     
     if (despesa) {
@@ -67,7 +67,7 @@ const FormularioDespesa: React.FC<FormularioDespesaProps> = ({
     
     // Limpar formulário
     setDescricao('');
-    setValor(0);
+    setValor('');
     setData(new Date().toISOString().split('T')[0]);
     setTipoDespesaId(tiposDespesa[0]?.id || '');
     setPago(false);
@@ -112,7 +112,7 @@ const FormularioDespesa: React.FC<FormularioDespesaProps> = ({
           min="0"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={valor}
-          onChange={(e) => setValor(Number(e.target.value))}
+          onChange={(e) => setValor(e.target.value)}
         />
       </div>
       

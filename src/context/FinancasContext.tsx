@@ -125,10 +125,23 @@ export const FinancasProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Funções para gerenciar despesas
   const adicionarDespesa = (despesa: Omit<Despesa, 'id'>) => {
     const novaDespesa = { ...despesa, id: gerarId() };
-    setEstado(prev => ({
-      ...prev,
-      despesas: [...prev.despesas, novaDespesa]
-    }));
+    setEstado(prev => {
+      const novoEstado = {
+        ...prev,
+        despesas: [...prev.despesas, novaDespesa]
+      };
+      // Gera alertas automáticos ao criar despesa
+      const novosAlertas = gerarAlertas(
+        novoEstado.despesas,
+        novoEstado.receitas,
+        novoEstado.tiposDespesa,
+        novoEstado.configuracao.alertas
+      );
+      return {
+        ...novoEstado,
+        alertas: novosAlertas
+      };
+    });
   };
 
   const atualizarDespesa = (despesa: Despesa) => {
