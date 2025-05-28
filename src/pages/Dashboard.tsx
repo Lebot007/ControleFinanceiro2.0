@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-medium text-gray-500">Saldo Total</h2>
-              <p className={`text-2xl font-bold ${saldoTotal >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <p className={`dashboard-card-value text-2xl font-bold ${saldoTotal >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldoTotal)}
               </p>
             </div>
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-medium text-gray-500">Receitas</h2>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="dashboard-card-value text-2xl font-bold text-green-600">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReceitas)}
               </p>
             </div>
@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-medium text-gray-500">Despesas</h2>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="dashboard-card-value text-2xl font-bold text-red-600">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalDespesas)}
               </p>
             </div>
@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-medium text-gray-500">Contas a Pagar</h2>
-              <p className="text-2xl font-bold text-yellow-600">
+              <p className="dashboard-card-value text-2xl font-bold text-yellow-600">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalDespesasNaoPagas)}
               </p>
             </div>
@@ -173,9 +173,13 @@ const Dashboard: React.FC = () => {
                 .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
                 .slice(0, 5)
                 .map((transacao, idx) => {
-                  const tipoDespesa = transacao.tipo === 'despesa' 
-                    ? tiposDespesa.find(t => t.id === (transacao as any).tipoDespesaId)
-                    : null;
+                  let tipoDespesa = null;
+                  if (transacao.tipo === 'despesa') {
+                    const despesa = despesas.find(d => d.id === transacao.id);
+                    if (despesa) {
+                      tipoDespesa = tiposDespesa.find(t => t.id === despesa.tipoDespesaId);
+                    }
+                  }
                   
                   return (
                     <tr key={idx}>

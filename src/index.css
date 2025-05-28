@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Responsividade para valores grandes nos cards do dashboard */
+@media (max-width: 1024px) {
+  .dashboard-card-value {
+    font-size: 1.1rem;
+    word-break: break-all;
+    overflow-x: auto;
+    max-width: 100%;
+    display: block;
+  }
+}
+@media (max-width: 768px) {
+  .dashboard-card-value {
+    font-size: 1rem;
+  }
+}

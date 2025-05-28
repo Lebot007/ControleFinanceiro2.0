@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { EstadoFinancas, Receita, Despesa, TipoDespesa, Meta, Alerta, ConfiguracaoAlertas } from '../types';
+import { EstadoFinancas, Receita, Despesa, TipoDespesa, Meta, ConfiguracaoAlertas } from '../types';
 import { gerarAlertas } from '../services/AlertaService';
 
 // Estado inicial padrão
