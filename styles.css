@@ -1651,6 +1651,14 @@ p { font-size: clamp(14px, 2vw, 16px); }
     background: var(--text-light);
 }
 
+/* Esconde scrollbar em dispositivos móveis e tablets */
+@media (max-width: 1024px) {
+    ::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+}
+
 /* ==================== RESPONSIVO ==================== */
 @media (max-width: 1024px) {
     .sidebar {
