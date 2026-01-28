@@ -1,3 +1,5 @@
+https://lebot007.github.io/ControleFinanceiro2.0/
+
 # 💰 FinControl - Gestor Financeiro Inteligente
 
 Um aplicativo web completo e responsivo para gerenciar suas finanças pessoais. Rastreie receitas, despesas, cartões de crédito e muito mais!
@@ -181,3 +183,4 @@ Este projeto é livre para uso pessoal.
 
 ### Versão: 1.0
 ### Data: Janeiro 2026
+
