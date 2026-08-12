@@ -438,8 +438,8 @@ tr:hover .row-actions{opacity:1}
    FLUXO — Finanças Pessoais
    Sistema completo em arquivo único. Sem backend, sem bancos
    externos: persistência via localStorage.
-   Módulos (em ordem): utilitários, estado/stockage, derivados,
-   recorrências/parcelas, ícones, UI-base (toast/modal/máscara),
+   Módulos (em ordem): utilitários, estado/armazenamento,
+   derivados, recorrências/parcelas, ícones, UI-base,
    gráficos, formulários, vistas, backup/CSV, busca, roteador.
    ============================================================ */
 
@@ -1044,6 +1044,8 @@ function openRecurrenceModal(rec){
     if(!validDate(start)) return toast("Informe a data da primeira ocorrência.","err");
     if(!catId) return toast("Escolha uma categoria.","err");
     if(endMode==="date" && !validDate(q("#r-date").value)) return toast("Informe a data final.","err");
+    if(isC && !q("#r-card").value) return toast("Escolha o cartão (ou cadastre um em Cartões).","err");
+    if(!isC && !q("#r-acc").value) return toast("Escolha a conta (ou cadastre uma em Contas).","err");
     const data={type:curType,desc,value,categoryId:catId,payMethod:method,
       accountId:isC?null:q("#r-acc").value, cardId:isC?q("#r-card").value:null,
       freq, every:freq==="dias"?Math.max(1,+q("#r-every").value||1):1,
@@ -1182,9 +1184,10 @@ function openQuickModal(){
 
 /* Ações de lançamento */
 function payTransaction(t){
+  const refreshCardModals=()=>modalStack.forEach(o=>{ if(o.dataset.cardDetail&&o._refresh) o._refresh(); });
   const doPay=accId=>{ if(accId) t.accountId=accId;
-    t.status="pago"; t.paidDate=todayISO(); save(); render(); toast("Marcado como pago."); };
-  if(t.status==="pago"){ t.status="pendente"; delete t.paidDate; save(); render(); return toast("Voltou para pendente.","warn"); }
+    t.status="pago"; t.paidDate=todayISO(); save(); render(); refreshCardModals(); toast("Marcado como pago."); };
+  if(t.status==="pago"){ t.status="pendente"; delete t.paidDate; save(); render(); refreshCardModals(); return toast("Voltou para pendente.","warn"); }
   if(t.cardId && !t.accountId) return accountPickModal(doPay, "Pagar com qual conta?");
   doPay();
 }
@@ -1491,26 +1494,27 @@ function renderCards(){
       `<button class="btn btn-primary" data-action="new-card">${icon("plus",15)} Cadastrar cartão</button>`)}</div>`}`;
 }
 function openCardDetail(card){
-  const inst=state.transactions.filter(t=>t.cardId===card.id&&t.type==="despesa");
-  const months=[...new Set(inst.map(t=>monthKey(t.date)))].sort();
-  const s=cardStats(card);
-  const block=(mk,label)=>{
-    const rows=inst.filter(t=>monthKey(t.date)===mk).sort((a,b)=>a.date.localeCompare(b.date));
-    if(!rows.length) return "";
-    const total=rows.reduce((x,t)=>x+t.value,0), open=rows.some(t=>t.status!=="pago");
-    return `<div class="invoice-block">
-      <div class="ib-h"><span>${label}</span><span class="ib-total num">${fmtMoney(total)}</span>
-        ${open?`<button class="btn btn-primary btn-sm" data-payinv="${mk}">${icon("check",13)} Pagar fatura</button>`:`<span class="badge pago">Paga</span>`}</div>
-      ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</span>
-        <span class="iv-n">${esc(t.desc)} ${t.installment?`<b style="color:var(--ink2)">· ${t.installment}/${t.installments}</b>`:""}</span>
-        <span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Aberta"}</span>
-        <b class="num">${fmtMoney(t.value)}</b>
-        ${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
-      </div>`).join("")}</div>`;
-  };
-  const nowMk=monthKey(todayISO());
-  const past=months.filter(m=>m<nowMk), future=months.filter(m=>m>nowMk);
-  const ov=openModal({wide:true, title:`${esc(card.name)} — faturas e parcelas`, body:`
+  const buildBody=()=>{
+    const inst=state.transactions.filter(t=>t.cardId===card.id&&t.type==="despesa");
+    const months=[...new Set(inst.map(t=>monthKey(t.date)))].sort();
+    const s=cardStats(card);
+    const block=(mk,label)=>{
+      const rows=inst.filter(t=>monthKey(t.date)===mk).sort((a,b)=>a.date.localeCompare(b.date));
+      if(!rows.length) return "";
+      const total=rows.reduce((x,t)=>x+t.value,0), open=rows.some(t=>t.status!=="pago");
+      return `<div class="invoice-block">
+        <div class="ib-h"><span>${label}</span><span class="ib-total num">${fmtMoney(total)}</span>
+          ${open?`<button class="btn btn-primary btn-sm" data-payinv="${mk}">${icon("check",13)} Pagar fatura</button>`:`<span class="badge pago">Paga</span>`}</div>
+        ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</span>
+          <span class="iv-n">${esc(t.desc)} ${t.installment?`<b style="color:var(--ink2)">· ${t.installment}/${t.installments}</b>`:""}</span>
+          <span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Aberta"}</span>
+          <b class="num">${fmtMoney(t.value)}</b>
+          ${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
+        </div>`).join("")}</div>`;
+    };
+    const nowMk=monthKey(todayISO());
+    const past=months.filter(m=>m<nowMk), future=months.filter(m=>m>nowMk);
+    return `
     <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;font-size:13px">
       <span>Limite: <b class="num">${fmtMoney(card.limit||0)}</b></span>
       <span>Utilizado: <b class="num" style="color:var(--down)">${fmtMoney(s.used)}</b></span>
@@ -1520,20 +1524,26 @@ function openCardDetail(card){
     ${[...past.map(m=>block(m,"Fatura "+m.split("-").reverse().join("/"))),
         block(nowMk,"Fatura atual ("+MESES3[+nowMk.slice(5,7)-1]+")"),
         ...future.map(m=>block(m,"Fatura futura "+m.split("-").reverse().join("/")))].join("") ||
-      emptyBlock("creditCard","Sem compras neste cartão","Use o botão “Compra” para registrar.")}`,
+      emptyBlock("creditCard","Sem compras neste cartão","Use o botão “Compra” para registrar.")}`;
+  };
+  const ov=openModal({wide:true, title:`${esc(card.name)} — faturas e parcelas`, body:buildBody(),
     foot:`<button class="btn btn-ghost" data-x>Fechar</button><button class="btn btn-primary" data-buy>${icon("plus",14)} Nova compra</button>`});
-  ov.querySelector("[data-x]").onclick=ov._close;
-  ov.querySelector("[data-buy]").onclick=()=>{ ov._close(); openTxModal({type:"despesa",presetCard:true}); };
-  ov.querySelectorAll("[data-payinv]").forEach(b=>b.onclick=()=>{
+  ov.dataset.cardDetail=card.id;
+  const bindPay=()=>ov.querySelectorAll("[data-payinv]").forEach(b=>b.onclick=()=>{
     const mk=b.dataset.payinv;
     accountPickModal(accId=>{
       let n=0,sum=0;
       state.transactions.forEach(t=>{ if(t.cardId===card.id&&t.status!=="pago"&&monthKey(t.date)===mk){
         t.status="pago"; t.accountId=accId; t.paidDate=todayISO(); n++; sum+=t.value; } });
       save(); render(); toast(`Fatura paga: ${n} parcela(s), ${fmtMoney(sum)}.`);
-      openCardDetail(card);
+      refresh();
     }, "Pagar fatura com qual conta?");
   });
+  const refresh=()=>{ ov.querySelector(".modal-b").innerHTML=buildBody(); bindPay(); };
+  ov._refresh=refresh;
+  bindPay();
+  ov.querySelector("[data-x]").onclick=ov._close;
+  ov.querySelector("[data-buy]").onclick=()=>{ ov._close(); openTxModal({type:"despesa",presetCard:true}); };
 }
 
 /* --- Contas bancárias --- */
@@ -1730,7 +1740,7 @@ function renderReports(){
       <h4 style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:12px 0 6px">Cartões</h4>
       ${byCard.length?byCard.map(x=>listItem(x.k?("💳 "+esc(x.k.name)):"—",x.v)).join(""):"<p style='color:var(--ink2);font-size:13px'>Nenhum gasto em cartão.</p>"}</div>
   </div>
-  <div class="card table-wrap"><div class="card-h"><h3>Maiore${top.length===1?"":"s"} despesa${top.length===1?"":"s"} do período</h3></div>
+  <div class="card table-wrap"><div class="card-h"><h3>${top.length===1?"Maior":"Maiores"} despesa${top.length===1?"":"s"} do período</h3></div>
     ${top.length?`<table class="responsive"><thead><tr><th>#</th><th>Descrição</th><th>Data</th><th>Categoria</th><th>Conta/Cartão</th><th>Valor</th></tr></thead><tbody>
     ${top.map((t,i)=>{const c=catById(t.categoryId),a=t.cardId?cardById(t.cardId):accById(t.accountId);
       return `<tr><td data-label="#" class="td-first">${i+1}</td><td data-label="Descrição">${esc(t.desc)}</td>
@@ -2049,7 +2059,7 @@ document.addEventListener("click", e=>{
     case "tx-del": if(tx) deleteTransaction(tx); break;
     case "tx-clear": ui.txF={q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc"}; render(); break;
     case "rec-edit": { const r=state.recurrences.find(x=>x.id===id); if(r) openRecurrenceModal(r); break; }
-    case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active&&!r.nextDate) r.nextDate=todayISO(); save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
+    case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active){ if(!r.nextDate) r.nextDate=todayISO(); materializeRecurrence(r); } save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
     case "rec-del": { const r=state.recurrences.find(x=>x.id===id); if(!r) break;
       const ov=openModal({title:"Excluir recorrência", body:`<p style="font-size:14px;color:var(--ink2)">Excluir <b>${esc(r.desc)}</b>? Escolha o que fazer com os lançamentos futuros já gerados.</p>`,
         foot:`<button class="btn btn-ghost" data-x>Cancelar</button>
@@ -2128,7 +2138,6 @@ window.addEventListener("hashchange", render);
   $("#fab").innerHTML=icon("plus",24);
   buildNav();
   applyTheme();
-  if(!state.accounts.length && !state.transactions.length){ /* mantém estado */ }
   materializeAll(); save();
   if(!state.initialized) onboarding();
   if(!location.hash) location.hash="#/dashboard";
