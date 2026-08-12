@@ -595,11 +595,11 @@ if(r.endMode==="count" && r.generated >= (r.count||0)) r.active=false;
 
 if(r.endMode==="date" && r.endDate && (!r.nextDate || r.nextDate > r.endDate)) r.active=false;
 }
-}
 const materializeAll = () => state.recurrences.forEach(materializeRecurrence);
 function createInstallments({type, desc, value, firstDate, n, categoryId, accountId, cardId, payMethod, note}){
 const groupId = uid();
 const base = Math.floor(value/n), rest = value - base*n;
+
 for(let i=0;i<n;i++){
 state.transactions.push({
 id:uid(), type, desc, value: base + (i===0?rest:0), date: addMonths(firstDate, i),
@@ -607,6 +607,7 @@ categoryId, accountId: cardId ? null : accountId, cardId: cardId||null,
 payMethod, status:"pendente", note:note||"", groupId, installment:i+1, installments:n
 });
 }
+
 return groupId;
 }
 /* ---------- 5. Ícones ---------- */
@@ -1613,15 +1614,32 @@ foot:`<button class="btn btn-ghost" data-x>Fechar</button><button class="btn btn
 ov.dataset.cardDetail=card.id;
 const bindPay=()=>ov.querySelectorAll("[data-payinv]").forEach(b=>b.onclick=()=>{
 const mk=b.dataset.payinv;
+
 accountPickModal(accId=>{
 let n=0,sum=0;
-state.transactions.forEach(t=>{ if(t.cardId===card.id&&t.status!=="pago"&&monthKey(t.date)===mk){
-t.status="pago"; t.accountId=accId; t.paidDate=todayISO(); n++; sum+=t.value; } });
-save(); render(); toast(`Fatura paga: ${n} parcela(s), ${fmtMoney(sum)}.`);
+
+state.transactions.forEach(t=>{
+if(t.cardId===card.id && t.status!=="pago" && monthKey(t.date)===mk){
+t.status="pago";
+t.accountId=accId;
+t.paidDate=todayISO();
+n++;
+sum+=t.value;
+}
+});
+
+save();
+render();
+toast(`Fatura paga: ${n} parcela(s), ${fmtMoney(sum)}.`);
 refresh();
 }, "Pagar fatura com qual conta?");
 });
-const refresh=()=>{ ov.querySelector(".modal-b").innerHTML=buildBody(); bindPay(); };
+
+const refresh=()=>{
+ov.querySelector(".modal-b").innerHTML=buildBody();
+bindPay();
+};
+
 ov._refresh=refresh;
 bindPay();
 ov.querySelector("[data-x]").onclick=ov._close;
