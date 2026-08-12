@@ -567,7 +567,7 @@ function periodRange(){
     const e = new Date(s.getFullYear(), s.getMonth()+1, ms-1);
     return [isoOf(s), isoOf(e)];
   };
-  if(p==="prev") return cycle(new Date(t.getFullYear(), t.getMonth()-1, Math.min(ms,28)+0.01) );
+  if(p==="prev"){ const [cs]=cycle(t); return cycle(fromISO(addDays(cs,-1))); }
   if(p==="mes")  return cycle(t);
   if(p==="30d")  return [todayISO(), addDays(todayISO(),30)];
   if(p==="ano")  return [`${t.getFullYear()}-01-01`, `${t.getFullYear()}-12-31`];
@@ -683,7 +683,7 @@ const ICONS = {
   sparkles:'<path d="M12 3.5 13.7 9 19 10.8l-5.3 1.8L12 18l-1.7-5.4L5 10.8 10.3 9z"/><path d="M18.7 15.7 19.4 18l2.3.8-2.3.8-.7 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
   shield:'<path d="m12 3 7 2.8v5.7c0 4.4-2.9 7.4-7 9-4.1-1.6-7-4.6-7-9V5.8z"/><path d="m9 11.8 2.2 2.2 3.8-4"/>',
   info:'<circle cx="12" cy="12" r="8.6"/><path d="M12 11v5"/><path d="M12 7.8h.01"/>',
-  wallet:'<path d="M19 7.5V6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20H19a2 2 0 0 0 2-2V9.5a2 2 0 0 0-2-2H5.5"/ ><path d="M16.5 13.5h.01"/>',
+  wallet:'<path d="M19 7.5V6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20H19a2 2 0 0 0 2-2V9.5a2 2 0 0 0-2-2H5.5"/><path d="M16.5 13.5h.01"/>',
   eye:'<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
   pig:'<path d="M19.5 12.5c0-3.6-3.1-6-7.2-6-3.9 0-7 2.3-7 5.8 0 1.9.9 3.3 2.1 4.4l.4 2.8h2.3l.5-1.6c.6.1 1.1.2 1.7.2.6 0 1.2-.1 1.8-.3l.5 1.7h2.3l.4-2.6c1.2-.8 2.2-2.2 2.2-4.4z"/><path d="M19.5 11h1.8v3h-1.9"/><path d="M9.3 11h.01"/>',
   gift:'<rect x="3.5" y="8" width="17" height="4"/><path d="M5 12v8.5h14V12"/><path d="M12 8v12.5"/><path d="M12 8s-4.8.3-5.6-2C5.8 4.2 8.2 3 9.6 4.2 11 5.4 12 8 12 8zm0 0s4.8.3 5.6-2c.6-1.8-1.8-3-3.2-1.8C13 5.4 12 8 12 8z"/>'
@@ -700,6 +700,7 @@ function toast(msg, type="ok"){
   $("#toast-root").appendChild(t);
   setTimeout(()=>{ t.classList.add("out"); setTimeout(()=>t.remove(), 260); }, 3200);
 }
+const modalStack=[];
 function openModal({title, body, foot, wide, onClose}){
   const root = $("#modal-root");
   const ov = document.createElement("div");
@@ -711,7 +712,9 @@ function openModal({title, body, foot, wide, onClose}){
     </div>`;
   root.appendChild(ov);
   requestAnimationFrame(()=>ov.classList.add("show"));
-  const close = ()=>{ ov.classList.remove("show"); setTimeout(()=>{ov.remove(); onClose&&onClose();}, 210); };
+  const close = ()=>{ const i=modalStack.indexOf(ov); if(i>-1) modalStack.splice(i,1);
+    ov.classList.remove("show"); setTimeout(()=>{ov.remove(); onClose&&onClose();}, 210); };
+  modalStack.push(ov);
   ov.addEventListener("mousedown", e=>{ if(e.target===ov) close(); });
   ov.querySelector("[data-close]").addEventListener("click", close);
   ov._close = close;
@@ -904,14 +907,15 @@ function openTxModal(opts={}){
   const q = s => ov.querySelector(s);
   initMoney(ov);
   setMoney(q("#f-value"), edit?.value ?? (opts.value||0));
-  q("#f-inst-d").value = edit?.date || todayISO();
+  const _fId = q("#f-inst-d"); if(_fId) _fId.value = edit?.date || todayISO();
   let status = edit?.status || (opts.status || "pendente");
   if(status==="vencido") status="pendente";
 
   const paintSeg = ()=>{ q("#tx-seg").querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===type));
     q("#f-cat").innerHTML = catOptions(type, edit?.categoryId);
-    q("#tg-inst").style.display = type==="despesa" ? "flex" : "none";
-    if(type!=="despesa"){ q("#pn-inst").classList.remove("open"); q("#tg-inst").classList.remove("on"); } };
+    const _tg = q("#tg-inst");
+    if(_tg){ _tg.style.display = type==="despesa" ? "flex" : "none";
+      if(type!=="despesa"){ q("#pn-inst").classList.remove("open"); _tg.classList.remove("on"); } } };
   const paintPay = ()=>{
     const isCard = q("#f-method").value === "Cartão de crédito";
     q("#w-card").style.display = isCard ? "" : "none";
@@ -987,7 +991,7 @@ function openTxModal(opts={}){
 }
 
 function openRecurrenceModal(rec){
-  const edit = !!rec;
+  const edit=!!(rec && rec.id);
   const type = rec?.type || "receita";
   const ov = openModal({
     title: edit ? "Editar recorrência" : (type==="receita"?"Nova receita recorrente":"Nova despesa recorrente"),
@@ -1046,9 +1050,12 @@ function openRecurrenceModal(rec){
       endMode, endDate:endMode==="date"?q("#r-date").value:null,
       count:endMode==="count"?Math.max(1,+q("#r-count").value||1):null, note:q("#r-note").value.trim()};
     if(edit){
+      const oldStart = rec.start;
       Object.assign(rec,data);
-      if(rec.start!==start){ rec.start=start; rec.nextDate=start; }
-      if(rec.endMode!=="never") rec.active=true;
+      if(oldStart!==start){
+        state.transactions = state.transactions.filter(t=>!(t.recurrenceId===rec.id && t.date>=todayISO()));
+        rec.nextDate=start; rec.generated=0;
+      }
       materializeRecurrence(rec);
     } else {
       state.recurrences.push({id:uid(), active:true, generated:0, nextDate:start, start, ...data});
@@ -1068,7 +1075,8 @@ function openCategoryModal(cat){
       Object.keys(ICONS).filter(k=>!["menu","x","chevL","chevR","chevD","filter","printer","shield"].includes(k))
       .map(k=>`<button type="button" data-i="${k}" title="${k}">${icon(k,17)}</button>`).join("")}</div></div>
     <div class="field"><label>Cor</label><div class="color-pick" id="c-colors">${PALETTE.map(c=>`<button type="button" data-c="${c}" style="background:${c}"></button>`).join("")}</div></div>`,
-    foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-save>${icon("check",15)} Salvar</button>`});
+    foot:`${edit?`<button class="btn btn-danger" data-del style="margin-right:auto">${icon("trash",14)} Excluir</button>`:""}
+      <button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-save>${icon("check",15)} Salvar</button>`});
   const q=s=>ov.querySelector(s);
   let t=cat?.type||"despesa", ic=cat?.icon||"dots", co=cat?.color||PALETTE[0];
   const paint=()=>{
@@ -1080,6 +1088,16 @@ function openCategoryModal(cat){
   q("#c-colors").onclick=e=>{const b=e.target.closest("[data-c]"); if(b){co=b.dataset.c;paint();}};
   paint();
   q("[data-x]").onclick=ov._close;
+  const _del=q("[data-del]");
+  if(_del) _del.onclick=()=>{
+    const used=state.transactions.some(x=>x.categoryId===cat.id)||state.recurrences.some(x=>x.categoryId===cat.id);
+    if(used) return toast("Categoria em uso por lançamentos ou recorrências. Reatribua antes de excluir.","err");
+    confirmModal({title:"Excluir categoria", danger:true, okLabel:"Excluir",
+      msg:`Excluir a categoria <b>${esc(cat.name)}</b>?`,
+      onOk:()=>{ delete state.budgets.categories[cat.id];
+        state.categories=state.categories.filter(x=>x.id!==cat.id);
+        save(); ov._close(); render(); toast("Categoria excluída."); }});
+  };
   q("[data-save]").onclick=()=>{
     const name=q("#c-name").value.trim();
     if(!name) return toast("Informe o nome.","err");
@@ -1342,7 +1360,8 @@ function renderTransactions(){
         `<button class="btn btn-primary" data-action="new-tx">${icon("plus",15)} Novo lançamento</button>`)}
   </div>`;
   $("#tf-q").addEventListener("input", e=>{ f.q=e.target.value;
-    clearTimeout(window._qT); window._qT=setTimeout(()=>{ const v=viewEl().scrollTop; render(); },220); });
+    clearTimeout(window._qT); window._qT=setTimeout(()=>{ window._qFocus=true; render(); },220); });
+  if(window._qFocus){ const el=$("#tf-q"); el.focus(); const L=el.value.length; el.setSelectionRange(L,L); window._qFocus=false; }
 }
 
 /* --- Contas a pagar --- */
@@ -1405,7 +1424,7 @@ function renderIncome(){
     <div class="card kpi" style="--kc:#d98e1f22;--ki:var(--warn)"><div class="k-top"><span class="k-ic">${icon("calendar",14)}</span>A receber no mês</div><div class="k-val num">${fmtMoney(toReceive)}</div></div>
     <div class="card kpi" style="--kc:#3b6ea822;--ki:var(--info)"><div class="k-top"><span class="k-ic">${icon("repeat",14)}</span>Recorrências ativas</div><div class="k-val num">${recs.filter(r=>r.active).length}</div></div>
   </div>
-  ${recs.length?`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Receitas recorrente</h3></div>
+  ${recs.length?`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Receitas recorrentes</h3></div>
     ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
       <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon("repeat",17)}</span>
       <span class="b-mid"><span class="b-name">${esc(r.desc)}</span><span class="b-sub">${FREQ_LABEL[r.freq]||r.freq} · próxima ${r.nextDate?fmtDate(r.nextDate):"—"} · ${r.generated} gerada(s)</span></span>
@@ -1556,7 +1575,9 @@ function renderPlanning(){
   const earned=recCyc.reduce((s,t)=>s+t.value,0);
   const budget=state.budgets.monthly||0;
   const avail=budget-spent;
-  const pct=budget?Math.min(100,Math.round(100*spent/budget)):0;
+  const pctRaw=budget?Math.round(100*spent/budget):0;
+  const pct=Math.min(100,pctRaw);
+  const over=budget>0 && spent>budget;
   const label=`${fmtDate(cs)} — ${fmtDate(ce)}`;
   const byCat=state.categories.filter(c=>c.type==="despesa").map(c=>{
     const sp=despCyc.filter(t=>t.categoryId===c.id).reduce((s,t)=>s+t.value,0);
@@ -1571,13 +1592,13 @@ function renderPlanning(){
     <button class="btn btn-primary no-print" data-action="budget-edit">${icon("pencil",15)} Definir orçamento</button></div>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin-bottom:16px">
     <div class="card lift">
-      <div class="card-h"><h3>Orçamento do ciclo</h3><span class="badge ${budget&&spent>budget?"vencido":"pago"}">${budget?(100-pct)>=0?"dentro do limite":"estourou":"sem orçamento"}</span></div>
+      <div class="card-h"><h3>Orçamento do ciclo</h3><span class="badge ${over?"vencido":"pago"}">${budget?(over?"estourou":"dentro do limite"):"sem orçamento"}</span></div>
       ${budget?`
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--ink2)">Gasto</span><b class="num">${fmtMoney(spent)} / ${fmtMoney(budget)}</b></div>
       ${bar(spent,budget,"var(--brand)")}
       <div style="display:flex;gap:20px;margin-top:14px;font-size:13px;flex-wrap:wrap">
         <span style="color:var(--ink2)">Disponível<br><b class="num" style="color:${avail>=0?"var(--up)":"var(--down)"};font-size:17px">${fmtMoney(avail)}</b></span>
-        <span style="color:var(--ink2)">Usado<br><b class="num" style="font-size:17px">${pct}%</b></span>
+        <span style="color:var(--ink2)">Usado<br><b class="num" style="font-size:17px">${pctRaw}%</b></span>
         <span style="color:var(--ink2)">Restam<br><b class="num" style="font-size:17px">${daysBetween(todayISO(),ce)} dia(s)</b></span>
       </div>`
       : emptyBlock("target","Sem orçamento definido","Defina um teto de gastos para este ciclo.","")}
@@ -1673,7 +1694,8 @@ function renderReports(){
   const cmp=(mk)=>{const list=state.transactions.filter(t=>monthKey(t.date)===mk);
     return {r:list.filter(t=>t.type==="receita").reduce((s,t)=>s+t.value,0), d:list.filter(t=>t.type==="despesa").reduce((s,t)=>s+t.value,0)};};
   const cur=cmp(mkNow);
-  const prevM=monthKey(addMonths(todayISO()+"-01",-1));
+  const _dp=new Date(); const _pm=new Date(_dp.getFullYear(),_dp.getMonth()-1,1);
+  const prevM=`${_pm.getFullYear()}-${pad(_pm.getMonth()+1)}`;
   const prv=cmp(prevM);
   const periodBtns=[["mes","Este mês"],["prev","Mês passado"],["30d","Próximos 30 dias"],["ano","Este ano"],["custom","Personalizado"]];
   const listItem=(name,v,color)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px">
@@ -1868,7 +1890,7 @@ function seedDemo(){
     T({type:"despesa",desc:"Mercado do mês",value:62000+i*7800,date:YM(i,9),categoryId:cat("Alimentação").id,accountId:A1.id});
     T({type:"despesa",desc:"Combustível",value:18000+i*2300,date:YM(i,12),categoryId:cat("Transporte").id,accountId:A3.id,payMethod:"Dinheiro"});
     T({type:"despesa",desc:"Internet fibra",value:9990,date:YM(i,15),categoryId:cat("Contas").id,accountId:A1.id,payMethod:"Débito automático"});
-    if(i%2===0) T({type:"despesa",desc:"Cinema e lazer",value:11500,date:YM(i,20),categoryId:cat("Lazer").id,accountId:K1.id?null:null});
+    if(i%2===0) T({type:"despesa",desc:"Cinema e lazer",value:11500,date:YM(i,20),categoryId:cat("Lazer").id,accountId:A3.id,payMethod:"Dinheiro"});
     if(i===2) T({type:"receita",desc:"Freelance site",value:95000,date:YM(i,18),categoryId:cat("Freelance").id,accountId:A1.id});
   }
   /* compra parcelada: notebook 10x (parcelas antigas pagas) */
@@ -1961,7 +1983,8 @@ function buildNav(){
     NAV.map(([r,l,ic])=>`<a class="nav-link" href="#/${r}" data-nav="${r}">${icon(ic,17)}<span>${l}</span></a>`).join("");
 }
 function render(){
-  const route=(location.hash.replace("#/","")||"dashboard").split("?")[0];
+  let route=(location.hash.replace("#/","")||"dashboard").split("?")[0];
+  if(!ROUTES[route]) route="dashboard";
   const key=ROUTES[route]==="/dashboard"?"dashboard":route;
   $$("#nav .nav-link").forEach(a=>a.classList.toggle("active",a.dataset.nav===key));
   $("#page-title").textContent=TITLES[key]||"Fluxo";
@@ -2082,7 +2105,8 @@ $("#import-file").addEventListener("change", e=>{
 /* Atalhos de teclado */
 document.addEventListener("keydown", e=>{
   const typing=/input|textarea|select/i.test(document.activeElement?.tagName||"");
-  if(e.key==="Escape"){ $("#search-results").classList.remove("open"); closeDrawer(); }
+  if(e.key==="Escape"){ if(modalStack.length){ modalStack[modalStack.length-1]._close(); return; }
+    $("#search-results").classList.remove("open"); closeDrawer(); }
   if(typing) return;
   if(e.key==="/"){ e.preventDefault(); $("#global-search").focus(); }
   if(e.key.toLowerCase()==="n"){ e.preventDefault(); openQuickModal(); }
