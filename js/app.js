@@ -215,9 +215,9 @@ ${state.cards.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Ca
 </div></div>
 <div class="field"><label>Observação</label><textarea id="f-note" maxlength="240">${esc(edit?.note||"")}</textarea></div>
 ${edit ? (edit.recurrenceId ? `<div class="hint">${icon("repeat",14)} Este lançamento faz parte de uma recorrência. Alterações valem só para esta ocorrência.</div>` : "") : `
-<div class="toggle-row" id="tg-inst">${icon("copy",16)} Parcelar esta despesa <span style="margin-left:auto;font-size:11px;color:var(--ink2)">2x até 120x</span></div>
+<div class="toggle-row" id="tg-inst">${icon("copy",16)} Parcelar esta despesa <span style="margin-left:auto;font-size:11px;color:var(--ink2)">2x ou mais</span></div>
 <div class="reveal" id="pn-inst"><div class="grid2">
-<div class="field"><label>Nº de parcelas</label><select id="f-inst-n">${Array.from({length:119},(_,i)=>opt(i+2,(i+2)+"x",i===0)).join("")}</select></div>
+<div class="field"><label>Nº de parcelas</label><select id="f-inst-n">${Array.from({length:47},(_,i)=>opt(i+2,(i+2)+"x",i===0)).join("")}</select></div>
 <div class="field"><label>Primeira parcela</label><input type="date" id="f-inst-d"></div>
 </div><div class="hint">${icon("info",13)} Cada parcela vira um lançamento mensal. Ex.: R$ 1.200 em 12x gera 12 parcelas de R$ 100.</div></div>
 <div class="toggle-row" id="tg-rec">${icon("repeat",16)} Repetir automaticamente <span style="margin-left:auto;font-size:11px;color:var(--ink2)">recorrência</span></div>
@@ -319,7 +319,7 @@ beginSave();
 const finalAcc = isCard ? (pickAcc || (edit ? edit.accountId : null)) : accId;
 if(edit){
 Object.assign(edit, {type, desc, value, date, categoryId:catId, accountId:finalAcc, cardId, payMethod:method, status, note});
-save(); ov._close(); render(); return toast("Lançamento atualizado.");
+save(); ov._close(); render(); refreshCardModals(); return toast("Lançamento atualizado.");
 }
 if(useRec){
 state.recurrences.push({
@@ -328,18 +328,18 @@ freq:recPlan.freq, every:recPlan.every, start:date, nextDate:date,
 endMode:recPlan.endMode, endDate:recPlan.endDate, count:recPlan.count,
 note, active:true, generated:0
 });
-materializeAll(); save(); ov._close(); render();
+materializeAll(); save(); ov._close(); render(); refreshCardModals();
 return toast("Recorrência criada e lançamentos futuros gerados.");
 }
 if(useInst){
 const gid = createInstallments({type, desc, value, firstDate:instPlan.fd, n:instPlan.n, categoryId:catId, accountId:accId, cardId, payMethod:method, note});
 if(status==="pago" && finalAcc){ state.transactions.forEach(t=>{ if(t.groupId===gid){ t.status="pago"; t.accountId=finalAcc; t.paidDate=todayISO(); } }); }
-save(); ov._close(); render();
+save(); ov._close(); render(); refreshCardModals();
 return toast(`${instPlan.n} parcelas geradas (${fmtMoney(Math.round(value/instPlan.n))} cada).`);
 }
 state.transactions.push({id:uid(), type, desc, value, date, categoryId:catId, accountId:finalAcc, cardId, payMethod:method, status, note,
 paidDate: status==="pago" ? todayISO() : undefined});
-save(); ov._close(); render();
+save(); ov._close(); render(); refreshCardModals();
 return toast(type==="receita" ? "Receita adicionada." : "Despesa adicionada.");
 };
 const paidCardPick = status==="pago" && isCard && !(edit && edit.accountId);
@@ -557,8 +557,8 @@ if(k==="income") openTxModal({type:"receita"});
 if(k==="card") openTxModal({type:"despesa", presetCard:true});
 });
 }
+function refreshCardModals(){ modalStack.forEach(o=>{ if(o.dataset.cardDetail&&o._refresh) o._refresh(); }); }
 function payTransaction(t){
-const refreshCardModals=()=>modalStack.forEach(o=>{ if(o.dataset.cardDetail&&o._refresh) o._refresh(); });
 const doPay=accId=>{ if(accId) t.accountId=accId;
 t.status="pago"; t.paidDate=todayISO(); save(); render(); refreshCardModals(); toast("Marcado como pago."); };
 if(t.status==="pago"){ t.status="pendente"; delete t.paidDate; save(); render(); refreshCardModals(); return toast("Voltou para pendente.","warn"); }
@@ -567,56 +567,36 @@ doPay();
 }
 function deleteTransaction(t){
 if(t.groupId){
-const group=state.transactions.filter(x=>x.groupId===t.groupId).sort((a,b)=>a.date.localeCompare(b.date));
-const paid=group.filter(x=>x.status==="pago").length;
-const ov=openModal({title:"Excluir parcelamento",
-body:`<p style="font-size:14px;color:var(--ink2);margin-bottom:6px"><b>${esc(t.desc)}</b> possui <b>${group.length} parcela(s)</b> — ${paid} paga(s) e ${group.length-paid} pendente(s).</p>
-<p style="font-size:13px;color:var(--ink2)">Escolha o que deseja excluir:</p>`,
+const group=state.transactions.filter(x=>x.groupId===t.groupId).sort((a,b)=>a.date.localeCompare(b.date)||(a.installment||0)-(b.installment||0));
+const future=group.filter(x=>x.date>=t.date);
+const paidCount=group.filter(x=>x.status==="pago").length;
+const ov=openModal({title:"Excluir parcelamento", body:`<p style="font-size:14px;color:var(--ink2)">
+<b>${esc(t.desc)}</b> faz parte de um parcelamento de <b>${group.length} parcela(s)</b>${t.installment?` (esta é a ${t.installment}ª)`:""}.
+${paidCount?`<br>${paidCount} parcela(s) já estão pagas.`:""}<br>O que você deseja fazer?</p>`,
 foot:`<button class="btn btn-ghost" data-x>Cancelar</button>
-<button class="btn btn-ghost" data-one>${icon("trash",14)} Só esta parcela</button>
-<button class="btn btn-danger" data-all>${icon("trash",14)} Excluir as ${group.length} parcelas</button>`});
+<button class="btn btn-ghost" data-one>Só esta parcela</button>
+${future.length>1?`<button class="btn btn-ghost" data-future>Esta e as próximas (${future.length})</button>`:""}
+<button class="btn btn-danger" data-all>${icon("trash",14)} Excluir todas (${group.length})</button>`});
 ov.querySelector("[data-x]").onclick=ov._close;
-ov.querySelector("[data-one]").onclick=()=>{ state.transactions=state.transactions.filter(x=>x.id!==t.id); save(); ov._close(); render(); toast("Parcela excluída."); };
-ov.querySelector("[data-all]").onclick=()=>{ confirmModal({title:"Excluir todas as parcelas", danger:true, okLabel:"Excluir tudo",
-msg:`Excluir <b>todas as ${group.length} parcelas</b> de <b>${esc(t.desc)}</b>, incluindo as já pagas?`,
-onOk:()=>{ state.transactions=state.transactions.filter(x=>x.groupId!==t.groupId); save(); ov._close(); render(); toast("Parcelamento excluído por completo."); }}); };
+ov.querySelector("[data-one]").onclick=()=>{
+state.transactions=state.transactions.filter(x=>x.id!==t.id);
+save(); ov._close(); render(); refreshCardModals(); toast("Parcela excluída.");
+};
+const fb=ov.querySelector("[data-future]");
+if(fb) fb.onclick=()=>{
+const ids=new Set(future.map(x=>x.id));
+state.transactions=state.transactions.filter(x=>!ids.has(x.id));
+save(); ov._close(); render(); refreshCardModals(); toast(`${future.length} parcela(s) excluída(s).`);
+};
+ov.querySelector("[data-all]").onclick=()=>{
+state.transactions=state.transactions.filter(x=>x.groupId!==t.groupId);
+save(); ov._close(); render(); refreshCardModals(); toast(`${group.length} parcela(s) excluídas.`);
+};
 return;
 }
 confirmModal({title:"Excluir lançamento", danger:true, okLabel:"Excluir",
 msg:`Excluir <b>${esc(t.desc)}</b> (${fmtMoney(t.value)})?`,
-onOk:()=>{ state.transactions=state.transactions.filter(x=>x.id!==t.id); save(); render(); toast("Lançamento excluído."); }});
-}
-function openInstallmentGroupModal(groupId){
-const group=state.transactions.filter(x=>x.groupId===groupId).sort((a,b)=>a.date.localeCompare(b.date));
-if(!group.length) return;
-const t0=group[0];
-const total=group.reduce((s,t)=>s+t.value,0);
-const paid=group.filter(t=>t.status==="pago");
-const abertos=group.filter(t=>t.status!=="pago");
-const body=`<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;font-size:13px">
-<span>Total: <b class="num">${fmtMoney(total)}</b></span>
-<span>Pagas: <b class="num" style="color:var(--up)">${paid.length}</b></span>
-<span>Pendentes: <b class="num" style="color:var(--warn)">${abertos.length}</b></span>
-<span>Restante: <b class="num">${fmtMoney(abertos.reduce((s,t)=>s+t.value,0))}</b></span></div>
-${group.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</span>
-<span class="iv-n">${esc(t.desc)} <b style="color:var(--ink2)">· ${t.installment}/${t.installments}</b></span>
-<span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Pendente"}</span>
-<b class="num">${fmtMoney(t.value)}</b>
-${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}</div>`).join("")}`;
-const ov=openModal({wide:true,title:`${esc(t0.desc)} — parcelas`,body,
-foot:`<button class="btn btn-ghost" data-x>Fechar</button>
-${abertos.length?`<button class="btn btn-primary" data-payall>${icon("check",14)} Pagar todas pendentes</button>`:""}
-<button class="btn btn-danger" data-delall>${icon("trash",14)} Excluir todas</button>`});
-ov.querySelector("[data-x]").onclick=ov._close;
-const payAll=ov.querySelector("[data-payall]");
-if(payAll) payAll.onclick=()=>{ accountPickModal(accId=>{
-state.transactions.forEach(t=>{ if(t.groupId===groupId&&t.status!=="pago"){ t.status="pago"; t.accountId=accId; t.paidDate=todayISO(); } });
-save(); ov._close(); render(); toast("Parcelas pendentes marcadas como pagas.");
-}, "Pagar com qual conta?"); };
-const delAll=ov.querySelector("[data-delall]");
-if(delAll) delAll.onclick=()=>{ confirmModal({title:"Excluir todas as parcelas",danger:true,okLabel:"Excluir tudo",
-msg:`Excluir <b>todas as ${group.length} parcelas</b> de <b>${esc(t0.desc)}</b>?`,
-onOk:()=>{ state.transactions=state.transactions.filter(x=>x.groupId!==groupId); save(); ov._close(); render(); toast("Parcelamento excluído por completo."); }}); };
+onOk:()=>{ state.transactions=state.transactions.filter(x=>x.id!==t.id); save(); render(); refreshCardModals(); toast("Lançamento excluído."); }});
 }
 /* ---------- 9. Vistas ---------- */
 const viewEl = () => $("#view");
@@ -633,7 +613,7 @@ const nw = netWorth();
 const paidMonthDelta = state.transactions.filter(t=>t.status==="pago"&&monthKey(t.date)===monthKey(todayISO()))
 .reduce((s,t)=>s+(t.type==="receita"?t.value:-t.value),0);
 const forecast = nw
-+ state.transactions.filter(t=>t.status!=="pago"&&t.type==="receita").reduce((s,t)=>s+t.value,0);
++ state.transactions.filter(t=>t.status!=="pago"&&t.type==="receita").reduce((s,t)=>s+t.value,0)
 - state.transactions.filter(t=>t.status!=="pago"&&t.type==="despesa").reduce((s,t)=>s+t.value,0);
 const pend = state.transactions.filter(t=>t.status!=="pago"&&t.type==="despesa");
 const pendSum = pend.filter(t=>t.date>=todayISO()).reduce((s,t)=>s+t.value,0);
@@ -721,7 +701,7 @@ return list.sort(S[f.sort]||S["date-desc"]);
 function txRow(t){
 const c=catById(t.categoryId), st=txStatus(t);
 const acc=t.cardId?cardById(t.cardId):accById(t.accountId);
-const badges=[ t.groupId?`<button class="chip chip-btn" style="background:var(--surface2);border:1px solid var(--line)" title="Gerenciar parcelas" data-action="tx-group" data-id="${t.groupId}">${t.installment}/${t.installments}</button>`:"",
+const badges=[ t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:"",
 t.recurrenceId?icon("repeat",12):"" ].join("");
 return `<tr>
 <td data-label="Data" class="td-first num" style="white-space:nowrap">${fmtDate(t.date)}</td>
@@ -801,7 +781,7 @@ const totalOpen=open.reduce((s,t)=>s+t.value,0);
 const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
 <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon(c?c.icon:"dots",18)}</span>
-<span class="b-mid"><span class="b-name">${esc(t.desc)} ${t.groupId?`<button class="chip chip-btn" style="background:var(--surface2);border:1px solid var(--line)" title="Gerenciar parcelas" data-action="tx-group" data-id="${t.groupId}">${t.installment}/${t.installments}</button>`:""}</span>
+<span class="b-mid"><span class="b-name">${esc(t.desc)} ${t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:""}</span>
 <span class="b-sub">vence ${fmtDate(t.date)} · ${esc(t.payMethod||"")} ${t.cardId?"· "+esc(cardById(t.cardId)?.name||""):""}</span></span>
 ${extra?`<span class="badge ${st}">${st==="pago"?"Paga":st==="vencido"?"Vencida":"Pendente"}</span>`:""}
 <span class="b-val num">${fmtMoney(t.value)}</span>
@@ -925,6 +905,8 @@ ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</s
 <span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Aberta"}</span>
 <b class="num">${fmtMoney(t.value)}</b>
 ${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
+<button class="icon-btn" title="Editar" data-action="tx-edit" data-id="${t.id}">${icon("pencil",14)}</button>
+<button class="icon-btn" title="Excluir parcela(s)" data-action="tx-del" data-id="${t.id}">${icon("trash",14)}</button>
 </div>`).join("")}</div>`;
 };
 const nowMk=monthKey(todayISO());
@@ -1128,7 +1110,6 @@ const periodBtns=[["mes","Este mês"],["prev","Mês passado"],["30d","Próximos 
 const listItem=(name,v,color)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px">
 <span style="flex:1">${name}</span><b class="num" style="color:${color||"var(--ink)"}">${fmtMoney(v)}</b></div>`;
 viewEl().innerHTML=`
-<div class="print-head"><div><strong>Fluxo — Finanças pessoais</strong><span>Relatório: ${fmtDate(ps)} a ${fmtDate(pe)}</span></div><span>Gerado em ${fmtDate(todayISO())}</span></div>
 <div class="page-head"><div><h1>Relatórios</h1><p>Análise completa do período ${fmtDate(ps)} — ${fmtDate(pe)}.</p></div>
 <button class="btn btn-ghost no-print" data-action="print">${icon("printer",15)} Imprimir / PDF</button></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" class="no-print">
@@ -1281,9 +1262,9 @@ toast(`CSV exportado (${list.length} lançamento(s)).`);
 }
 function openCsvModal(){
 const ov=openModal({title:"Exportar lançamentos (.csv)", body:`
-<p style="font-size:13px;color:var(--ink2);margin-bottom:14px">O período já vem igual ao selecionado nos Relatórios. As datas saem no formato definido nas Configurações.</p>
+<p style="font-size:13px;color:var(--ink2);margin-bottom:14px">Escolha o período dos lançamentos a exportar.</p>
 <div class="field"><label>Período</label><select id="csv-period">
-${opt("all","Todos os lançamentos")}${opt("mes","Este mês")}${opt("prev","Mês passado")}${opt("30d","Próximos 30 dias")}${opt("ano","Este ano")}${opt("custom","Personalizado")}</select></div>
+${opt("all","Todos os lançamentos",true)}${opt("mes","Este mês")}${opt("prev","Mês passado")}${opt("30d","Próximos 30 dias")}${opt("ano","Este ano")}${opt("custom","Personalizado")}</select></div>
 <div class="grid2" id="csv-custom" style="display:none">
 <div class="field"><label>De</label><input type="date" id="csv-from"></div>
 <div class="field"><label>Até</label><input type="date" id="csv-to"></div>
@@ -1292,10 +1273,8 @@ ${opt("all","Todos os lançamentos")}${opt("mes","Este mês")}${opt("prev","Mês
 foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok>${icon("download",15)} Exportar</button>`});
 const q=s=>ov.querySelector(s);
 const [csvPs,csvPe]=periodRange();
-q("#csv-period").value=ui.period;
-q("#csv-custom").style.display=ui.period==="custom"?"":"none";
-q("#csv-from").value=(ui.period==="custom"&&ui.from)||csvPs;
-q("#csv-to").value=(ui.period==="custom"&&ui.to)||csvPe;
+q("#csv-from").value = q("#csv-from").value || csvPs;
+q("#csv-to").value = q("#csv-to").value || csvPe;
 const csvRange=()=>{
 const p=q("#csv-period").value;
 if(p==="all") return ["0000-01-01","9999-12-31"];
@@ -1495,9 +1474,13 @@ case "catlimit": openCatLimitModal(id); break;
 case "goal-edit": openGoalModal(el.dataset.g); break;
 case "tx-pay": if(tx) payTransaction(tx); break;
 case "tx-edit": if(tx) openTxModal({tx}); break;
-case "tx-dup": if(tx){ state.transactions.push({...tx,id:uid(),status:"pendente",paidDate:undefined}); save(); render(); toast("Lançamento duplicado."); } break;
+case "tx-dup": if(tx){
+const copy={...tx,id:uid(),status:"pendente"};
+delete copy.paidDate; delete copy.groupId; delete copy.installment; delete copy.installments;
+delete copy.recurrenceId; delete copy.recIndex;
+state.transactions.push(copy); save(); render(); refreshCardModals(); toast("Lançamento duplicado.");
+} break;
 case "tx-del": if(tx) deleteTransaction(tx); break;
-case "tx-group": openInstallmentGroupModal(id); break;
 case "tx-clear": ui.txF={q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false}; render(); break;
 case "rec-edit": { const r=state.recurrences.find(x=>x.id===id); if(r) openRecurrenceModal(r); break; }
 case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active){ if(!r.nextDate) r.nextDate=todayISO(); materializeRecurrence(r); } save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
@@ -1573,7 +1556,6 @@ $("#btn-menu").innerHTML=icon("menu",19);
 $("#search-ic").innerHTML=icon("search",15);
 $("#btn-new-top").innerHTML=icon("plus",16)+" Novo lançamento";
 $("#fab").innerHTML=icon("plus",24);
-if(matchMedia("(max-width:640px)").matches){ $("#global-search").placeholder="Pesquisar…"; }
 buildNav();
 applyTheme();
 materializeAll(); save();
