@@ -563,19 +563,37 @@ return addDays(iso, every);
 }
 function materializeRecurrence(r){
 if(!r.active) return;
+
 const horizon = addDays(todayISO(), 90);
+
+const maxGuard = r.endMode === "count"
+? Math.max(500, (r.count || 0) + 10)
+: 500;
+
 let guard = 0;
-while(r.nextDate && r.nextDate <= horizon && guard++ < 200){
+
+while(r.nextDate && guard++ < maxGuard){
+
 if(r.endMode==="date" && r.endDate && r.nextDate > r.endDate) { r.active=false; break; }
+
 if(r.endMode==="count" && r.generated >= (r.count||0)) { r.active=false; break; }
+
+if(r.endMode!=="count" && r.nextDate > horizon) break;
+
 state.transactions.push({
 id:uid(), type:r.type, desc:r.desc, value:r.value, date:r.nextDate,
 categoryId:r.categoryId, accountId:r.accountId||null, cardId:r.cardId||null,
 payMethod:r.payMethod||"Pix", status:"pendente", note:r.note||"",
 recurrenceId:r.id, recIndex:(r.generated||0)+1
 });
+
 r.nextDate = advanceDate(r.nextDate, r.freq, r.every);
 r.generated = (r.generated||0)+1;
+}
+
+if(r.endMode==="count" && r.generated >= (r.count||0)) r.active=false;
+
+if(r.endMode==="date" && r.endDate && (!r.nextDate || r.nextDate > r.endDate)) r.active=false;
 }
 }
 const materializeAll = () => state.recurrences.forEach(materializeRecurrence);
@@ -1212,9 +1230,59 @@ if(t.cardId && !t.accountId) return accountPickModal(doPay, "Pagar com qual cont
 doPay();
 }
 function deleteTransaction(t){
+const refreshCardModals=()=>modalStack.forEach(o=>{ if(o.dataset.cardDetail&&o._refresh) o._refresh(); });
+
+if(t.groupId){
+
+const total=state.transactions.filter(x=>x.groupId===t.groupId).length;
+
+const ov=openModal({
+title:"Excluir parcelamento",
+body:`<p style="font-size:14px;color:var(--ink2)">
+Este lançamento faz parte de um parcelamento com <b>${total}</b> parcela(s).<br><br>
+Você pode excluir apenas esta parcela ou todas as parcelas do parcelamento.
+</p>`,
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button>
+<button class="btn btn-danger" data-one>${icon("trash",14)} Excluir só esta parcela</button>
+<button class="btn btn-danger" data-all>${icon("trash",14)} Excluir todas as ${total} parcelas</button>`
+});
+
+ov.querySelector("[data-x]").onclick=ov._close;
+
+ov.querySelector("[data-one]").onclick=()=>{
+if(ov._saving) return;
+ov._saving=true;
+state.transactions=state.transactions.filter(x=>x.id!==t.id);
+save();
+ov._close();
+render();
+refreshCardModals();
+toast("Parcela excluída.");
+};
+
+ov.querySelector("[data-all]").onclick=()=>{
+if(ov._saving) return;
+ov._saving=true;
+state.transactions=state.transactions.filter(x=>x.groupId!==t.groupId);
+save();
+ov._close();
+render();
+refreshCardModals();
+toast(`${total} parcela(s) excluída(s).`);
+};
+
+return;
+}
+
 confirmModal({title:"Excluir lançamento", danger:true, okLabel:"Excluir",
-msg:`Excluir <b>${esc(t.desc)}</b> (${fmtMoney(t.value)})?<br>${t.groupId?"Este item faz parte de um parcelamento — apenas esta parcela será excluída.":""}`,
-onOk:()=>{ state.transactions=state.transactions.filter(x=>x.id!==t.id); save(); render(); toast("Lançamento excluído."); }});
+msg:`Excluir <b>${esc(t.desc)}</b> (${fmtMoney(t.value)})?`,
+onOk:()=>{
+state.transactions=state.transactions.filter(x=>x.id!==t.id);
+save();
+render();
+refreshCardModals();
+toast("Lançamento excluído.");
+}});
 }
 /* ---------- 9. Vistas ---------- */
 const viewEl = () => $("#view");
@@ -1523,6 +1591,7 @@ ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</s
 <span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Aberta"}</span>
 <b class="num">${fmtMoney(t.value)}</b>
 ${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
+<button class="icon-btn" title="Excluir parcela" data-action="tx-del" data-id="${t.id}">${icon("trash",14)}</button>
 </div>`).join("")}</div>`;
 };
 const nowMk=monthKey(todayISO());
