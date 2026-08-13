@@ -22,6 +22,7 @@
 --r:16px; --r-sm:10px;
 --disp:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;
 --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+color-scheme:light;
 }
 [data-theme="dark"]{
 --bg:#0c1310; --surface:#141d18; --surface2:#18231d; --ink:#e6efe9; --ink2:#93a59b;
@@ -32,6 +33,7 @@
 --side:#081712; --side2:#0c221a;
 --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.5);
 --shadow-lg:0 4px 10px rgba(0,0,0,.4),0 28px 56px -16px rgba(0,0,0,.6);
+color-scheme:dark;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -44,6 +46,7 @@ a{color:var(--brand)}
 .num{font-variant-numeric:tabular-nums}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+input[type="checkbox"]{accent-color:var(--brand);width:16px;height:16px;cursor:pointer;flex-shrink:0}
 #app{display:flex;min-height:100vh}
 #sidebar{width:246px;flex-shrink:0;position:fixed;inset:0 auto 0 0;z-index:60;background:linear-gradient(180deg,var(--side) 0%,var(--side2) 140%);color:var(--side-ink);display:flex;flex-direction:column;padding:22px 14px 16px;transition:transform .28s cubic-bezier(.4,0,.2,1)}
 #sidebar::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(420px 220px at 20% -5%, rgba(37,196,141,.22), transparent 60%)}
@@ -96,6 +99,7 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 #fab:hover{transform:scale(1.06) rotate(90deg)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9.5px 16px;border-radius:11px;font-size:13.5px;font-weight:600;border:1px solid transparent;transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;white-space:nowrap}
 .btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-dk));color:#fff;box-shadow:0 6px 16px -6px rgba(14,107,79,.5)}
 .btn-primary:hover{box-shadow:0 10px 22px -6px rgba(14,107,79,.55);transform:translateY(-1px)}
 .btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink)}
@@ -156,6 +160,11 @@ tr:hover .row-actions{opacity:1}@media (hover:none){.row-actions{opacity:1}}
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 16px;margin-bottom:16px}
 .filters input,.filters select{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-size:13px}
 .filters input[type=search]{flex:1;min-width:170px}.filters input:focus,.filters select:focus{border-color:var(--brand);outline:none}
+.sel-all{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;user-select:none;white-space:nowrap}
+.sel-all:hover{color:var(--brand-ink)}
+.bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;background:var(--brand-soft);border:1px solid var(--brand);border-radius:12px;font-size:13.5px;color:var(--brand-ink);animation:pop .18s ease;flex-wrap:wrap}
+.bulk-bar>.ic{color:var(--brand)}
+.ck-cell{width:38px}
 .cc-grid{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
 .cc-visual{border-radius:16px;padding:18px;color:#fff;position:relative;overflow:hidden;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;margin-bottom:14px;background:linear-gradient(135deg,var(--cc,#0e6b4f) 0%, color-mix(in srgb,var(--cc,#0e6b4f) 55%, #04120d) 130%);box-shadow:0 14px 28px -12px color-mix(in srgb,var(--cc,#0e6b4f) 70%, transparent)}
 .cc-visual::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.09);right:-70px;top:-90px}
@@ -216,7 +225,7 @@ tr:hover .row-actions{opacity:1}@media (hover:none){.row-actions{opacity:1}}
 .toggle-row:hover{border-color:var(--brand);background:var(--brand-soft)}
 .toggle-row.on{border-style:solid;border-color:var(--brand);background:var(--brand-soft)}
 .reveal{display:none;animation:viewIn .25s ease}.reveal.open{display:block}
-.stat-strip{display:flex;gap:26px;flex-wrap:wrap;padding:16px 20px}
+.stat-strip{display:flex;gap:26px;flex-wrap:wrap;padding:16px 20px;align-items:center}
 .stat-strip .ss b{font-family:var(--disp);font-size:19px;display:block}.stat-strip .ss span{font-size:12px;color:var(--ink2)}
 .settings-grid{grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));align-items:start}
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}.set-row:last-child{border-bottom:none}
@@ -250,7 +259,7 @@ tr:hover .row-actions{opacity:1}@media (hover:none){.row-actions{opacity:1}}
 table.responsive thead{display:none}
 table.responsive, table.responsive tbody, table.responsive tr, table.responsive td{display:block;width:100%}
 table.responsive tr{border:1px solid var(--line);border-radius:13px;margin:10px;background:var(--surface);box-shadow:var(--shadow);padding:6px 0;width:auto}
-table.responsive td{border:none;padding:6px 14px;display:flex;justify-content:space-between;gap:12px;text-align:right}
+table.responsive td{border:none;padding:6px 14px;display:flex;justify-content:space-between;gap:12px;text-align:right;align-items:center}
 table.responsive td::before{content:attr(data-label);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700;text-align:left}
 table.responsive td.td-first{padding-top:12px}
 table.responsive .row-actions{justify-content:flex-end;opacity:1;padding-bottom:10px}
@@ -378,8 +387,10 @@ demo:false, initialized:false
 };
 }
 let state = loadState() || defaultState();
-const ui = { period:"mes", from:"", to:"", txF:{q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false} };
+const ui = { period:"mes", from:"", to:"", txF:{q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false},
+sel:{lanc:new Set(), contas:new Set(), receitas:new Set()} };
 let _billGroups = {};
+let _viewIds = {lanc:[], contas:[], receitas:[]};
 function loadState(){
 try{
 const raw = localStorage.getItem(DB_KEY);
@@ -457,6 +468,30 @@ const now = todayISO(), mk = monthKey(now);
 const invoiceNow = inst.filter(t=>monthKey(t.date)===mk).reduce((s,t)=>s+t.value,0);
 const overdue = open.filter(t=>t.date<now).reduce((s,t)=>s+t.value,0);
 return {used, open:open.length, invoiceNow, overdue, available:Math.max(0,(card.limit||0)-used)};
+}
+/* Seleção em lote */
+function pruneSel(){
+const ids = new Set(state.transactions.map(t=>t.id));
+for(const k in ui.sel){ for(const id of [...ui.sel[k]]) if(!ids.has(id)) ui.sel[k].delete(id); }
+}
+function selBar(key){
+const n = ui.sel[key].size;
+if(!n) return "";
+return `<div class="bulk-bar no-print">${icon("check",15)} <b>${n} selecionado(s)</b>
+<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn btn-ghost btn-sm" data-action="bulk-all" data-set="${key}">Selecionar todos (${_viewIds[key].length})</button>
+<button class="btn btn-danger btn-sm" data-action="bulk-del" data-set="${key}">${icon("trash",13)} Excluir selecionados</button>
+<button class="btn btn-ghost btn-sm" data-action="bulk-clear" data-set="${key}">Limpar seleção</button>
+</span></div>`;
+}
+function paintCkAll(){
+$$("[data-ckall]").forEach(el=>{
+const key = el.dataset.ckall, ids = _viewIds[key]||[], set = ui.sel[key];
+if(!set) return;
+const n = ids.filter(id=>set.has(id)).length;
+el.checked = ids.length>0 && n===ids.length;
+el.indeterminate = n>0 && n<ids.length;
+});
 }
 /* ---------- 4. Recorrências e parcelas ---------- */
 function advanceDate(iso, freq, every){
@@ -1182,6 +1217,25 @@ confirmModal({title:"Excluir lançamento", danger:true, okLabel:"Excluir",
 msg:`Excluir <b>${esc(t.desc)}</b> (${fmtMoney(t.value)})?`,
 onOk:()=>{ state.transactions=state.transactions.filter(x=>x.id!==t.id); save(); render(); toast("Lançamento excluído."); }});
 }
+/* Exclusão em lote */
+function bulkDeleteSel(key){
+const idset = new Set([...ui.sel[key]].filter(id=>state.transactions.some(t=>t.id===id)));
+if(!idset.size){ ui.sel[key].clear(); render(); return; }
+const list = state.transactions.filter(t=>idset.has(t.id));
+const nRec  = list.filter(t=>t.recurrenceId).length;
+const nInst = list.filter(t=>t.groupId).length;
+let extra = "";
+if(nRec)  extra += `<br>• <b>${nRec}</b> item(ns) pertencem a recorrências — somente estas ocorrências serão apagadas; a geração automática das próximas continua.`;
+if(nInst) extra += `<br>• <b>${nInst}</b> item(ns) são parcelas — as demais parcelas dos mesmos grupos serão mantidas.`;
+confirmModal({
+title:"Excluir selecionados", danger:true, okLabel:`Excluir ${idset.size}`,
+msg:`Você está prestes a excluir <b>${idset.size}</b> lançamento(s). Essa ação não pode ser desfeita.${extra}`,
+onOk:()=>{
+state.transactions = state.transactions.filter(t=>!idset.has(t.id));
+ui.sel[key].clear();
+save(); render(); toast(`${idset.size} lançamento(s) excluído(s).`);
+}});
+}
 /* ---------- 9. Vistas ---------- */
 const viewEl = () => $("#view");
 function emptyBlock(ic, title, msg, btn){
@@ -1194,7 +1248,8 @@ const txP = state.transactions.filter(inP);
 const rec = txP.filter(t=>t.type==="receita").reduce((s,t)=>s+t.value,0);
 const desp = txP.filter(t=>t.type==="despesa").reduce((s,t)=>s+t.value,0);
 const nw = netWorth();
-const paidMonthDelta = state.transactions.filter(t=>t.status==="pago"&&monthKey(t.date)===monthKey(todayISO()))
+const [csC,ceC] = cycleRange(new Date());
+const paidMonthDelta = state.transactions.filter(t=>t.status==="pago"&&inRange(t.date,csC,ceC))
 .reduce((s,t)=>s+(t.type==="receita"?t.value:-t.value),0);
 const forecast = nw
 + state.transactions.filter(t=>t.status!=="pago"&&t.type==="receita").reduce((s,t)=>s+t.value,0)
@@ -1288,7 +1343,8 @@ const acc=t.cardId?cardById(t.cardId):accById(t.accountId);
 const badges=[ t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:"",
 t.recurrenceId?icon("repeat",12):"" ].join("");
 return `<tr>
-<td data-label="Data" class="td-first num" style="white-space:nowrap">${fmtDate(t.date)}</td>
+<td data-label="Selecionar" class="td-first ck-cell"><input type="checkbox" data-ck="lanc" data-id="${t.id}" ${ui.sel.lanc.has(t.id)?"checked":""} aria-label="Selecionar lançamento"></td>
+<td data-label="Data" class="num" style="white-space:nowrap">${fmtDate(t.date)}</td>
 <td data-label="Descrição"><div class="td-main">${esc(t.desc)}</div>
 <div class="td-sub">${badges} ${t.note?`<span title="${esc(t.note)}">${icon("info",12)}</span>`:""}</div></td>
 <td data-label="Categoria"><span class="chip" style="background:${c?c.color+"1d":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${c?icon(c.icon,12)+esc(c.name):"—"}</span></td>
@@ -1305,6 +1361,8 @@ return `<tr>
 }
 function renderTransactions(){
 const list=filteredTx(), f=ui.txF;
+const shown=list.slice(0,400);
+_viewIds.lanc=shown.map(t=>t.id);
 const rIn=list.filter(t=>t.type==="receita").reduce((s,t)=>s+t.value,0);
 const rOut=list.filter(t=>t.type==="despesa").reduce((s,t)=>s+t.value,0);
 viewEl().innerHTML=`
@@ -1320,12 +1378,15 @@ ${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}${state.cards.ma
 <select data-filter="method"><option value="">Forma: todas</option>${PAY_METHODS.map(m=>opt(m,m,f.method===m)).join("")}</select>
 <input type="date" data-filter="from" value="${f.from}" title="De"><input type="date" data-filter="to" value="${f.to}" title="Até">
 <select data-filter="sort">${opt("date-desc","Mais recentes",f.sort==="date-desc")}${opt("date-asc","Mais antigos",f.sort==="date-asc")}${opt("val-desc","Maior valor",f.sort==="val-desc")}${opt("val-asc","Menor valor",f.sort==="val-asc")}${opt("desc","Descrição A–Z",f.sort==="desc")}</select>
+<label class="sel-all"><input type="checkbox" data-ckall="lanc"> Selecionar todos</label>
 <button class="btn btn-ghost btn-sm" data-action="tx-clear">${icon("x",13)} Limpar</button>
 </div>
+${selBar("lanc")}
 <div class="card table-wrap">
 ${list.length?`<table class="responsive"><thead><tr>
+<th class="ck-cell"><input type="checkbox" data-ckall="lanc" aria-label="Selecionar todos"></th>
 <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Forma</th><th>Status</th><th style="text-align:right">Ações</th>
-</tr></thead><tbody>${list.slice(0,400).map(txRow).join("")}</tbody></table>
+</tr></thead><tbody>${shown.map(txRow).join("")}</tbody></table>
 <div class="table-foot">
 <span>Receitas: <b class="val-up num">${fmtMoney(rIn)}</b></span>
 <span>Despesas: <b class="val-down num">${fmtMoney(rOut)}</b></span>
@@ -1363,9 +1424,11 @@ const groups=[
 ];
 groups.forEach(([key,,items])=>{ _billGroups[key]=items; });
 const paid=bills.filter(t=>t.status==="pago").sort((a,b)=>(b.paidDate||b.date).localeCompare(a.paidDate||a.date)).slice(0,15);
+_viewIds.contas=[...open.map(t=>t.id), ...paid.map(t=>t.id)];
 const totalOpen=open.reduce((s,t)=>s+t.value,0);
 const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
+<input type="checkbox" data-ck="contas" data-id="${t.id}" ${ui.sel.contas.has(t.id)?"checked":""} aria-label="Selecionar conta">
 <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon(c?c.icon:"dots",18)}</span>
 <span class="b-mid"><span class="b-name">${esc(t.desc)} ${t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:""}</span>
 <span class="b-sub">vence ${fmtDate(t.date)} · ${esc(t.payMethod||"")} ${t.cardId?"· "+esc(cardById(t.cardId)?.name||""):""}</span></span>
@@ -1384,7 +1447,9 @@ viewEl().innerHTML=`
 <div class="ss"><b class="num" style="color:var(--down)">${open.filter(t=>t.date<today).length}</b><span>vencidas</span></div>
 <div class="ss"><b class="num" style="color:var(--warn)">${open.filter(t=>t.date===today).length}</b><span>hoje</span></div>
 <div class="ss"><b class="num">${open.length}</b><span>pendentes no total</span></div>
+<label class="sel-all" style="margin-left:auto"><input type="checkbox" data-ckall="contas"> Selecionar todas (${open.length+paid.length})</label>
 </div>
+${selBar("contas")}
 ${open.length? groups.map(([key,name,items,color])=> items.length?`
 <div class="bill-group"><h4 style="color:${color}">${name} <span class="count">${items.length} · ${fmtMoney(items.reduce((s,t)=>s+t.value,0))}</span>
 <button class="btn btn-ghost btn-sm no-print" style="margin-left:auto" data-action="pay-group" data-id="${key}">${icon("check",13)} Pagar todas (${items.length})</button></h4>
@@ -1393,14 +1458,15 @@ ${items.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>row(t)).join("")}</div>
 ${paid.length?`<div class="bill-group"><h4>Pagas recentemente <span class="count">${paid.length}</span></h4>${paid.map(t=>row(t,true)).join("")}</div>`:""}`;
 }
 function renderIncome(){
-const today=todayISO(), mk=monthKey(today);
+const [csC,ceC]=cycleRange(new Date());
 const inc=state.transactions.filter(t=>t.type==="receita");
-const month=inc.filter(t=>monthKey(t.date)===mk);
+const month=inc.filter(t=>inRange(t.date,csC,ceC));
 const received=month.filter(t=>t.status==="pago").reduce((s,t)=>s+t.value,0);
 const toReceive=month.filter(t=>t.status!=="pago").reduce((s,t)=>s+t.value,0);
 const recs=state.recurrences.filter(r=>r.type==="receita");
 const pendCount=inc.filter(t=>t.status!=="pago").length;
 const list=[...inc].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,120);
+_viewIds.receitas=list.map(t=>t.id);
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Receitas</h1><p>Salário, freelance, vendas, rendimentos — tudo o que entra.</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
@@ -1412,6 +1478,7 @@ ${pendCount?`<button class="btn btn-ghost" data-action="receive-all">${icon("che
 <div class="card kpi" style="--kc:#d98e1f22;--ki:var(--warn)"><div class="k-top"><span class="k-ic">${icon("calendar",14)}</span>A receber no mês</div><div class="k-val num">${fmtMoney(toReceive)}</div></div>
 <div class="card kpi" style="--kc:#3b6ea822;--ki:var(--info)"><div class="k-top"><span class="k-ic">${icon("repeat",14)}</span>Recorrências ativas</div><div class="k-val num">${recs.filter(r=>r.active).length}</div></div>
 </div>
+${selBar("receitas")}
 ${recs.length?`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Receitas recorrentes</h3></div>
 ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
 <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon("repeat",17)}</span>
@@ -1422,10 +1489,15 @@ ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
 <button class="icon-btn" data-action="rec-edit" data-id="${r.id}">${icon("pencil",15)}</button>
 <button class="icon-btn" data-action="rec-del" data-id="${r.id}">${icon("trash",15)}</button>
 </div></div>`;}).join("")}</div>`:""}
-<div class="card table-wrap"><div class="card-h"><h3>Histórico de receitas</h3></div>
-${list.length?`<table class="responsive"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+<div class="card table-wrap"><div class="card-h"><h3>Histórico de receitas</h3>
+<label class="sel-all"><input type="checkbox" data-ckall="receitas"> Selecionar todas</label></div>
+${list.length?`<table class="responsive"><thead><tr>
+<th class="ck-cell"><input type="checkbox" data-ckall="receitas" aria-label="Selecionar todas"></th>
+<th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
 <tbody>${list.map(t=>{const c=catById(t.categoryId),st=txStatus(t),a=accById(t.accountId);
-return `<tr><td data-label="Data" class="td-first num">${fmtDate(t.date)}</td>
+return `<tr>
+<td data-label="Selecionar" class="td-first ck-cell"><input type="checkbox" data-ck="receitas" data-id="${t.id}" ${ui.sel.receitas.has(t.id)?"checked":""} aria-label="Selecionar receita"></td>
+<td data-label="Data" class="num">${fmtDate(t.date)}</td>
 <td data-label="Descrição"><div class="td-main">${esc(t.desc)}</div>${t.recurrenceId?`<div class="td-sub">${icon("repeat",11)} recorrente #${t.recIndex||""}</div>`:""}</td>
 <td data-label="Categoria"><span class="chip" style="background:${c?c.color+"1d":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${c?esc(c.name):"—"}</span></td>
 <td data-label="Valor" class="num val-up">+ ${fmtMoney(t.value)}</td>
@@ -2019,6 +2091,7 @@ ${icon("sparkles",17)}<span>Grimório das Fortunas</span><span class="rpg-tag">R
 }
 let _lastRoute="";
 function render(){
+pruneSel();
 let route=(location.hash.replace("#/","")||"dashboard").split("?")[0];
 if(!ROUTES[route]) route="dashboard";
 const key=ROUTES[route]==="/dashboard"?"dashboard":route;
@@ -2028,6 +2101,7 @@ closeDrawer();
 ({dashboard:renderDashboard, lancamentos:renderTransactions, contas:renderBills, receitas:renderIncome,
 cartoes:renderCards, carteiras:renderAccounts, planejamento:renderPlanning,
 relatorios:renderReports, configuracoes:renderSettings}[key]||renderDashboard)();
+paintCkAll();
 if(_lastRoute!==key){ window.scrollTo({top:0,behavior:"auto"}); _lastRoute=key; }
 }
 function applyTheme(){ document.documentElement.dataset.theme = state.settings.theme==="dark"?"dark":"light";
@@ -2085,6 +2159,9 @@ case "tx-edit": if(tx) openTxModal({tx}); break;
 case "tx-dup": if(tx){ state.transactions.push({...tx,id:uid(),status:"pendente",paidDate:undefined}); save(); render(); toast("Lançamento duplicado."); } break;
 case "tx-del": if(tx) deleteTransaction(tx); break;
 case "tx-clear": ui.txF={q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false}; render(); break;
+case "bulk-del": { const key=el.dataset.set; if(ui.sel[key]) bulkDeleteSel(key); break; }
+case "bulk-clear": { const s=ui.sel[el.dataset.set]; if(s){ s.clear(); render(); } break; }
+case "bulk-all": { const key=el.dataset.set, s=ui.sel[key]; if(s){ _viewIds[key].forEach(i=>s.add(i)); render(); } break; }
 case "pay-group": {
 const items = _billGroups[id] || [];
 if(!items.length) break;
@@ -2132,11 +2209,44 @@ onOk:()=>{ state.cards=state.cards.filter(x=>x.id!==id);
 state.transactions=state.transactions.filter(t=>t.cardId!==id); save(); render(); toast("Cartão excluído."); }});
 break; }
 case "acc-edit": { const a=accById(id); if(a) openAccountModal(a); break; }
-case "acc-del": { const a=accById(id); if(!a) break;
-if(state.transactions.some(t=>t.accountId===id))
-return toast("Esta conta possui lançamentos. Exclua ou reatribua os lançamentos antes.","err");
+case "acc-del": {
+const a=accById(id); if(!a) break;
+const linked=state.transactions.filter(t=>t.accountId===id);
+const linkedRecs=state.recurrences.filter(r=>r.accountId===id);
+if(!linked.length && !linkedRecs.length){
 confirmModal({title:"Excluir conta", danger:true, okLabel:"Excluir",
-msg:`Excluir <b>${esc(a.name)}</b>?`, onOk:()=>{ state.accounts=state.accounts.filter(x=>x.id!==id); save(); render(); toast("Conta excluída."); }});
+msg:`Excluir <b>${esc(a.name)}</b>?`,
+onOk:()=>{ state.accounts=state.accounts.filter(x=>x.id!==id); save(); render(); toast("Conta excluída."); }});
+break;
+}
+const ov=openModal({
+title:"Excluir conta e dados vinculados",
+body:`
+<div class="hint" style="background:var(--down-soft);border-color:var(--down);color:var(--down);margin-bottom:14px">
+${icon("alert",15)} <span><b>Atenção:</b> esta ação é permanente e não poderá ser desfeita.</span></div>
+<p style="font-size:14px;line-height:1.7;color:var(--ink2)">A conta <b style="color:var(--ink)">${esc(a.name)}</b> possui registros vinculados a ela. Ao confirmar, os seguintes dados serão <b style="color:var(--down)">apagados definitivamente</b>:</p>
+<ul style="margin:10px 0 14px 20px;font-size:13.5px;line-height:1.9;color:var(--ink2)">
+<li><b style="color:var(--ink)">${linked.length}</b> lançamento(s) — despesas, receitas e contas a pagar;</li>
+${linkedRecs.length?`<li><b style="color:var(--ink)">${linkedRecs.length}</b> recorrência(s) programada(s) nesta conta;</li>`:""}
+<li>o saldo e o histórico da própria conta.</li>
+</ul>
+<label class="toggle-row" style="border-color:var(--down)">
+<input type="checkbox" id="ck-acc-del" style="width:auto">
+<span>Sim, estou ciente e desejo excluir a conta <b>${esc(a.name)}</b> junto com todos os dados vinculados a ela.</span>
+</label>`,
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button>
+<button class="btn btn-danger" data-ok disabled>${icon("trash",14)} Excluir conta${linked.length?` e ${linked.length} lançamento(s)`:''}</button>`
+});
+const okBtn=ov.querySelector("[data-ok]"), ckAcc=ov.querySelector("#ck-acc-del");
+ckAcc.onchange=()=>{ okBtn.disabled=!ckAcc.checked; };
+ov.querySelector("[data-x]").onclick=ov._close;
+okBtn.onclick=()=>{
+if(!ckAcc.checked) return;
+state.transactions=state.transactions.filter(t=>t.accountId!==id);
+state.recurrences=state.recurrences.filter(r=>r.accountId!==id);
+state.accounts=state.accounts.filter(x=>x.id!==id);
+save(); ov._close(); render(); toast("Conta e dados vinculados excluídos.");
+};
 break; }
 case "cat-edit": { const c=catById(id); if(c) openCategoryModal(c); break; }
 case "export-json": exportJSON(); break;
@@ -2154,7 +2264,19 @@ document.addEventListener("click", e=>{
 if(!e.target.closest("#tf-q")) ui.txF._focus=false;
 }, true);
 document.addEventListener("change", e=>{
-if(e.target.matches("[data-filter]")){ ui.txF[e.target.dataset.filter]=e.target.value; render(); }
+const tg=e.target;
+if(tg.matches("[data-filter]")){ ui.txF[tg.dataset.filter]=tg.value; render(); return; }
+if(tg.dataset && tg.dataset.ck && ui.sel[tg.dataset.ck]){
+const set=ui.sel[tg.dataset.ck];
+if(tg.checked) set.add(tg.dataset.id); else set.delete(tg.dataset.id);
+render(); return;
+}
+if(tg.dataset && tg.dataset.ckall && ui.sel[tg.dataset.ckall]){
+const key=tg.dataset.ckall, set=ui.sel[key];
+if(tg.checked){ for(const i of _viewIds[key]) set.add(i); }
+else { for(const i of _viewIds[key]) set.delete(i); }
+render(); return;
+}
 });
 $("#global-search").addEventListener("input", e=>doSearch(e.target.value.trim()));
 $("#global-search").addEventListener("focus", e=>{ if(e.target.value.trim().length>=2) doSearch(e.target.value.trim()); });
