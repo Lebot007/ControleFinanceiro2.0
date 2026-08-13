@@ -442,7 +442,7 @@ const used = open.reduce((s,t)=>s+t.value,0);
 const now = todayISO(), mk = monthKey(now);
 const invoiceNow = inst.filter(t=>monthKey(t.date)===mk).reduce((s,t)=>s+t.value,0);
 const overdue = open.filter(t=>t.date<now).reduce((s,t)=>s+t.value,0);
-return {used, open:open.length, invoiceNow, overdue, available:(card.limit||0)-used};
+return {used, open:open.length, invoiceNow, overdue, available:Math.max(0,(card.limit||0)-used)};
 }
 /* ---------- 4. Recorrências e parcelas ---------- */
 function advanceDate(iso, freq, every){
@@ -452,10 +452,6 @@ if(freq==="semanal") return addDays(iso, 7*every);
 if(freq==="anual")   return addMonths(iso, 12*every);
 return addDays(iso, every);
 }
-/* GERAÇÃO CORRIGIDA:
-   - "count": gera exatamente as N ocorrências (sem corte por horizonte).
-   - "date": gera até a data final escolhida.
-   - "never": gera com horizonte amplo conforme a frequência. */
 function materializeRecurrence(r){
 if(!r.active) return;
 const freq = r.freq || "mensal";
@@ -1112,7 +1108,6 @@ if(t.status==="pago"){ t.status="pendente"; delete t.paidDate; save(); render();
 if(t.cardId && !t.accountId) return accountPickModal(doPay, "Pagar com qual conta?");
 doPay();
 }
-/* Exclusão com opções em massa para parcelas e recorrências */
 function deleteTransaction(t){
 const mates = groupMates(t);
 const sib = recSiblings(t);
@@ -1378,7 +1373,7 @@ viewEl().innerHTML=`
 </div>
 ${open.length? groups.map(([key,name,items,color])=> items.length?`
 <div class="bill-group"><h4 style="color:${color}">${name} <span class="count">${items.length} · ${fmtMoney(items.reduce((s,t)=>s+t.value,0))}</span>
-<button class="btn btn-ghost btn-sm no-print" style="margin-left:auto" data-action="pay-group" data-key="${key}">${icon("check",13)} Pagar todas (${items.length})</button></h4>
+<button class="btn btn-ghost btn-sm no-print" style="margin-left:auto" data-action="pay-group" data-id="${key}">${icon("check",13)} Pagar todas (${items.length})</button></h4>
 ${items.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>row(t)).join("")}</div>`:"").join("")
 : `<div class="card">${emptyBlock("check","Nenhuma conta pendente","Você está em dia. Aproveite para planejar os próximos meses.","")}</div>`}
 ${paid.length?`<div class="bill-group"><h4>Pagas recentemente <span class="count">${paid.length}</span></h4>${paid.map(t=>row(t,true)).join("")}</div>`:""}`;
@@ -1439,7 +1434,7 @@ viewEl().innerHTML=`
 ${state.cards.length?`<div class="card stat-strip no-print" style="margin-bottom:18px">
 <div class="ss"><b class="num">${fmtMoney(limitAll)}</b><span>limite total</span></div>
 <div class="ss"><b class="num" style="color:var(--down)">${fmtMoney(usedAll)}</b><span>utilizado (parcelas em aberto)</span></div>
-<div class="ss"><b class="num" style="color:var(--up)">${fmtMoney(limitAll-usedAll)}</b><span>disponível</span></div>
+<div class="ss"><b class="num" style="color:var(--up)">${fmtMoney(Math.max(0,limitAll-usedAll))}</b><span>disponível</span></div>
 <div class="ss"><b class="num">${fmtMoney(stats.reduce((s,x)=>s+x.s.invoiceNow,0))}</b><span>faturas do mês</span></div>
 </div>`:""}
 ${state.cards.length?`<div class="grid cc-grid">${state.cards.map(c=>{const s=cardStats(c);
@@ -1661,7 +1656,6 @@ else state.goals.netWorth=getMoney(ov.querySelector("#g-value"));
 save(); ov._close(); render(); toast("Meta salva.");
 };
 }
-/* --- Relatórios (com cabeçalho na impressão/PDF) --- */
 function renderReports(){
 const [ps,pe]=periodRange();
 const inP=t=>inRange(t.date,ps,pe);
@@ -1699,7 +1693,7 @@ viewEl().innerHTML=`
 <div class="seg" id="rep-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.period===k?'on':''}">${l}</button>`).join("")}</div>
 ${ui.period==="custom"?`<input type="date" id="p-from" value="${ui.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.to}">`:""}
 </div>
-<div class="grid kpis no-print" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+<div class="grid kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
 <div class="card kpi" style="--kc:#0e9f6e22"><div class="k-top">Receitas no período</div><div class="k-val num pos">${fmtMoney(rec)}</div></div>
 <div class="card kpi" style="--kc:#dd4a4822"><div class="k-top">Despesas no período</div><div class="k-val num neg">${fmtMoney(desp)}</div></div>
 <div class="card kpi" style="--kc:#3b6ea822"><div class="k-top">Resultado</div><div class="k-val num ${rec-desp>=0?"pos":"neg"}">${fmtMoney(rec-desp)}</div></div>
@@ -1736,7 +1730,6 @@ $("#rep-seg").onclick=e=>{const b=e.target.closest("[data-period]"); if(b){ui.pe
 const pf=$("#p-from"),pt=$("#p-to");
 if(pf){pf.onchange=()=>{ui.from=pf.value;render();}; pt.onchange=()=>{ui.to=pt.value;render();};}
 }
-/* --- Configurações --- */
 function renderSettings(){
 const s=state.settings;
 viewEl().innerHTML=`
