@@ -735,7 +735,7 @@ wide:true,
 title: edit ? "Editar lançamento" : "Novo lançamento",
 body: `
 <form id="tx-form">
-<div class="seg" id="tx-seg" style="margin-bottom:16px">
+<div class="seg" id="tx-seg" style="margin-bottom:16px${edit?";display:none":""}">
 <button type="button" data-t="despesa">${icon("arrowDR",15)} Despesa</button>
 <button type="button" data-t="receita">${icon("arrowUR",15)} Receita</button>
 </div>
