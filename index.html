@@ -1482,6 +1482,7 @@ viewEl().innerHTML=`
 <div class="page-head"><div><h1>Receitas</h1><p>Salário, freelance, vendas, rendimentos — tudo o que entra.</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
 <button class="btn btn-ghost" data-action="receive-sel" ${ui.sel.receitas.size?"":"disabled"}>${icon("check",15)} Receber selecionadas${ui.sel.receitas.size?` (${ui.sel.receitas.size})`:""}</button>
+<button class="btn btn-ghost" data-action="pend-sel" ${ui.sel.receitas.size?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${ui.sel.receitas.size?` (${ui.sel.receitas.size})`:""}</button>
 <button class="btn btn-ghost" data-action="new-rec-income">${icon("repeat",15)} Receita recorrente</button>
 <button class="btn btn-primary" data-action="new-income">${icon("plus",16)} Nova receita</button></div></div>
 <div class="grid kpis no-print" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
@@ -2200,6 +2201,16 @@ const total = pend.reduce((s,t)=>s+t.value,0);
 confirmModal({title:"Receber receitas selecionadas", okLabel:`Receber ${pend.length}`,
 msg:`Marcar <b>${pend.length}</b> receita(s) selecionada(s) como recebida(s), totalizando <b>${fmtMoney(total)}</b>?${pend.length<ids.size?`<br><span style="color:var(--ink2)">(${ids.size-pend.length} já recebida(s) serão ignoradas.)</span>`:""}`,
 onOk:()=>{ pend.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); }); save(); render(); toast(`${pend.length} receita(s) recebida(s).`); }});
+break; }
+case "pend-sel": {
+const ids = new Set([...ui.sel.receitas].filter(id=>state.transactions.some(t=>t.id===id)));
+if(!ids.size){ toast("Marque ao menos uma receita na lista.","warn"); break; }
+const paid = state.transactions.filter(t=>ids.has(t.id) && t.type==="receita" && t.status==="pago");
+if(!paid.length){ toast("Nenhuma receita recebida entre as selecionadas.","warn"); break; }
+const total = paid.reduce((s,t)=>s+t.value,0);
+confirmModal({title:"Marcar como pendentes", okLabel:`Marcar ${paid.length}`,
+msg:`Voltar <b>${paid.length}</b> receita(s) selecionada(s) para <b>pendente</b>, totalizando <b>${fmtMoney(total)}</b>?<br><span style="color:var(--ink2)">O valor sai do saldo da conta até ser recebida novamente.${paid.length<ids.size?` (${ids.size-paid.length} já pendente(s) serão ignoradas.)`:""}</span>`,
+onOk:()=>{ paid.forEach(t=>{ t.status="pendente"; delete t.paidDate; }); save(); render(); toast(`${paid.length} receita(s) marcada(s) como pendente(s).`); }});
 break; }
 case "rec-edit": { const r=state.recurrences.find(x=>x.id===id); if(r) openRecurrenceModal(r); break; }
 case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active){ if(!r.nextDate) r.nextDate=todayISO(); materializeRecurrence(r); } save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
