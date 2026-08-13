@@ -990,7 +990,7 @@ function renderLedger(st){
     <div class="hud-grid">
       ${statCard('i-coin','Ouro',fmtBRL(st.patrimonio),`Patrimônio somado de todas as contas · +${st.ptsP} pts`,st.ptsP/40*100,bar('#8a6d1f','#e8c96a'))}
       ${statCard('i-gem','Tesouro',fmtBRL(st.investido),`Investido em poupança e investimentos · +${st.ptsT} pts`,st.ptsT/20*100,bar('#0b4a37','#2ee6a8'))}
-      ${statCard('i-shield','Honra',fmtPct(st.taxa),`Taxa de poupança do histórico · +${st.ptsS} pts`,st.ptsS/30*100,bar('#37135c','#9d4edd'))}
+      ${statCard('i-shield','Honra',fmtPct(st.taxa),`Taxa de poupança do histórico · +${st.ptsS} pts`,st.taxa*100,bar('#37135c','#9d4edd'))}
       ${statCard('i-swords','Disciplina',Math.max(0,10-st.vencidas)+' / 10',`Despesas vencidas: ${st.vencidas} · +${st.ptsD} pts`,st.ptsD/10*100,bar('#5a0a10','#d7263d'))}
     </div>
     <p class="hud-total">SCORE FINAL <b>${st.score}/100</b> · ${st.rank.name}</p>`;
