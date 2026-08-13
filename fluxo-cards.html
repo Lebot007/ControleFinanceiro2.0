@@ -4,16 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fluxo — Grimório das Fortunas</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="%230b0908"/><text x="50" y="72" font-size="62" text-anchor="middle" fill="%23c9a227">ᛟ</text></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="%230b0908"/><path d="M50 18 L62 34 V60 L50 72 L38 60 V34 Z" fill="%23c9a227"/><path d="M50 28 L56 38 V56 L50 62 L44 56 V38 Z" fill="%230b0908"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <style>
-/* ============ BASE / FUNDO ============ */
 :root{
   --ink:#0a0806; --gold:#c9a227; --gold-hi:#e8c96a; --gold-lo:#8a6d1f;
   --blood:#a4161a; --arcane:#9d4edd; --emerald:#2ee6a8; --parch:#efe6cf;
-  --runic:"Segoe UI Historic","Segoe UI Symbol","Noto Sans Runic",serif;
+  --steel:#8a94a0; --leather:#5a3a1f;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
@@ -22,9 +21,9 @@ body{
   min-height:100vh;color:var(--parch);overflow-x:hidden;
   font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;
   background:
-    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.14), transparent 60%),
-    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.13), transparent 62%),
-    radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.07), transparent 60%),
+    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.09), transparent 60%),
+    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.10), transparent 62%),
+    radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.05), transparent 60%),
     repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 3px, transparent 3px 10px),
     linear-gradient(#0c0a08,#060505 60%,#0b0706);
@@ -32,8 +31,8 @@ body{
 .vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
   background:radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.88) 100%);}
 .fog{position:fixed;inset:-20%;pointer-events:none;z-index:0;opacity:.6;
-  background:radial-gradient(40% 30% at 30% 40%, rgba(150,120,200,.05), transparent 70%),
-             radial-gradient(35% 28% at 72% 62%, rgba(200,160,80,.045), transparent 70%);
+  background:radial-gradient(40% 30% at 30% 40%, rgba(150,120,200,.04), transparent 70%),
+             radial-gradient(35% 28% at 72% 62%, rgba(200,160,80,.035), transparent 70%);
   animation:fogDrift 46s ease-in-out infinite alternate;}
 @keyframes fogDrift{from{transform:translate(-2%,1%) scale(1)}to{transform:translate(2%,-2%) scale(1.06)}}
 #embers{position:fixed;inset:0;pointer-events:none;z-index:1}
@@ -47,41 +46,44 @@ body{
   100%{transform:translate(var(--dx),-108vh) scale(.35);opacity:0}}
 main,header.top,footer.page{position:relative;z-index:2}
 
-/* ============ TIPOS ============ */
 h1,h2,h3{font-family:"Cinzel Decorative","Cinzel",serif;color:var(--gold-hi);font-weight:700}
-.runic{font-family:var(--runic)}
 
-/* ============ CABEÇALHO ============ */
+/* ============ CABEÇALHO — BRASÃO ============ */
 header.top{max-width:1040px;margin:0 auto;padding:2.6rem 1rem 1rem;
   display:flex;align-items:flex-end;justify-content:center;gap:1.6rem;text-align:center}
 .titles{max-width:720px}
-.seal{width:72px;height:72px;margin:0 auto .8rem;display:grid;place-items:center;
-  font-family:"Cinzel Decorative";font-size:2rem;color:#f3d9a0;user-select:none;
-  border-radius:47% 53% 50% 50%/50% 48% 52% 50%;
-  background:radial-gradient(circle at 35% 28%,#c22b33,#7c1420 62%,#560d16);
-  box-shadow:inset 0 3px 6px rgba(255,255,255,.28),inset 0 -7px 12px rgba(0,0,0,.6),0 8px 18px rgba(0,0,0,.65);
-  text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.coat-of-arms{width:94px;height:94px;margin:0 auto .8rem;display:grid;place-items:center;user-select:none;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.75)) drop-shadow(0 0 18px rgba(201,162,39,.45));}
+.coat-of-arms svg{width:100%;height:100%}
 h1{font-size:clamp(1.5rem,4.6vw,2.6rem);letter-spacing:.06em;line-height:1.15;
   background:linear-gradient(#f6e3a5,#c9a227 55%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#e8c96a;
   filter:drop-shadow(0 2px 10px rgba(201,162,39,.35))}
 .tag{font-style:italic;color:#bda877;font-size:1.02rem;margin-top:.35rem}
-.rune-row{margin-top:.6rem;color:rgba(201,162,39,.55);letter-spacing:.9em;font-size:.95rem;text-indent:.9em}
-.candle{position:relative;width:26px;height:96px;flex:none;margin-bottom:14px}
-.candle .wax{position:absolute;bottom:0;width:100%;height:64px;border-radius:6px 6px 4px 4px;
-  background:linear-gradient(#f3e6c8,#cbb28a 60%,#8a6f4d);box-shadow:inset -5px 0 8px rgba(0,0,0,.35)}
-.candle .wick{position:absolute;bottom:62px;left:50%;width:3px;height:9px;background:#2b1d12;transform:translateX(-50%)}
-.candle .flame{position:absolute;bottom:69px;left:50%;width:16px;height:28px;transform-origin:50% 100%;
-  border-radius:50% 50% 46% 54%/62% 62% 38% 38%;
-  background:radial-gradient(circle at 50% 78%,#fff8d8 0%,#ffd76a 34%,#ff8c2e 62%,rgba(255,90,20,0) 80%);
-  filter:drop-shadow(0 0 10px rgba(255,160,60,.85));animation:flick 1.35s ease-in-out infinite}
+.ornament-row{margin-top:.7rem;color:rgba(201,162,39,.55);letter-spacing:.38em;font-size:.8rem;text-indent:.38em;
+  display:flex;justify-content:center;align-items:center;gap:.8em}
+.ornament-row .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.65}
+
+/* TORCHES */
+.torch{position:relative;width:22px;height:120px;flex:none;margin-bottom:6px}
+.torch .stick{position:absolute;bottom:0;width:10px;left:6px;height:82px;border-radius:2px;
+  background:linear-gradient(#4a2f18,#2a1a0d);box-shadow:inset -2px 0 3px rgba(0,0,0,.5)}
+.torch .band{position:absolute;bottom:60px;left:3px;width:16px;height:8px;border-radius:2px;
+  background:linear-gradient(#5a4830,#2a1f12);border:1px solid #1a1208}
+.torch .wrap{position:absolute;bottom:72px;left:2px;width:18px;height:20px;border-radius:4px 4px 2px 2px;
+  background:linear-gradient(#6b5030,#3a2816);border:1px solid #1a1208}
+.torch .flame{position:absolute;bottom:90px;left:50%;width:22px;height:34px;transform-origin:50% 100%;
+  border-radius:50% 50% 44% 56%/62% 62% 38% 38%;
+  background:radial-gradient(circle at 50% 72%,#fff8d8 0%,#ffd76a 28%,#ff8c2e 58%,#c23a14 82%,rgba(255,90,20,0) 95%);
+  filter:drop-shadow(0 0 14px rgba(255,160,60,.95)) drop-shadow(0 -4px 20px rgba(255,120,30,.6));
+  animation:flick 1.35s ease-in-out infinite}
 @keyframes flick{
   0%,100%{transform:translateX(-50%) scale(1) rotate(-2deg)}
-  25%{transform:translateX(-53%) scale(.93,1.07) rotate(2.6deg)}
+  25%{transform:translateX(-53%) scale(.93,1.08) rotate(2.6deg)}
   50%{transform:translateX(-47%) scale(1.05,.95) rotate(-1.8deg)}
-  75%{transform:translateX(-50%) scale(.96,1.06) rotate(1.4deg)}}
+  75%{transform:translateX(-50%) scale(.96,1.07) rotate(1.4deg)}}
 
-/* ============ ALTAR DE ENTREGA ============ */
+/* ============ ALTAR ============ */
 main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 #altar{text-align:center;margin-top:1rem}
 .altar-title{font-size:clamp(1.15rem,3vw,1.6rem);margin-bottom:1.4rem;letter-spacing:.08em}
@@ -97,7 +99,9 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 .dz-in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:.7rem}
 .dz-in p{font-size:1.15rem;color:#d8c9a3}
 .dz-in .ou{font-style:italic;color:#8f7f58;font-size:.95rem}
-.rune-line{color:rgba(201,162,39,.4);letter-spacing:.7em;font-size:.85rem;text-indent:.7em;margin-top:.4rem}
+.ornament-line{color:rgba(201,162,39,.4);letter-spacing:.3em;font-size:.8rem;text-indent:.3em;margin-top:.5rem;
+  display:flex;justify-content:center;align-items:center;gap:.5em}
+.ornament-line .dot{width:3px;height:3px;border-radius:50%;background:var(--gold);opacity:.5}
 .altar-note{margin-top:1rem;font-style:italic;color:#7f7250;font-size:.95rem}
 
 /* ============ BOTÕES ============ */
@@ -121,7 +125,7 @@ input[type=file]{display:none}
   box-shadow:0 0 34px -8px rgba(164,22,26,.55), inset 0 0 44px rgba(0,0,0,.6);
   animation:errShake .4s ease}
 @keyframes errShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}60%{transform:translateX(6px)}}
-.err-rune{display:block;font-size:2.6rem;color:#d7263d;text-shadow:0 0 16px rgba(215,38,61,.8);font-family:var(--runic)}
+.err-rune{display:block;font-size:2.6rem;color:#d7263d;text-shadow:0 0 16px rgba(215,38,61,.8);font-family:"Cinzel Decorative"}
 .err-card h3{color:#e35d6a;margin:.4rem 0 .5rem;letter-spacing:.08em}
 .err-card p{color:#d8b8ad}
 .err-hint{font-style:italic;color:#96756c;font-size:.95rem;margin-top:.5rem}
@@ -196,7 +200,7 @@ input[type=file]{display:none}
 @keyframes cember{0%{transform:translate(0,0);opacity:0}12%{opacity:.95}100%{transform:translate(var(--dx),-580px);opacity:0}}
 .actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 
-/* ============ PERGAMINHO DE JULGAMENTO ============ */
+/* ============ LEDGER ============ */
 .ledger{width:min(340px,92vw);padding:1.3rem 1.3rem 1.1rem;position:relative;
   border:1px solid #4a3d22;background:linear-gradient(#141008,#0c0906);
   box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 14px 34px -18px rgba(0,0,0,.9)}
@@ -208,7 +212,6 @@ input[type=file]{display:none}
 .ledger li i{flex:1;border-bottom:1px dotted rgba(200,169,95,.35);transform:translateY(-3px)}
 .ledger li b{color:var(--parch);font-weight:700}
 .ledger li em{font-style:normal;color:#8fd6a8;font-family:"Cinzel",serif;font-size:.68rem;letter-spacing:.06em}
-.ledger li em.neg{color:#e35d6a}
 .ledger .total{margin-top:.9rem;text-align:center;font-family:"Cinzel",serif;font-size:.85rem;letter-spacing:.12em;color:#c8a95f}
 .ledger .total b{color:#f6e3a5;font-size:1.05rem}
 
@@ -216,7 +219,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
 
 @media (max-width:560px){
   header.top{gap:.8rem}
-  .candle{height:80px}.candle .wax{height:50px}.candle .wick{bottom:48px}.candle .flame{bottom:55px}
+  .torch{height:96px}.torch .stick{height:64px}.torch .band{bottom:48px}.torch .wrap{bottom:58px}.torch .flame{bottom:74px}
 }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -231,18 +234,70 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
 <div class="vignette" aria-hidden="true"></div>
 
 <header class="top">
-  <div class="candle" aria-hidden="true"><div class="flame"></div><div class="wick"></div><div class="wax"></div></div>
+  <div class="torch" aria-hidden="true"><div class="flame"></div><div class="wrap"></div><div class="band"></div><div class="stick"></div></div>
   <div class="titles">
-    <div class="seal" aria-hidden="true">F</div>
+    <div class="coat-of-arms" aria-hidden="true">
+      <!-- Brasão heráldico medieval: escudo com espada e coroa, sem referências religiosas -->
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f6e3a5"/>
+            <stop offset=".45" stop-color="#c9a227"/>
+            <stop offset="1" stop-color="#5a4410"/>
+          </linearGradient>
+          <linearGradient id="bladeGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f0f4f8"/>
+            <stop offset=".5" stop-color="#9aa5b2"/>
+            <stop offset="1" stop-color="#3a4048"/>
+          </linearGradient>
+          <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe9a8"/>
+            <stop offset="1" stop-color="#a87720"/>
+          </linearGradient>
+          <filter id="coaGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Escudo heráldico -->
+        <path d="M60 12 L100 24 L100 62 Q100 96 60 114 Q20 96 20 62 L20 24 Z"
+              fill="url(#shieldGrad)" stroke="#3a2810" stroke-width="2.5"/>
+        <path d="M60 20 L94 30 L94 62 Q94 90 60 106 Q26 90 26 62 L26 30 Z"
+              fill="none" stroke="#6b4e18" stroke-width="1.2" opacity=".8"/>
+        <!-- Faixa horizontal -->
+        <path d="M26 52 H94" stroke="#6b4e18" stroke-width="1" opacity=".5"/>
+        <path d="M26 72 H94" stroke="#6b4e18" stroke-width="1" opacity=".5"/>
+        <!-- Coroa no topo -->
+        <g filter="url(#coaGlow)">
+          <path d="M42 22 L42 14 L50 20 L60 8 L70 20 L78 14 L78 22 Z"
+                fill="url(#crownGrad)" stroke="#5a4410" stroke-width="1.5"/>
+          <circle cx="50" cy="18" r="2" fill="#d7263d"/>
+          <circle cx="60" cy="12" r="2" fill="#2e6fd0"/>
+          <circle cx="70" cy="18" r="2" fill="#d7263d"/>
+        </g>
+        <!-- Espada cruzada vertical -->
+        <path d="M60 32 L64 38 V82 H56 V38 Z" fill="url(#bladeGrad)" stroke="#1a1d22" stroke-width="1.2"/>
+        <path d="M60 36 V80" stroke="#d0d7e0" stroke-width=".8" opacity=".7"/>
+        <rect x="48" y="82" width="24" height="4" rx="2" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
+        <rect x="57" y="86" width="6" height="14" rx="2" fill="#5a3a1f" stroke="#1a1d22" stroke-width="1"/>
+        <circle cx="60" cy="103" r="4" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
+        <!-- Ornamentos laterais (diamantes heráldicos) -->
+        <path d="M34 50 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
+        <path d="M78 50 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
+        <path d="M34 78 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
+        <path d="M78 78 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
+      </svg>
+    </div>
     <h1>Fluxo · Grimório das Fortunas</h1>
-    <p class="tag">O julgamento arcano de vossas finanças — extensão decorativa do tomo principal</p>
-    <div class="rune-row runic" aria-hidden="true">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ</div>
+    <p class="tag">O julgamento cavaleiresco de vossas finanças — extensão decorativa do tomo principal</p>
+    <div class="ornament-row" aria-hidden="true">
+      <span>⚜</span><span class="dot"></span><span>⚔</span><span class="dot"></span><span>⚜</span>
+    </div>
   </div>
-  <div class="candle" aria-hidden="true"><div class="flame"></div><div class="wick"></div><div class="wax"></div></div>
+  <div class="torch" aria-hidden="true"><div class="flame"></div><div class="wrap"></div><div class="band"></div><div class="stick"></div></div>
 </header>
 
 <main>
-  <!-- ALTAR DE ENTREGA -->
   <section id="altar">
     <h2 class="altar-title">Entregai o Tomo de Vossas Finanças</h2>
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Entregar backup JSON do Fluxo">
@@ -263,23 +318,21 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
         <span class="ou">— ou —</span>
         <label class="btn" for="fileInput">📜 Entregar backup (.json)</label>
         <input type="file" id="fileInput" accept=".json,application/json">
-        <div class="rune-line runic" aria-hidden="true">ᛏ ᛟ ᛗ ᛟ</div>
+        <div class="ornament-line" aria-hidden="true">⚜<span class="dot"></span>⚔<span class="dot"></span>⚜</div>
       </div>
     </div>
     <p class="altar-note">O grimório apenas lê o backup em vosso navegador — nada é enviado, guardado ou alterado no Fluxo.</p>
   </section>
 
-  <!-- ERRO -->
   <section id="errBox" hidden>
     <div class="err-card">
-      <span class="err-rune runic" aria-hidden="true">ᚦ</span>
+      <span class="err-rune" aria-hidden="true">⚠</span>
       <h3>O feitiço falhou</h3>
       <p id="errMsg"></p>
       <p class="err-hint">Exportai o backup no Fluxo (index.html) e entregai o arquivo .json válido aqui.</p>
     </div>
   </section>
 
-  <!-- PALCO DA CARTA -->
   <section id="stage" hidden>
     <div class="stage-wrap">
       <div>
@@ -323,17 +376,15 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
 <script>
 (function(){
 'use strict';
-/* ================= UTILITÁRIOS ================= */
 const $=s=>document.querySelector(s);
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fmtBRL=c=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100);
 const fmtPct=t=>(t*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 const hojeISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const hojeFmt=()=>new Date().toLocaleDateString('pt-BR');
-const RUNES='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
+const RUNES='⚜⚔♛♜♝♞';
 function serieRunica(){let s='';for(let i=0;i<2;i++)s+=RUNES[Math.floor(Math.random()*RUNES.length)];return s+'-'+(100+Math.floor(Math.random()*900));}
 
-/* ================= RANKS ================= */
 const RANKS={
   D:{key:'D',name:'Plebeu Endividado',phrase:'“As moedas fogem de quem jamais as governou.”',aura:'#8d8577',frame:'iron',medal:['#7a7264','#3a352c']},
   C:{key:'C',name:'Escudeiro Errante',phrase:'“Um escudo partido ainda sonha com glória.”',aura:'#8fa3b8',frame:'iron',medal:['#9aa9b8','#46525e']},
@@ -353,7 +404,14 @@ function rankFor(score){
   return RANKS.D;
 }
 
-/* ================= RETRATOS SVG (inline, um por classe) ================= */
+/* ================= RETRATOS SVG — personagens estilizados com shading profissional =================
+   Técnicas aplicadas:
+   • Gradientes radiais+lineares em múltiplas camadas para volume e sombreamento [[24]]
+   • Silhuetas fortes com clareza em qualquer escala [[21]]
+   • Detalhes hierárquicos (armadura > tecido > pele) [[38]]
+   • Paletas ricas com tons complementares para profundidade [[23]]
+   • Iluminação cinematográfica: luz principal + rim light [[39]]
+=========================================================================================== */
 function molduraRetrato(key,defs,corpo){
   const aura=RANKS[key].aura, nome=RANKS[key].name;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Retrato: ${nome}">
@@ -362,11 +420,27 @@ function molduraRetrato(key,defs,corpo){
       <stop offset="0" stop-color="${aura}" stop-opacity=".48"/>
       <stop offset="1" stop-color="${aura}" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="${key}rim" cx="85%" cy="30%" r="60%">
+      <stop offset="0" stop-color="${aura}" stop-opacity=".55"/>
+      <stop offset="1" stop-color="${aura}" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="${key}bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1510"/>
+      <stop offset="1" stop-color="#0a0806"/>
+    </linearGradient>
     <clipPath id="${key}clip"><path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z"/></clipPath>
+    <filter id="${key}glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="${key}soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.8"/>
+    </filter>
   </defs>
-  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="#0c0a09" stroke="${aura}" stroke-opacity=".55" stroke-width="3"/>
+  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="url(#${key}bg)" stroke="${aura}" stroke-opacity=".55" stroke-width="3"/>
   <g clip-path="url(#${key}clip)">
     <rect x="46" y="20" width="228" height="286" fill="url(#${key}au)"/>
+    <rect x="46" y="20" width="228" height="286" fill="url(#${key}rim)"/>
     ${corpo}
   </g>
   <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="none" stroke="rgba(232,201,106,.3)" stroke-width="1.4"/>
@@ -374,154 +448,569 @@ function molduraRetrato(key,defs,corpo){
 }
 
 const PORTRAITS={
-/* D — plebeu de capuz, curvado, com tigela de esmolas */
+/* ================= D — PLEBEU ENDIVIDADO =================
+   Camponês esfarrapado, expressão cansada, manto rasgado, tigela de esmolas.
+   Paleta: tons terrosos e acinzentados — sem brilho de herói. */
 D(){return molduraRetrato('D',
-`<linearGradient id="dCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4f3f"/><stop offset="1" stop-color="#2c261d"/></linearGradient>`,
-`<circle cx="238" cy="66" r="18" fill="#b9b09a" opacity=".22"/>
-<path d="M62 304 C64 236 92 200 138 184 C124 172 118 150 128 132 C140 110 172 106 188 124 C202 140 200 166 184 180 C238 196 258 244 260 304 Z" fill="url(#dCloak)" stroke="#171310" stroke-width="3"/>
-<path d="M132 122 C146 104 178 104 190 124" stroke="#171310" stroke-width="3" fill="none"/>
-<ellipse cx="158" cy="152" rx="26" ry="30" fill="#120e0a"/>
-<circle cx="150" cy="150" r="2.4" fill="#8d8577" opacity=".85"/>
-<circle cx="166" cy="150" r="2.4" fill="#8d8577" opacity=".85"/>
-<rect x="206" y="238" width="26" height="22" fill="#6b5c44" stroke="#171310" stroke-width="2"/>
-<path d="M206 245 h26 M206 253 h26 M213 238 v22 M224 238 v22" stroke="#171310" stroke-width="1" opacity=".6"/>
-<path d="M128 282 a34 12 0 0 0 68 0 z" fill="#3c3122" stroke="#171310" stroke-width="2"/>
-<ellipse cx="162" cy="282" rx="34" ry="8" fill="#241d13" stroke="#171310" stroke-width="2"/>
-<circle cx="156" cy="280" r="3" fill="#8d8577" opacity=".7"/>`);},
+`<linearGradient id="dCloak" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#6b5a3f"/><stop offset=".6" stop-color="#3a2f1f"/><stop offset="1" stop-color="#1a1408"/>
+</linearGradient>
+<linearGradient id="dSkin" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#c9a882"/><stop offset="1" stop-color="#7a5d3e"/>
+</linearGradient>
+<linearGradient id="dWood" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#8a6a3e"/><stop offset="1" stop-color="#3a2812"/>
+</linearGradient>`,
+`<!-- Lua minguada ao fundo -->
+<circle cx="238" cy="68" r="22" fill="#c9c0a8" opacity=".32"/>
+<circle cx="244" cy="62" r="19" fill="#1a1510" opacity=".95"/>
+<!-- Chão pedregoso -->
+<ellipse cx="160" cy="300" rx="120" ry="14" fill="#0a0806" opacity=".7"/>
+<!-- Manto rasgado -->
+<path d="M68 304 C68 238 96 200 140 186 C130 172 124 150 134 130 C148 106 182 106 194 126 C208 144 204 170 188 184 C240 200 258 248 260 304 Z" fill="url(#dCloak)" stroke="#0a0806" stroke-width="3"/>
+<!-- Rasgos no manto -->
+<path d="M92 258 q6 10 4 22 M236 266 q-4 12 -6 22 M118 284 l8 6 M218 290 l-6 8" stroke="#0a0806" stroke-width="1.8" fill="none" opacity=".8"/>
+<path d="M88 260 l-4 12 M238 268 l4 14" stroke="#8a6d1f" stroke-width=".6" fill="none" opacity=".5"/>
+<!-- Capuz -->
+<path d="M128 126 C142 108 178 108 192 126 L188 148 Q160 138 132 148 Z" fill="#2a1f12" stroke="#0a0806" stroke-width="2.5"/>
+<!-- Cabeça e rosto -->
+<ellipse cx="160" cy="158" rx="26" ry="30" fill="url(#dSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<!-- Barba desgrenhada -->
+<path d="M140 168 Q160 192 180 168 Q178 186 160 192 Q142 186 140 168 Z" fill="#4a3a28" stroke="#1a1208" stroke-width="1.2"/>
+<path d="M146 172 l2 10 M154 176 l1 10 M162 176 l-1 10 M170 172 l-2 10" stroke="#1a1208" stroke-width=".8" opacity=".7"/>
+<!-- Olhos cansados -->
+<ellipse cx="150" cy="156" rx="4" ry="2.5" fill="#1a1208"/>
+<ellipse cx="170" cy="156" rx="4" ry="2.5" fill="#1a1208"/>
+<circle cx="151" cy="156" r="1.2" fill="#d8c9a3" opacity=".8"/>
+<circle cx="171" cy="156" r="1.2" fill="#d8c9a3" opacity=".8"/>
+<!-- Sobrancelhas caídas -->
+<path d="M144 150 q6 -3 12 0 M164 150 q6 -3 12 0" stroke="#3a2812" stroke-width="1.5" fill="none"/>
+<!-- Boca triste -->
+<path d="M152 180 q8 -3 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<!-- Tigela de esmolas -->
+<path d="M210 240 a32 10 0 0 0 64 0 l-6 20 a26 8 0 0 1 -52 0 Z" fill="url(#dWood)" stroke="#1a1208" stroke-width="2"/>
+<ellipse cx="242" cy="240" rx="32" ry="10" fill="#5a4028" stroke="#1a1208" stroke-width="2"/>
+<path d="M214 240 a28 6 0 0 0 56 0" stroke="#8a6d1f" stroke-width=".8" fill="none" opacity=".6"/>
+<!-- Poucas moedas na tigela -->
+<circle cx="232" cy="238" r="3" fill="#8a6d1f" stroke="#3a2812" stroke-width=".6"/>
+<circle cx="244" cy="237" r="2.5" fill="#6b5528" stroke="#3a2812" stroke-width=".6"/>
+<circle cx="254" cy="239" r="2" fill="#8a6d1f" stroke="#3a2812" stroke-width=".6"/>
+<!-- Mão segurando tigela -->
+<path d="M208 232 q-10 2 -12 14 q6 -4 14 -2 Z" fill="url(#dSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<!-- Luz ambiente -->
+<ellipse cx="240" cy="240" rx="38" ry="14" fill="#8a6d1f" opacity=".08" filter="url(#dsoft)"/>`);},
 
-/* C — escudeiro com escudo e espada quebrada */
+/* ================= C — ESCRDEIRO ERRANTE =================
+   Jovem aprendiz com armadura de couro simples, escudo de madeira rachado, espada quebrada. */
 C(){return molduraRetrato('C',
-`<linearGradient id="cSteel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d3dae0"/><stop offset="1" stop-color="#93a0ab"/></linearGradient>`,
-`<circle cx="152" cy="116" r="26" fill="#c9a58a" stroke="#241a12" stroke-width="2"/>
-<path d="M128 108 q24 -22 48 0 l-5 -15 q-19 -13 -38 0 Z" fill="#5a4632"/>
-<path d="M108 304 C108 220 124 180 152 172 C180 180 196 220 196 304 Z" fill="#4a5440" stroke="#20241c" stroke-width="3"/>
-<path d="M152 176 V304" stroke="#20241c" stroke-width="2" opacity=".5"/>
-<circle cx="104" cy="240" r="56" fill="#6b4a2f" stroke="#241a12" stroke-width="5"/>
-<path d="M104 184 V296 M48 240 H160" stroke="#4a3018" stroke-width="4" opacity=".8"/>
-<circle cx="104" cy="240" r="56" fill="none" stroke="#8f9ba6" stroke-width="3" stroke-dasharray="2 14"/>
-<circle cx="104" cy="240" r="13" fill="#9aa7b2" stroke="#241a12" stroke-width="3"/>
-<rect x="224" y="242" width="12" height="30" rx="4" fill="#5b4028" stroke="#241a12" stroke-width="2"/>
-<circle cx="230" cy="278" r="7" fill="#9aa7b2" stroke="#241a12" stroke-width="2"/>
-<rect x="206" y="232" width="48" height="9" rx="4" fill="#9aa7b2" stroke="#241a12" stroke-width="2"/>
-<path d="M223 232 V178 L226 168 L230 176 L234 162 L238 174 V232 Z" fill="url(#cSteel)" stroke="#39424b" stroke-width="2"/>
-<path d="M226 150 L231 132 L238 152 L231 146 Z" fill="#c3ccd4" stroke="#39424b" stroke-width="2" transform="rotate(14 231 142)" opacity=".95"/>`);},
+`<linearGradient id="cSteel" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#d3dae0"/><stop offset=".5" stop-color="#8a94a0"/><stop offset="1" stop-color="#3a424b"/>
+</linearGradient>
+<linearGradient id="cLeather" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#8a6a42"/><stop offset="1" stop-color="#3a2812"/>
+</linearGradient>
+<linearGradient id="cWood" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#6b4a28"/><stop offset="1" stop-color="#2a1a0a"/>
+</linearGradient>
+<linearGradient id="cSkin" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#e8c098"/><stop offset="1" stop-color="#9a6a42"/>
+</linearGradient>
+<linearGradient id="cHair" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#6a4828"/><stop offset="1" stop-color="#2a1808"/>
+</linearGradient>`,
+`<!-- Fundo campo de batalha -->
+<ellipse cx="160" cy="300" rx="130" ry="16" fill="#0a0806" opacity=".7"/>
+<!-- Armadura de couro (gambeson) -->
+<path d="M92 304 C92 232 114 196 160 188 C206 196 228 232 228 304 Z" fill="url(#cLeather)" stroke="#1a1208" stroke-width="3"/>
+<!-- Costuras do gambeson -->
+<path d="M160 192 V304" stroke="#1a1208" stroke-width="1.2" opacity=".7" stroke-dasharray="3 4"/>
+<path d="M110 220 q50 -14 100 0 M106 248 q54 -12 108 0 M104 276 q56 -10 112 0" stroke="#3a2812" stroke-width="1.2" opacity=".6" fill="none"/>
+<path d="M100 250 h120" stroke="#1a1208" stroke-width="1.5" opacity=".5"/>
+<!-- Cinto com fivela -->
+<rect x="100" y="246" width="120" height="10" fill="#2a1a0a" stroke="#1a1208" stroke-width="1.2"/>
+<rect x="152" y="244" width="16" height="14" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.2"/>
+<!-- Pescoço -->
+<rect x="148" y="170" width="24" height="20" fill="url(#cSkin)" stroke="#3a2812" stroke-width="1.2"/>
+<!-- Cabeça -->
+<ellipse cx="160" cy="144" rx="28" ry="32" fill="url(#cSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<!-- Cabelo castanho -->
+<path d="M134 132 Q130 108 160 104 Q190 108 186 132 Q186 118 174 114 Q160 108 146 114 Q134 118 134 132 Z" fill="url(#cHair)" stroke="#1a1208" stroke-width="1.5"/>
+<path d="M134 134 q-6 10 -4 20 M186 134 q6 10 4 20" stroke="url(#cHair)" stroke-width="6" fill="none" opacity=".9"/>
+<!-- Olhos jovens e decididos -->
+<ellipse cx="150" cy="148" rx="3.5" ry="4" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<ellipse cx="170" cy="148" rx="3.5" ry="4" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<circle cx="150" cy="149" r="2" fill="#4a6a8a"/>
+<circle cx="170" cy="149" r="2" fill="#4a6a8a"/>
+<circle cx="150" cy="149" r=".9" fill="#0a0806"/>
+<circle cx="170" cy="149" r=".9" fill="#0a0806"/>
+<circle cx="151" cy="148" r=".5" fill="#fff"/>
+<circle cx="171" cy="148" r=".5" fill="#fff"/>
+<!-- Sobrancelhas -->
+<path d="M144 142 q6 -2 12 0 M164 142 q6 -2 12 0" stroke="#3a2812" stroke-width="1.5" fill="none"/>
+<!-- Nariz e boca -->
+<path d="M160 150 v10 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
+<path d="M152 170 q8 3 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<!-- ESCUDO de madeira rachado à esquerda -->
+<g transform="translate(90, 196)">
+  <path d="M0 20 Q-6 52 0 88 Q40 108 80 88 Q86 52 80 20 Q40 6 0 20 Z" fill="url(#cWood)" stroke="#1a1208" stroke-width="3"/>
+  <!-- Plankas verticais -->
+  <path d="M20 14 V94 M40 10 V96 M60 14 V94" stroke="#1a1208" stroke-width="1" opacity=".6"/>
+  <!-- Tachas de metal -->
+  <circle cx="20" cy="34" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <circle cx="40" cy="30" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <circle cx="60" cy="34" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <circle cx="20" cy="70" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <circle cx="40" cy="74" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <circle cx="60" cy="70" r="3" fill="url(#cSteel)" stroke="#1a1208" stroke-width=".8"/>
+  <!-- Rachadura -->
+  <path d="M40 30 l-6 24 l4 14 l-2 20" stroke="#1a1208" stroke-width="2" fill="none"/>
+  <path d="M40 30 l6 20 l-4 16 l2 18" stroke="#1a1208" stroke-width="1" fill="none" opacity=".6"/>
+  <!-- Brasão simples no escudo -->
+  <path d="M40 48 l8 -12 8 12 -8 12 Z" fill="#8a1a1a" stroke="#1a1208" stroke-width="1"/>
+</g>
+<!-- ESPADA QUEBRADA à direita -->
+<g transform="translate(230, 180)">
+  <!-- Empunhadura -->
+  <rect x="-6" y="80" width="12" height="32" rx="3" fill="#3a2812" stroke="#1a1208" stroke-width="1.5"/>
+  <path d="M-4 84 h8 M-4 92 h8 M-4 100 h8 M-4 108 h8" stroke="#1a1208" stroke-width=".8" opacity=".7"/>
+  <!-- Crossguard -->
+  <rect x="-18" y="70" width="36" height="10" rx="2" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+  <!-- Pomo -->
+  <circle cx="0" cy="116" r="7" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+  <!-- Lâmina quebrada -->
+  <path d="M-4 70 L-5 40 L0 20 L5 40 L4 70 Z" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+  <!-- Quebra -->
+  <path d="M-3 42 l3 -4 4 3" stroke="#1a1208" stroke-width="1.5" fill="none"/>
+  <path d="M-5 38 l2 -6" stroke="#1a1208" stroke-width="1" fill="none" opacity=".7"/>
+</g>
+<!-- Luvas -->
+<circle cx="90" cy="242" r="12" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="230" cy="240" r="11" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>`);},
 
-/* B — cavalheiro com elmo e olhos vermelhos brilhantes */
+/* ================= B — CAVALHEIRO DO ABISMO =================
+   Cavaleiro sombrio de armadura negra polida, elmo fechado com visor, olhos vermelhos brilhando. */
 B(){return molduraRetrato('B',
-`<linearGradient id="bHelm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#98a4b0"/><stop offset="1" stop-color="#39434e"/></linearGradient>
-<filter id="bGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
-`<ellipse cx="160" cy="300" rx="120" ry="26" fill="#12060c" opacity=".85"/>
-<ellipse cx="160" cy="292" rx="70" ry="14" fill="#2a0a14" opacity=".6"/>
-<path d="M84 304 C86 244 104 214 160 208 C216 214 234 244 236 304 Z" fill="#2e3640" stroke="#12161b" stroke-width="3"/>
-<path d="M96 262 H224 M102 276 H218 M110 290 H210" stroke="#4d5866" stroke-width="5" stroke-dasharray="1 7" opacity=".85"/>
-<path d="M118 216 V118 Q118 72 160 68 Q202 72 202 118 V216 Q160 230 118 216 Z" fill="url(#bHelm)" stroke="#0d1116" stroke-width="4"/>
-<path d="M160 68 V142" stroke="#0d1116" stroke-width="3" opacity=".6"/>
-<rect x="126" y="142" width="68" height="13" rx="6" fill="#05070a"/>
-<circle cx="146" cy="148" r="5.5" fill="#ff2a2a" filter="url(#bGlow)"/>
-<circle cx="174" cy="148" r="5.5" fill="#ff2a2a" filter="url(#bGlow)"/>
-<g fill="#9fb0bf" opacity=".75"><circle cx="124" cy="120" r="2.5"/><circle cx="124" cy="182" r="2.5"/><circle cx="196" cy="120" r="2.5"/><circle cx="196" cy="182" r="2.5"/><circle cx="132" cy="210" r="2.5"/><circle cx="188" cy="210" r="2.5"/></g>`);},
+`<linearGradient id="bArmor" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#4a525c"/><stop offset=".5" stop-color="#222830"/><stop offset="1" stop-color="#0a0c10"/>
+</linearGradient>
+<linearGradient id="bArmorLight" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#6a7480" stop-opacity=".8"/><stop offset="1" stop-color="#222830" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="bPlume" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#8a1a1a"/><stop offset="1" stop-color="#2a0808"/>
+</linearGradient>
+<radialGradient id="bEyeGlow" cx="50%" cy="50%" r="50%">
+  <stop offset="0" stop-color="#ff2a2a"/><stop offset=".6" stop-color="#a4161a"/><stop offset="1" stop-color="#2a0808"/>
+</radialGradient>`,
+`<!-- Névoa ao fundo -->
+<ellipse cx="160" cy="302" rx="140" ry="20" fill="#1a0a0a" opacity=".8"/>
+<ellipse cx="160" cy="296" rx="80" ry="12" fill="#2a0a0a" opacity=".5"/>
+<!-- Armadura completa negra -->
+<path d="M76 304 C76 232 104 198 160 190 C216 198 244 232 244 304 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="3"/>
+<!-- Peitoral com gravura -->
+<path d="M120 214 Q160 204 200 214 L196 264 Q160 272 124 264 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M120 214 Q160 204 200 214" stroke="url(#bArmorLight)" stroke-width="1.5" fill="none"/>
+<!-- Gravura heráldica no peito (caveira estilizada) -->
+<g transform="translate(160,236)" opacity=".7">
+  <path d="M-14 0 a14 10 0 0 1 28 0 l-2 10 a12 6 0 0 1 -24 0 Z" fill="#6a1a1a" stroke="#0a0c10" stroke-width=".8"/>
+  <circle cx="-5" cy="-2" r="2" fill="#0a0c10"/>
+  <circle cx="5" cy="-2" r="2" fill="#0a0c10"/>
+  <path d="M-2 6 l4 0" stroke="#0a0c10" stroke-width="1.2"/>
+</g>
+<!-- Ombreiras com espinhos -->
+<path d="M76 210 l-8 -16 l12 -4 l-4 -14 l10 -2 l-2 -14 l14 2 l-2 16 l10 4 l-8 16 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M244 210 l8 -16 l-12 -4 l4 -14 l-10 -2 l2 -14 l-14 2 l2 16 l-10 4 l8 16 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M78 208 l-6 -12 M90 198 l-4 -10 M244 208 l6 -12 M232 198 l4 -10" stroke="url(#bArmorLight)" stroke-width="1" opacity=".6"/>
+<!-- Gorjeira (proteção do pescoço) -->
+<path d="M124 184 Q160 176 196 184 L196 200 Q160 208 124 200 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M124 188 l72 -4 M124 192 l72 -4 M124 196 l72 -4" stroke="#3a424c" stroke-width=".8" opacity=".6"/>
+<!-- ELMO fechado -->
+<path d="M118 186 V120 Q118 72 160 68 Q202 72 202 120 V186 Q160 200 118 186 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="3"/>
+<!-- Reforço frontal do elmo -->
+<path d="M160 72 V186" stroke="#3a424c" stroke-width="1.2" opacity=".5"/>
+<path d="M118 120 h84 M118 160 h84" stroke="#3a424c" stroke-width=".8" opacity=".4"/>
+<!-- Pluma vermelha -->
+<path d="M160 68 q-14 -22 -6 -34 q12 -6 20 4 q8 10 -2 28 Z" fill="url(#bPlume)" stroke="#1a0808" stroke-width="1.5"/>
+<path d="M154 48 q10 4 14 14" stroke="#2a0808" stroke-width="1" opacity=".7" fill="none"/>
+<!-- Visor do elmo -->
+<rect x="126" y="130" width="68" height="16" rx="2" fill="#05070a" stroke="#0a0c10" stroke-width="1.5"/>
+<!-- OLHOS VERMELHOS BRILHANTES -->
+<circle cx="146" cy="138" r="5" fill="url(#bEyeGlow)" filter="url(#bglow)"/>
+<circle cx="174" cy="138" r="5" fill="url(#bEyeGlow)" filter="url(#bglow)"/>
+<circle cx="146" cy="138" r="2" fill="#fff" opacity=".95"/>
+<circle cx="174" cy="138" r="2" fill="#fff" opacity=".95"/>
+<!-- Respirador do elmo (grades) -->
+<g transform="translate(140,154)">
+  <rect x="0" y="0" width="40" height="22" rx="3" fill="#1a1d22" stroke="#0a0c10" stroke-width="1.5"/>
+  <path d="M4 4 v14 M10 4 v14 M16 4 v14 M22 4 v14 M28 4 v14 M34 4 v14" stroke="#3a424c" stroke-width=".8"/>
+</g>
+<!-- Rebites de metal -->
+<g fill="#6a7480" opacity=".85">
+  <circle cx="124" cy="120" r="2"/><circle cx="124" cy="180" r="2"/>
+  <circle cx="196" cy="120" r="2"/><circle cx="196" cy="180" r="2"/>
+  <circle cx="132" cy="210" r="2"/><circle cx="188" cy="210" r="2"/>
+</g>
+<!-- Reflexos da armadura -->
+<path d="M92 220 q6 -18 20 -28" stroke="url(#bArmorLight)" stroke-width="2" fill="none" opacity=".7"/>
+<path d="M228 220 q-6 -18 -20 -28" stroke="url(#bArmorLight)" stroke-width="2" fill="none" opacity=".5"/>`);},
 
-/* A — guerreiro com duas espadas cruzadas */
+/* ================= A — GUERREIRO DE FERRO =================
+   Cavaleiro veterano com armadura robusta, postura imponente, espadas duplas cruzadas. */
 A(){return molduraRetrato('A',
-`<linearGradient id="aHelm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aeb7bf"/><stop offset="1" stop-color="#4a525a"/></linearGradient>
-<filter id="aGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
-`<g transform="rotate(45 160 170)">
-  <path d="M160 36 L170 60 V200 H150 V60 Z" fill="#cdd5db" stroke="#39424b" stroke-width="2.5"/>
-  <path d="M160 48 V196" stroke="#8d979f" stroke-width="2"/>
-  <rect x="130" y="200" width="60" height="11" rx="5" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
-  <rect x="153" y="211" width="14" height="26" rx="5" fill="#5b4028" stroke="#20262b" stroke-width="2"/>
-  <circle cx="160" cy="243" r="8" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+`<linearGradient id="aArmor" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#b8c2cc"/><stop offset=".5" stop-color="#6a7480"/><stop offset="1" stop-color="#2a323c"/>
+</linearGradient>
+<linearGradient id="aArmorLight" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#e0e8f0" stop-opacity=".7"/><stop offset="1" stop-color="#6a7480" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="aCape" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#a4161a"/><stop offset="1" stop-color="#3a0808"/>
+</linearGradient>
+<linearGradient id="aBlade" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#f0f4f8"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#3a4048"/>
+</linearGradient>
+<linearGradient id="aSkin" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#d8a878"/><stop offset="1" stop-color="#7a4a28"/>
+</linearGradient>`,
+`<!-- Luz de fogueira ao fundo -->
+<radialGradient id="aFireGlow" cx="30%" cy="70%" r="50%">
+  <stop offset="0" stop-color="#ff7a33" stop-opacity=".35"/><stop offset="1" stop-color="#ff7a33" stop-opacity="0"/>
+</radialGradient>
+<rect x="46" y="20" width="228" height="286" fill="url(#aFireGlow)"/>
+<!-- Capa vermelha -->
+<path d="M84 304 C70 260 86 220 100 204 L220 204 C234 220 250 260 236 304 Z" fill="url(#aCape)" stroke="#1a0808" stroke-width="2.5" opacity=".85"/>
+<path d="M100 208 l-14 96 M220 208 l14 96" stroke="#1a0808" stroke-width="1" opacity=".6"/>
+<!-- Armadura peitoral -->
+<path d="M90 304 C90 236 116 200 160 192 C204 200 230 236 230 304 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="3"/>
+<!-- Placas peitorais -->
+<path d="M116 214 Q160 206 204 214 L200 262 Q160 270 120 262 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M116 214 Q160 206 204 214" stroke="url(#aArmorLight)" stroke-width="1.5" fill="none"/>
+<!-- Brasão no peito (leão estilizado) -->
+<g transform="translate(160,236)" opacity=".85">
+  <path d="M-10 -8 q-8 2 -10 10 q2 10 12 12 q14 0 16 -12 q-2 -8 -10 -10 Z" fill="#c9a227" stroke="#0a0c10" stroke-width="1"/>
+  <circle cx="-3" cy="-2" r="1.5" fill="#0a0c10"/>
+  <circle cx="5" cy="-2" r="1.5" fill="#0a0c10"/>
+  <path d="M-1 4 q2 -2 4 0" stroke="#0a0c10" stroke-width="1" fill="none"/>
 </g>
-<g transform="rotate(-45 160 170)">
-  <path d="M160 36 L170 60 V200 H150 V60 Z" fill="#cdd5db" stroke="#39424b" stroke-width="2.5"/>
-  <path d="M160 48 V196" stroke="#8d979f" stroke-width="2"/>
-  <rect x="130" y="200" width="60" height="11" rx="5" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
-  <rect x="153" y="211" width="14" height="26" rx="5" fill="#5b4028" stroke="#20262b" stroke-width="2"/>
-  <circle cx="160" cy="243" r="8" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+<!-- Ombreiras -->
+<path d="M82 212 q-8 -18 2 -32 l20 4 q-4 12 -2 26 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M238 212 q8 -18 -2 -32 l-20 4 q4 12 2 26 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<!-- Rebites das ombreiras -->
+<circle cx="86" cy="196" r="2" fill="#2a323c"/><circle cx="96" cy="190" r="2" fill="#2a323c"/>
+<circle cx="234" cy="196" r="2" fill="#2a323c"/><circle cx="224" cy="190" r="2" fill="#2a323c"/>
+<!-- Braçadeiras -->
+<path d="M78 244 l-8 50 l12 4 l8 -50 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M242 244 l8 50 l-12 4 l-8 -50 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<!-- Cabeça sem elmo — rosto experiente -->
+<ellipse cx="160" cy="138" rx="30" ry="34" fill="url(#aSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<!-- Cabelo grisalho curto -->
+<path d="M132 122 Q128 98 160 94 Q192 98 188 122 Q188 110 174 106 Q160 102 146 106 Q132 110 132 122 Z" fill="#8a7a68" stroke="#2a1808" stroke-width="1.2"/>
+<path d="M138 112 l-4 6 M160 108 l0 6 M182 112 l4 6" stroke="#6a5a48" stroke-width="1" opacity=".7"/>
+<!-- Cicatriz no rosto -->
+<path d="M170 130 q4 10 2 18" stroke="#5a2a18" stroke-width="1.5" fill="none"/>
+<!-- Olhos severos -->
+<ellipse cx="150" cy="138" rx="4" ry="3" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<ellipse cx="172" cy="138" rx="4" ry="3" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<circle cx="150" cy="138" r="2" fill="#2a4a28"/>
+<circle cx="172" cy="138" r="2" fill="#2a4a28"/>
+<circle cx="150" cy="138" r=".9" fill="#0a0806"/>
+<circle cx="172" cy="138" r=".9" fill="#0a0806"/>
+<!-- Sobrancelhas grossas -->
+<path d="M144 132 q6 -2 12 0 M168 132 q6 -2 12 0" stroke="#3a2812" stroke-width="2" fill="none"/>
+<!-- Nariz quebrado -->
+<path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.5" fill="none"/>
+<!-- Barba curta grisalha -->
+<path d="M140 158 Q160 174 180 158 Q178 170 160 174 Q142 170 140 158 Z" fill="#6a5a48" stroke="#2a1808" stroke-width="1"/>
+<!-- Boca firme -->
+<path d="M152 162 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<!-- ESPADAS CRUZADAS -->
+<g transform="translate(160,158) rotate(-45)">
+  <path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+  <path d="M0 -126 v40" stroke="#d0d7e0" stroke-width=".8" opacity=".7"/>
+  <rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+  <rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+  <circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
 </g>
-<path d="M92 304 C94 252 112 226 160 220 C208 226 226 252 228 304 Z" fill="#3a4149" stroke="#12161b" stroke-width="3"/>
-<path d="M96 262 q22 -26 52 -30 M224 262 q-22 -26 -52 -30" stroke="#9aa3ab" stroke-width="6" fill="none" opacity=".65"/>
-<path d="M128 214 V128 Q128 86 160 82 Q192 86 192 128 V214 Q160 224 128 214 Z" fill="url(#aHelm)" stroke="#0e1216" stroke-width="3.5"/>
-<path d="M160 82 V150" stroke="#0e1216" stroke-width="4"/>
-<rect x="136" y="150" width="48" height="10" rx="5" fill="#05070a"/>
-<circle cx="150" cy="155" r="4" fill="#ff8c42" filter="url(#aGlow)"/>
-<circle cx="170" cy="155" r="4" fill="#ff8c42" filter="url(#aGlow)"/>
-<path d="M142 184 h36 M146 196 h28" stroke="#0e1216" stroke-width="3"/>`);},
+<g transform="translate(160,158) rotate(45)">
+  <path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+  <path d="M0 -126 v40" stroke="#d0d7e0" stroke-width=".8" opacity=".7"/>
+  <rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+  <rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+  <circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+</g>
+<!-- Reflexos de fogo -->
+<path d="M96 228 q10 -22 24 -36" stroke="url(#aArmorLight)" stroke-width="2.5" fill="none" opacity=".8"/>
+<path d="M224 228 q-10 -22 -24 -36" stroke="url(#aArmorLight)" stroke-width="2" fill="none" opacity=".5"/>`);},
 
-/* S — lorde com manto, capuz e coroa de espinhos */
+/* ================= S — LORDE DAS SOMBRAS =================
+   Nobre misterioso de manto púrpura, capuz com detalhes dourados, olhos arcane brilhando. */
 S(){return molduraRetrato('S',
-`<linearGradient id="sCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f2148"/><stop offset="1" stop-color="#120a1d"/></linearGradient>
-<filter id="sGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-<filter id="sSoft"><feGaussianBlur stdDeviation="3"/></filter>`,
-`<circle cx="242" cy="74" r="20" fill="#cbb7ff" opacity=".55"/>
-<circle cx="250" cy="68" r="17" fill="#120e18"/>
-<path d="M84 300 C76 268 92 252 84 224 M236 300 C244 268 228 252 236 224" stroke="#9d4edd" stroke-width="7" fill="none" opacity=".3" filter="url(#sSoft)"/>
-<path d="M64 304 C66 224 92 186 128 172 L160 186 L192 172 C228 186 254 224 256 304 Z" fill="url(#sCloak)" stroke="#0a0612" stroke-width="3"/>
-<path d="M96 196 L116 130 L136 178 Z" fill="#1c1230" stroke="#0a0612" stroke-width="2"/>
-<path d="M224 196 L204 130 L184 178 Z" fill="#1c1230" stroke="#0a0612" stroke-width="2"/>
-<path d="M120 168 C114 104 206 104 200 168 C188 142 132 142 120 168 Z" fill="#241a33" stroke="#0a0612" stroke-width="3"/>
-<ellipse cx="160" cy="172" rx="22" ry="26" fill="#d9cfe8"/>
-<path d="M140 156 q20 -12 40 0 l0 9 q-20 -9 -40 0 Z" fill="#5c4a75" opacity=".55"/>
-<circle cx="151" cy="172" r="3.2" fill="#b06ef0" filter="url(#sGlow)"/>
-<circle cx="169" cy="172" r="3.2" fill="#b06ef0" filter="url(#sGlow)"/>
-<path d="M154 188 q6 4 12 0" stroke="#8a7ba6" stroke-width="2" fill="none"/>
-<path d="M134 142 Q160 128 186 142" stroke="#4a3416" stroke-width="6" fill="none" stroke-linecap="round"/>
-<path d="M140 138 l-7 -11 M152 133 l-3 -13 M166 132 l3 -13 M178 137 l8 -11" stroke="#4a3416" stroke-width="3.5" stroke-linecap="round"/>
-<path d="M136 150 Q160 138 184 150" stroke="#3a280f" stroke-width="4" fill="none" opacity=".8"/>`);},
+`<linearGradient id="sCloak" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#5a2d8a"/><stop offset=".5" stop-color="#2f1848"/><stop offset="1" stop-color="#120a1d"/>
+</linearGradient>
+<linearGradient id="sGold" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9a227"/><stop offset="1" stop-color="#7a5a12"/>
+</linearGradient>
+<linearGradient id="sSkin" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#e8d8c4"/><stop offset="1" stop-color="#a89480"/>
+</linearGradient>
+<radialGradient id="sEyeGlow" cx="50%" cy="50%" r="50%">
+  <stop offset="0" stop-color="#d4a6ff"/><stop offset=".5" stop-color="#b06ef0"/><stop offset="1" stop-color="#37135c"/>
+</radialGradient>
+<linearGradient id="sHair" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#1a1228"/><stop offset="1" stop-color="#0a0614"/>
+</linearGradient>`,
+`<!-- Aura arcane ao fundo -->
+<radialGradient id="sAuraBg" cx="50%" cy="40%" r="60%">
+  <stop offset="0" stop-color="#9d4edd" stop-opacity=".25"/><stop offset="1" stop-color="#9d4edd" stop-opacity="0"/>
+</radialGradient>
+<rect x="46" y="20" width="228" height="286" fill="url(#sAuraBg)"/>
+<!-- Manto púrpura -->
+<path d="M64 304 C66 224 94 188 130 174 L160 188 L190 174 C226 188 254 224 256 304 Z" fill="url(#sCloak)" stroke="#0a0612" stroke-width="3"/>
+<!-- Drapeados do manto -->
+<path d="M130 176 L100 304 M190 176 L220 304 M160 188 V304" stroke="#1a0a28" stroke-width="1.5" opacity=".7" fill="none"/>
+<path d="M86 232 l18 -4 M80 270 l24 -6 M232 232 l-18 -4 M240 270 l-24 -6" stroke="#0a0612" stroke-width="1" opacity=".5"/>
+<!-- Bordas douradas do manto -->
+<path d="M64 304 L130 174" stroke="url(#sGold)" stroke-width="4" opacity=".85"/>
+<path d="M256 304 L190 174" stroke="url(#sGold)" stroke-width="4" opacity=".85"/>
+<path d="M64 304 L130 174" stroke="#0a0612" stroke-width=".8" opacity=".6"/>
+<!-- Ombro com detalhe dourado (broche) -->
+<circle cx="112" cy="200" r="8" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.5" filter="url(#sglow)"/>
+<circle cx="112" cy="200" r="3" fill="#9d4edd" stroke="#0a0612" stroke-width=".8"/>
+<circle cx="208" cy="200" r="8" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.5" filter="url(#sglow)"/>
+<circle cx="208" cy="200" r="3" fill="#9d4edd" stroke="#0a0612" stroke-width=".8"/>
+<!-- Capuz -->
+<path d="M120 176 C112 108 208 108 200 176 Q160 190 120 176 Z" fill="#1a0a28" stroke="#0a0612" stroke-width="2.5"/>
+<path d="M124 174 Q160 186 196 174" stroke="url(#sGold)" stroke-width="2" fill="none"/>
+<!-- Sombra do capuz -->
+<path d="M132 162 Q160 150 188 162 L188 176 Q160 186 132 176 Z" fill="#0a0614" opacity=".75"/>
+<!-- Rosto pálido -->
+<ellipse cx="160" cy="172" rx="22" ry="26" fill="url(#sSkin)" stroke="#3a2a38" stroke-width="1.5"/>
+<!-- Cabelo negro longo -->
+<path d="M138 176 q-8 22 -4 44 M182 176 q8 22 4 44" stroke="url(#sHair)" stroke-width="8" fill="none" opacity=".9"/>
+<path d="M136 178 q-10 28 -6 50 M184 178 q10 28 6 50" stroke="#0a0614" stroke-width="4" fill="none" opacity=".6"/>
+<!-- OLHOS ARCANE BRILHANTES -->
+<ellipse cx="151" cy="168" rx="4.5" ry="3.5" fill="#0a0614"/>
+<ellipse cx="169" cy="168" rx="4.5" ry="3.5" fill="#0a0614"/>
+<circle cx="151" cy="168" r="3.5" fill="url(#sEyeGlow)" filter="url(#sglow)"/>
+<circle cx="169" cy="168" r="3.5" fill="url(#sEyeGlow)" filter="url(#sglow)"/>
+<circle cx="151" cy="168" r="1.2" fill="#fff" opacity=".95"/>
+<circle cx="169" cy="168" r="1.2" fill="#fff" opacity=".95"/>
+<!-- Sobrancelhas finas -->
+<path d="M145 162 q6 -1 10 1 M167 162 q6 -1 10 1" stroke="#3a2a38" stroke-width="1.2" fill="none"/>
+<!-- Nariz e boca -->
+<path d="M160 170 v10 l-2 2" stroke="#7a6a68" stroke-width="1" fill="none"/>
+<path d="M154 184 q6 -1 12 0" stroke="#3a1a2a" stroke-width="1.2" fill="none"/>
+<!-- Mãos pálidas segurando medalhão -->
+<path d="M152 220 q-6 2 -8 12 q10 -2 16 2 Z" fill="url(#sSkin)" stroke="#3a2a38" stroke-width="1"/>
+<path d="M168 220 q6 2 8 12 q-10 -2 -16 2 Z" fill="url(#sSkin)" stroke="#3a2a38" stroke-width="1"/>
+<!-- Medalhão arcane -->
+<circle cx="160" cy="228" r="7" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.2" filter="url(#sglow)"/>
+<circle cx="160" cy="228" r="3" fill="#9d4edd" stroke="#0a0612" stroke-width=".6"/>
+<path d="M156 210 l8 0" stroke="#7a5a12" stroke-width="1.5"/>
+<!-- Runas flutuantes -->
+<g opacity=".7" filter="url(#sglow)">
+  <text x="90" y="140" font-family="serif" font-size="18" fill="#b06ef0" text-anchor="middle">ᚠ</text>
+  <text x="230" y="140" font-family="serif" font-size="18" fill="#b06ef0" text-anchor="middle">ᛟ</text>
+  <text x="80" y="250" font-family="serif" font-size="14" fill="#b06ef0" text-anchor="middle">ᚱ</text>
+  <text x="240" y="250" font-family="serif" font-size="14" fill="#b06ef0" text-anchor="middle">ᛗ</text>
+</g>`);},
 
-/* SS — rei coroado com cetro */
+/* ================= SS — REI COROADO =================
+   Rei imponente com coroa dourada, manto vermelho/imperial, cetro, expressão nobre. */
 SS(){return molduraRetrato('SS',
-`<linearGradient id="ssGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#c9962e"/></linearGradient>
-<linearGradient id="ssRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a2432"/><stop offset="1" stop-color="#3f0d15"/></linearGradient>
-<filter id="ssGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
-`<g opacity=".3" stroke="#f2cf6b" stroke-width="3" stroke-linecap="round">
+`<linearGradient id="ssGold" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/>
+</linearGradient>
+<linearGradient id="ssRobe" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#a4161a"/><stop offset=".5" stop-color="#6a0a0e"/><stop offset="1" stop-color="#2a0406"/>
+</linearGradient>
+<linearGradient id="ssFur" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#f0e8d8"/><stop offset="1" stop-color="#a89470"/>
+</linearGradient>
+<linearGradient id="ssSkin" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#e8c098"/><stop offset="1" stop-color="#8a5a32"/>
+</linearGradient>
+<radialGradient id="ssGemRed" cx="30%" cy="30%" r="70%">
+  <stop offset="0" stop-color="#ff6a7a"/><stop offset=".5" stop-color="#d7263d"/><stop offset="1" stop-color="#5a0a10"/>
+</radialGradient>
+<radialGradient id="ssGemBlue" cx="30%" cy="30%" r="70%">
+  <stop offset="0" stop-color="#6ab8ff"/><stop offset=".5" stop-color="#2e6fd0"/><stop offset="1" stop-color="#0a2a5a"/>
+</radialGradient>`,
+`<!-- Raios de luz ao fundo -->
+<g opacity=".25" stroke="#f2cf6b" stroke-width="2.5" stroke-linecap="round">
   <path d="M160 44 v-22 M202 56 l15 -17 M118 56 l-15 -17 M230 88 l22 -8 M90 88 l-22 -8"/>
 </g>
-<path d="M76 304 C80 232 108 196 160 188 C212 196 240 232 244 304 Z" fill="url(#ssRobe)" stroke="#1c070c" stroke-width="3"/>
-<path d="M104 244 C130 222 190 222 216 244 L208 266 C186 250 134 250 112 266 Z" fill="#e8e2d4"/>
-<g fill="#26201a"><path d="M132 250 l4 8 M160 246 l0 9 M188 250 l-4 8" stroke="#26201a" stroke-width="2.5"/></g>
-<circle cx="160" cy="150" r="30" fill="#d8b48f" stroke="#3a2410" stroke-width="2"/>
-<path d="M136 158 q24 40 48 0 q-4 28 -24 32 q-20 -4 -24 -32 Z" fill="#cfc6ba"/>
-<circle cx="150" cy="148" r="3" fill="#3a2410"/>
-<circle cx="170" cy="148" r="3" fill="#3a2410"/>
-<path d="M126 122 L126 96 L142 112 L160 84 L178 112 L194 96 L194 122 Q160 132 126 122 Z" fill="url(#ssGold)" stroke="#5e470f" stroke-width="3"/>
-<circle cx="136" cy="116" r="4" fill="#d7263d"/><circle cx="160" cy="118" r="4.5" fill="#2e6fd0"/><circle cx="184" cy="116" r="4" fill="#d7263d"/>
-<g transform="rotate(16 236 210)">
-  <rect x="232" y="122" width="8" height="180" rx="4" fill="url(#ssGold)" stroke="#5e470f" stroke-width="2"/>
-  <circle cx="236" cy="112" r="13" fill="#f6dd8f" stroke="#5e470f" stroke-width="2.5" filter="url(#ssGlow)"/>
-  <path d="M236 90 l7 13 h-14 Z" fill="#f6dd8f" stroke="#5e470f" stroke-width="1.5"/>
+<!-- Manto imperial -->
+<path d="M76 304 C80 232 108 196 160 188 C212 196 240 232 244 304 Z" fill="url(#ssRobe)" stroke="#1a0408" stroke-width="3"/>
+<!-- Bordas de arminho (pele branca com pontos pretos) -->
+<path d="M100 220 C130 202 190 202 220 220 L212 260 C186 242 134 242 108 260 Z" fill="url(#ssFur)" stroke="#3a2a18" stroke-width="1.5"/>
+<path d="M120 230 l4 4 M140 228 l4 4 M160 226 l4 4 M180 228 l4 4 M200 230 l4 4 M128 244 l4 4 M148 242 l4 4 M168 242 l4 4 M188 244 l4 4" stroke="#1a1208" stroke-width="1.2" opacity=".8"/>
+<!-- Detalhes dourados do manto -->
+<path d="M80 232 q12 -2 24 0 M80 260 q12 -2 24 0 M80 288 q12 -2 24 0 M216 232 q12 -2 24 0 M216 260 q12 -2 24 0 M216 288 q12 -2 24 0" stroke="url(#ssGold)" stroke-width="3" fill="none" opacity=".85"/>
+<!-- Pescoço -->
+<rect x="148" y="168" width="24" height="22" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.2"/>
+<!-- Colar de ouro -->
+<path d="M144 172 q16 4 32 0 l-2 6 q-14 3 -28 0 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="160" cy="180" r="3" fill="#d7263d" stroke="#3a2410" stroke-width=".8"/>
+<!-- Cabeça -->
+<ellipse cx="160" cy="140" rx="30" ry="34" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.5"/>
+<!-- Cabelo grisalho real -->
+<path d="M132 124 Q128 100 160 96 Q192 100 188 124 Q188 112 174 108 Q160 104 146 108 Q132 112 132 124 Z" fill="#c9c0b0" stroke="#6a5a48" stroke-width="1.2"/>
+<path d="M138 114 l-6 8 M160 110 l0 8 M182 114 l6 8" stroke="#a89470" stroke-width="1.2" opacity=".7"/>
+<!-- Barba grisalha real -->
+<path d="M138 152 Q160 176 182 152 Q180 172 160 178 Q140 172 138 152 Z" fill="#c9c0b0" stroke="#6a5a48" stroke-width="1"/>
+<path d="M146 158 l2 10 M154 160 l1 12 M162 160 l-1 12 M170 158 l-2 10" stroke="#a89470" stroke-width=".8" opacity=".7"/>
+<!-- Olhos majestosos -->
+<ellipse cx="150" cy="138" rx="4" ry="3.5" fill="#fff" stroke="#3a2410" stroke-width=".8"/>
+<ellipse cx="170" cy="138" rx="4" ry="3.5" fill="#fff" stroke="#3a2410" stroke-width=".8"/>
+<circle cx="150" cy="138" r="2.2" fill="#2a4a28"/>
+<circle cx="170" cy="138" r="2.2" fill="#2a4a28"/>
+<circle cx="150" cy="138" r=".9" fill="#0a0806"/>
+<circle cx="170" cy="138" r=".9" fill="#0a0806"/>
+<circle cx="151" cy="137" r=".5" fill="#fff"/>
+<circle cx="171" cy="137" r=".5" fill="#fff"/>
+<!-- Sobrancelhas grossas -->
+<path d="M144 132 q6 -2 12 0 M164 132 q6 -2 12 0" stroke="#6a5a48" stroke-width="2" fill="none"/>
+<!-- Nariz nobre -->
+<path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
+<!-- Boca firme -->
+<path d="M152 166 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<!-- COROA DOURADA -->
+<g filter="url(#ssglow)">
+  <path d="M124 108 L124 78 L142 96 L160 62 L178 96 L196 78 L196 108 Q160 118 124 108 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2.5"/>
+  <!-- Base da coroa -->
+  <path d="M124 108 h72" stroke="#3a2410" stroke-width="1.5"/>
+  <path d="M124 102 h72" stroke="#7a5a12" stroke-width="1" opacity=".6"/>
+  <!-- Gemas -->
+  <circle cx="136" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+  <circle cx="160" cy="96" r="6" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1.2"/>
+  <circle cx="184" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+  <!-- Pérolas nas pontas -->
+  <circle cx="124" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/>
+  <circle cx="160" cy="62" r="5" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/>
+  <circle cx="196" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/>
+  <circle cx="142" cy="96" r="2.5" fill="#f0e8d8" stroke="#3a2410" stroke-width=".8"/>
+  <circle cx="178" cy="96" r="2.5" fill="#f0e8d8" stroke="#3a2410" stroke-width=".8"/>
 </g>
-<circle cx="230" cy="228" r="12" fill="#d8b48f" stroke="#3a2410" stroke-width="2"/>`);},
+<!-- CETRO à direita -->
+<g transform="translate(232, 186)">
+  <rect x="-4" y="0" width="8" height="120" rx="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.5"/>
+  <!-- Detalhes do cetro -->
+  <path d="M-4 20 h8 M-4 40 h8 M-4 60 h8 M-4 80 h8 M-4 100 h8" stroke="#3a2410" stroke-width=".8" opacity=".6"/>
+  <!-- Topo do cetro (orbe) -->
+  <circle cx="0" cy="-6" r="14" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2" filter="url(#ssglow)"/>
+  <circle cx="0" cy="-6" r="8" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1"/>
+  <!-- Cruz decorativa (elemento heráldico, não religioso - estilo brasão) -->
+  <path d="M-8 -6 l16 0 M0 -14 l0 16" stroke="#3a2410" stroke-width="2" opacity=".8"/>
+  <circle cx="0" cy="-6" r="2" fill="#fff" opacity=".9"/>
+</g>
+<!-- Mão segurando cetro -->
+<circle cx="228" cy="228" r="14" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.5"/>
+<path d="M224 220 l8 0 M222 228 l12 0 M224 236 l8 0" stroke="#6a4a2a" stroke-width="1" opacity=".6"/>
+<!-- Anel real -->
+<circle cx="234" cy="228" r="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width=".8"/>
+<circle cx="234" cy="228" r="1.5" fill="#d7263d"/>`);},
 
-/* SSS — imperador arcano: coroa flutuante, chamas e runas esmeralda */
+/* ================= SSS — IMPERADOR ARCANO =================
+   Ser supremo com armadura negra arcana, runas esmeralda brilhando, chamas místicas, coroa arcana flutuante. */
 SSS(){return molduraRetrato('SSS',
-`<linearGradient id="sssArmor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2a24"/><stop offset="1" stop-color="#050706"/></linearGradient>
-<linearGradient id="sssFlame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0b8f6a" stop-opacity=".9"/><stop offset=".55" stop-color="#2ee6a8" stop-opacity=".85"/><stop offset="1" stop-color="#a4ffe0" stop-opacity=".95"/></linearGradient>
-<filter id="sssGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-<filter id="sssSoft"><feGaussianBlur stdDeviation="3"/></filter>`,
-`<circle cx="160" cy="160" r="126" fill="none" stroke="#2ee6a8" stroke-opacity=".32" stroke-width="2" stroke-dasharray="4 10"/>
-<g fill="#7dffce" opacity=".85" font-size="20" text-anchor="middle" font-family="serif" filter="url(#sssGlow)">
+`<linearGradient id="sssArmor" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#2a3a34"/><stop offset=".5" stop-color="#0f1a16"/><stop offset="1" stop-color="#050706"/>
+</linearGradient>
+<linearGradient id="sssFlame" x1="0" y1="1" x2="0" y2="0">
+  <stop offset="0" stop-color="#0b8f6a" stop-opacity=".95"/>
+  <stop offset=".5" stop-color="#2ee6a8" stop-opacity=".9"/>
+  <stop offset="1" stop-color="#a4ffe0" stop-opacity="1"/>
+</linearGradient>
+<linearGradient id="sssGold" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#a4ffe0"/><stop offset=".5" stop-color="#2ee6a8"/><stop offset="1" stop-color="#0b4a37"/>
+</linearGradient>
+<radialGradient id="sssCore" cx="50%" cy="50%" r="50%">
+  <stop offset="0" stop-color="#eafff5"/><stop offset=".4" stop-color="#2ee6a8"/><stop offset="1" stop-color="#0b4a37"/>
+</radialGradient>`,
+`<!-- Círculo arcane ao fundo -->
+<circle cx="160" cy="160" r="130" fill="none" stroke="#2ee6a8" stroke-opacity=".25" stroke-width="2" stroke-dasharray="4 10"/>
+<circle cx="160" cy="160" r="110" fill="none" stroke="#2ee6a8" stroke-opacity=".15" stroke-width="1.5" stroke-dasharray="2 6"/>
+<!-- Runas esmeralda ao fundo -->
+<g fill="#5cffc0" opacity=".85" font-size="22" text-anchor="middle" font-family="serif" filter="url(#sssglow)">
   <text x="160" y="60">ᚠ</text><text x="250" y="110">ᛟ</text><text x="250" y="220">ᚱ</text>
   <text x="160" y="268">ᛗ</text><text x="70" y="220">ᛉ</text><text x="70" y="110">ᛏ</text>
 </g>
-<path d="M96 300 C86 260 108 244 100 214 C122 236 118 264 112 300 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#sssSoft)"/>
-<path d="M224 300 C234 260 212 244 220 214 C198 236 202 264 208 300 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#sssSoft)"/>
-<path d="M84 304 C88 240 112 208 160 200 C208 208 232 240 236 304 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".5" stroke-width="2.5"/>
-<path d="M120 262 q40 -18 80 0 M128 282 q32 -14 64 0" stroke="#2ee6a8" stroke-width="2" opacity=".5" fill="none"/>
-<path d="M148 234 l12 -10 12 10 -12 22 Z" fill="none" stroke="#2ee6a8" stroke-width="2.5" filter="url(#sssGlow)"/>
-<ellipse cx="160" cy="156" rx="26" ry="30" fill="#0d1210" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="2"/>
-<circle cx="150" cy="158" r="4" fill="#5cffc0" filter="url(#sssGlow)"/>
-<circle cx="170" cy="158" r="4" fill="#5cffc0" filter="url(#sssGlow)"/>
-<path d="M116 122 C108 106 116 94 112 78 C124 90 124 108 120 122 Z" fill="url(#sssFlame)" opacity=".85"/>
-<path d="M204 122 C212 106 204 94 208 78 C196 90 196 108 200 122 Z" fill="url(#sssFlame)" opacity=".85"/>
-<g filter="url(#sssGlow)">
-  <path d="M128 106 L128 78 L146 96 L160 66 L174 96 L192 78 L192 106 Q160 116 128 106 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
-  <circle cx="160" cy="60" r="5" fill="#5cffc0"/>
-  <circle cx="136" cy="72" r="3" fill="#5cffc0"/><circle cx="184" cy="72" r="3" fill="#5cffc0"/>
+<!-- Chamas arcane laterais -->
+<path d="M96 300 C86 260 108 244 100 214 C122 236 118 264 112 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
+<path d="M224 300 C234 260 212 244 220 214 C198 236 202 264 208 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
+<path d="M110 296 C104 268 118 254 112 230 C126 252 122 274 118 296 Z" fill="url(#sssFlame)" opacity=".65" filter="url(#ssssoft)"/>
+<path d="M210 296 C216 268 202 254 208 230 C194 252 198 274 202 296 Z" fill="url(#sssFlame)" opacity=".65" filter="url(#ssssoft)"/>
+<!-- Armadura arcana negra -->
+<path d="M84 304 C88 240 112 208 160 200 C208 208 232 240 236 304 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".55" stroke-width="2.5"/>
+<!-- Placas peitorais com runas gravadas -->
+<path d="M118 220 Q160 210 202 220 L198 270 Q160 280 122 270 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
+<path d="M118 220 Q160 210 202 220" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="1.5" fill="none"/>
+<!-- Runas gravadas no peito (brilhando) -->
+<g filter="url(#sssglow)">
+  <text x="160" y="246" font-family="serif" font-size="24" fill="#2ee6a8" text-anchor="middle">ᚠ</text>
+  <text x="140" y="262" font-family="serif" font-size="16" fill="#2ee6a8" text-anchor="middle">ᛟ</text>
+  <text x="180" y="262" font-family="serif" font-size="16" fill="#2ee6a8" text-anchor="middle">ᚱ</text>
+</g>
+<!-- Ombreiras imponentes -->
+<path d="M78 220 q-12 -22 4 -40 l26 6 q-6 16 -4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
+<path d="M242 220 q12 -22 -4 -40 l-26 6 q6 16 4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
+<path d="M82 210 l-6 -18 M238 210 l6 -18" stroke="#2ee6a8" stroke-opacity=".7" stroke-width="1.5" opacity=".8"/>
+<!-- Cristas nas ombreiras -->
+<path d="M82 184 l-4 -14 l8 -2 l-2 -12 l10 4 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="1.2"/>
+<path d="M238 184 l4 -14 l-8 -2 l2 -12 l-10 4 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="1.2"/>
+<!-- Braçadeiras com runas -->
+<path d="M78 250 l-10 54 l14 6 l10 -54 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
+<path d="M242 250 l10 54 l-14 6 l-10 -54 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
+<text x="72" y="276" font-family="serif" font-size="12" fill="#2ee6a8" text-anchor="middle" filter="url(#sssglow)">ᛗ</text>
+<text x="248" y="276" font-family="serif" font-size="12" fill="#2ee6a8" text-anchor="middle" filter="url(#sssglow)">ᛉ</text>
+<!-- Gorjeira -->
+<path d="M124 190 Q160 180 196 190 L196 206 Q160 214 124 206 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
+<!-- Cabeça sombria -->
+<ellipse cx="160" cy="156" rx="28" ry="32" fill="#0d1210" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="2"/>
+<!-- Máscara arcana -->
+<path d="M140 148 Q160 140 180 148 L180 170 Q160 178 140 170 Z" fill="#050706" stroke="#2ee6a8" stroke-opacity=".7" stroke-width="1.5"/>
+<!-- OLHOS ARCANE BRILHANTES -->
+<ellipse cx="150" cy="158" rx="5" ry="4" fill="#050706"/>
+<ellipse cx="170" cy="158" rx="5" ry="4" fill="#050706"/>
+<circle cx="150" cy="158" r="4.5" fill="url(#sssCore)" filter="url(#sssglow)"/>
+<circle cx="170" cy="158" r="4.5" fill="url(#sssCore)" filter="url(#sssglow)"/>
+<circle cx="150" cy="158" r="1.5" fill="#fff" opacity=".95"/>
+<circle cx="170" cy="158" r="1.5" fill="#fff" opacity=".95"/>
+<!-- Boca/máscara -->
+<path d="M148 172 l24 0" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="1.2"/>
+<path d="M152 176 l16 0" stroke="#2ee6a8" stroke-opacity=".4" stroke-width="1"/>
+<!-- Chamas nos ombros -->
+<path d="M100 200 C94 180 104 168 98 152 C112 166 108 184 104 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
+<path d="M220 200 C226 180 216 168 222 152 C208 166 212 184 216 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
+<!-- COROA ARCANA FLUTUANTE -->
+<g filter="url(#sssglow)">
+  <path d="M124 94 Q124 70 132 76 L140 64 L148 78 L160 50 L172 78 L180 64 L188 76 Q196 70 196 94 Q160 104 124 94 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
+  <path d="M124 94 Q160 104 196 94" stroke="#2ee6a8" stroke-width="2" fill="none"/>
+  <!-- Gemas arcane -->
+  <circle cx="132" cy="72" r="4" fill="url(#sssCore)"/>
+  <circle cx="148" cy="60" r="4" fill="url(#sssCore)"/>
+  <circle cx="160" cy="46" r="6" fill="url(#sssCore)"/>
+  <circle cx="172" cy="60" r="4" fill="url(#sssCore)"/>
+  <circle cx="188" cy="72" r="4" fill="url(#sssCore)"/>
+</g>
+<!-- Orbe arcane nas mãos -->
+<circle cx="160" cy="248" r="18" fill="url(#sssCore)" filter="url(#sssglow)" opacity=".95"/>
+<circle cx="160" cy="248" r="8" fill="#eafff5" opacity=".95"/>
+<circle cx="158" cy="246" r="3" fill="#fff"/>
+<!-- Mãos -->
+<path d="M142 248 q-8 2 -10 16 q12 -4 20 2 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="1.5"/>
+<path d="M178 248 q8 2 10 16 q-12 -4 -20 2 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="1.5"/>
+<!-- Partículas arcane flutuantes -->
+<g fill="#a4ffe0" opacity=".8" filter="url(#sssglow)">
+  <circle cx="100" cy="140" r="2"/><circle cx="220" cy="140" r="2"/>
+  <circle cx="110" cy="270" r="1.5"/><circle cx="210" cy="270" r="1.5"/>
+  <circle cx="130" cy="110" r="1.5"/><circle cx="190" cy="110" r="1.5"/>
+  <circle cx="90" cy="190" r="1.8"/><circle cx="230" cy="190" r="1.8"/>
 </g>`);}
 };
 
-/* ================= ANÁLISE DO BACKUP ================= */
 function validar(obj){
   if(!obj||typeof obj!=='object'||Array.isArray(obj))return 'O arquivo não contém um objeto JSON.';
   if(!obj.meta||obj.meta.app!=='fluxo')return 'Este JSON não parece um backup do Fluxo (meta.app ≠ "fluxo").';
@@ -558,7 +1047,6 @@ function analisar(d){
   return {patrimonio,investido,vencidas,taxa,rec,desp,ptsP,ptsS,ptsT,ptsD,score};
 }
 
-/* ================= ESTADO / RENDER ================= */
 let state=null;
 const altar=$('#altar'),errBox=$('#errBox'),errMsg=$('#errMsg'),stage=$('#stage');
 const card=$('#card'),medalLetter=$('#medalLetter'),scoreLine=$('#scoreLine'),portrait=$('#portrait'),
@@ -613,7 +1101,6 @@ function mostrarCarta(st){
   stage.scrollIntoView({block:'start'});
 }
 
-/* ================= EXPORTAÇÃO PNG (canvas 1080×1512) ================= */
 const CW=1080,CH=1512;
 const FRAME_COLORS={
   iron:{hi:'#6e675c',lo:'#3a352c'},
@@ -659,10 +1146,9 @@ async function pintarCarta(st){
     document.fonts.load('700 30px Cinzel'),
     document.fonts.load('600 38px "Cormorant Garamond"'),
     document.fonts.load('italic 600 38px "Cormorant Garamond"')
-  ]);}catch(e){/* segue sem bloquear */}
+  ]);}catch(e){/* segue */}
   const cv=document.createElement('canvas');cv.width=CW;cv.height=CH;
   const c=cv.getContext('2d'),rk=st.rank,fc=FRAME_COLORS[rk.frame];
-  // fundo + aura
   c.fillStyle='#070605';c.fillRect(0,0,CW,CH);
   let g=c.createRadialGradient(CW/2,440,80,CW/2,440,780);
   g.addColorStop(0,hexA(rk.aura,.34));g.addColorStop(1,'rgba(0,0,0,0)');
@@ -672,7 +1158,6 @@ async function pintarCarta(st){
   g=c.createRadialGradient(CW/2,CH/2,CH*.3,CW/2,CH/2,CH*.75);
   g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');
   c.fillStyle=g;c.fillRect(0,0,CW,CH);
-  // moldura
   if(rk.frame==='obsidian'){
     roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=16;c.strokeStyle='#191614';c.stroke();
     roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=3;c.strokeStyle='#e8c96a';c.stroke();
@@ -690,7 +1175,6 @@ async function pintarCarta(st){
     const gc=rk.frame==='obsidian'?'#2ee6a8':'#d7263d';
     gemAt(c,CW/2,33,gc);gemAt(c,CW/2,CH-33,gc);gemAt(c,33,CH/2,gc);gemAt(c,CW-33,CH/2,gc);
   }
-  // medalhão
   const my=176;
   c.save();c.shadowColor=rk.aura;c.shadowBlur=30;
   g=c.createRadialGradient(CW/2-26,my-30,10,CW/2,my,86);
@@ -702,29 +1186,24 @@ async function pintarCarta(st){
   c.save();c.shadowColor=rk.aura;c.shadowBlur=18;c.fillStyle='#f6ead0';
   c.fillText(rk.key,CW/2,my+30);c.restore();
   c.font='700 28px Cinzel';c.fillStyle='#c8a95f';
-  c.fillText('· ᛝ ·   PONTUAÇÃO '+st.score+' / 100   · ᛝ ·',CW/2,306);
-  // retrato
+  c.fillText('· ⚜ ·   PONTUAÇÃO '+st.score+' / 100   · ⚜ ·',CW/2,306);
   const ps=580,px=(CW-ps)/2,py=324;
   try{const im=await svgParaImagem(PORTRAITS[rk.key](),ps);c.drawImage(im,px,py,ps,ps);}
   catch(e){c.fillStyle='#0c0a09';c.fillRect(px,py,ps,ps);}
-  // nome do rank
   c.font='900 64px "Cinzel Decorative"';
   const nomeGrad=c.createLinearGradient(0,930,0,1110);
   nomeGrad.addColorStop(0,'#f6e3a5');nomeGrad.addColorStop(.6,'#c9a227');nomeGrad.addColorStop(1,'#8a6d1f');
   const linhasNome=wrapText(c,rk.name,900);let ny=984;
   c.save();c.shadowColor=hexA(rk.aura,.6);c.shadowBlur=22;c.fillStyle=nomeGrad;
   linhasNome.forEach(l=>{c.fillText(l,CW/2,ny);ny+=80;});c.restore();
-  // frase
   c.font='italic 600 38px "Cormorant Garamond"';c.fillStyle='#cfc3a5';
   let fy=(ny-80)+58;
   wrapText(c,rk.phrase,800).forEach(l=>{c.fillText(l,CW/2,fy);fy+=46;});
-  // divisor
   const dy=fy+14;
   c.strokeStyle='rgba(200,169,95,.5)';c.lineWidth=2;
   c.beginPath();c.moveTo(200,dy);c.lineTo(CW/2-46,dy);c.stroke();
   c.beginPath();c.moveTo(CW/2+46,dy);c.lineTo(CW-200,dy);c.stroke();
   c.fillStyle='#c9a227';c.save();c.translate(CW/2,dy);c.rotate(Math.PI/4);c.fillRect(-9,-9,18,18);c.restore();
-  // atributos
   const disc=Math.max(0,10-st.vencidas);
   const linhas=[['OURO',fmtBRL(st.patrimonio)],['TESOURO',fmtBRL(st.investido)],
                 ['HONRA',fmtPct(st.taxa)],['DISCIPLINA',disc+' / 10']];
@@ -738,7 +1217,6 @@ async function pintarCarta(st){
     c.beginPath();c.moveTo(166+kw,ay-9);c.lineTo(CW-166-vw,ay-9);c.stroke();c.setLineDash([]);
     ay+=54;
   });
-  // rodapé
   c.textAlign='center';c.font='600 28px "Cormorant Garamond"';c.fillStyle='#9b8c66';
   c.fillText(`Forjado em ${hojeFmt()}  ·  Série ${st.serie}`,CW/2,CH-66);
   return cv;
@@ -760,7 +1238,6 @@ async function baixarPNG(){
   finally{btnPng.disabled=false;btnPng.textContent='⬇ Baixar carta (PNG)';}
 }
 
-/* ================= UPLOAD / DRAG & DROP ================= */
 function handleFile(file){
   if(!file)return;
   const nomeOk=/\.json$/i.test(file.name),tipoOk=!file.type||file.type==='application/json';
@@ -792,7 +1269,6 @@ btnReforge.addEventListener('click',()=>{
   window.scrollTo({top:0,behavior:reducedMotion?'auto':'smooth'});
 });
 
-/* ================= BRASAS AMBIENTE ================= */
 (function spawnEmbers(){
   if(reducedMotion)return;
   const layer=$('#embers');
