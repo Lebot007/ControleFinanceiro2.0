@@ -381,6 +381,7 @@ const base = defaultState();
 const out = {...base, ...d, settings:{...base.settings, ...(d.settings||{})},
 budgets:{...base.budgets, ...(d.budgets||{})}, goals:{...base.goals, ...(d.goals||{})}};
 ["categories","accounts","cards","transactions","recurrences"].forEach(k=>{ if(!Array.isArray(out[k])) out[k]=[]; });
+out.accounts.forEach(a=>{ if(!a.createdAt) a.createdAt = todayISO(); });
 return out;
 }
 function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(state)); }catch(e){ toast("Não foi possível salvar (armazenamento cheio?).", "err"); } }
@@ -1045,7 +1046,7 @@ if(ov._saving) return;
 ov._saving=true;
 const saveBtn=q("[data-save]"); if(saveBtn) saveBtn.disabled=true;
 const data={name,type:q("#a-type").value,institution:q("#a-inst").value.trim(),initial:getMoney(q("#a-init")),note:q("#a-note").value.trim()};
-if(edit) Object.assign(acc,data); else state.accounts.push({id:uid(),...data});
+if(edit) Object.assign(acc,data); else state.accounts.push({id:uid(),createdAt:todayISO(),...data});
 save(); ov._close(); render(); toast(edit?"Conta atualizada.":"Conta criada.");
 };
 }
@@ -1558,7 +1559,8 @@ const byCat=state.categories.filter(c=>c.type==="despesa").map(c=>{
 const sp=despCyc.filter(t=>t.categoryId===c.id).reduce((s,t)=>s+t.value,0);
 return {c, sp, lim:state.budgets.categories[c.id]||0};
 }).filter(x=>x.sp>0||x.lim>0).sort((a,b)=>b.sp-a.sp);
-const saved=earned-spent;
+const aportes=state.accounts.filter(a=>a.createdAt&&inRange(a.createdAt,cs,ce)).reduce((s,a)=>s+(a.initial||0),0);
+const saved=earned-spent+aportes;
 const nw=netWorth();
 const bar=(val,lim,color)=>{const p=lim?Math.min(100,Math.round(100*val/lim)):0;
 return `<div class="progress ${lim&&val>lim?"over":""}" style="--pc:${color}"><i style="width:${p}%"></i></div>`;};
