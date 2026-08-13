@@ -9,58 +9,88 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <style>
+/* ================================================================
+   1 · DESIGN TOKENS
+================================================================ */
 :root{
-  --ink:#0a0806; --gold:#c9a227; --gold-hi:#e8c96a; --gold-lo:#8a6d1f;
-  --blood:#a4161a; --arcane:#9d4edd; --emerald:#2ee6a8; --parch:#efe6cf;
+  --c-void:#050403; --c-bg:#0c0a08; --c-coal:#141008; --c-panel:#1a1409;
+  --c-wood:#3a2812; --c-bronze:#8a6d1f; --c-gold:#c9a227; --c-gold-hi:#e8c96a; --c-gold-lum:#f6e3a5;
+  --c-silver:#b6c2cd; --c-blood:#a4161a; --c-blood-hi:#d7263d; --c-arcane:#9d4edd; --c-emerald:#2ee6a8;
+  --c-parch:#efe6cf; --c-mute:#bda877; --c-dim:#7f7250;
+  --f-disp:"Cinzel Decorative","Cinzel",serif;
+  --f-ui:"Cinzel",serif;
+  --f-body:"Cormorant Garamond",Georgia,serif;
+  --r-sm:6px; --r-md:12px; --r-lg:18px;
+  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem; --sp-6:1.5rem; --sp-8:2rem;
+  --sh-1:0 10px 30px -12px rgba(0,0,0,.85);
+  --sh-2:0 26px 50px -20px rgba(0,0,0,.9);
+  --gl-gold:0 0 18px -6px rgba(232,201,106,.55);
+  --ez:cubic-bezier(.16,1,.3,1); --ez2:cubic-bezier(.2,.7,.3,1);
+  --t-fast:.18s ease; --t-med:.35s var(--ez2); --t-slow:.8s var(--ez);
+  --aura:#8d8577; /* tema do rank ativo (JS) */
 }
+/* ================================================================
+   2 · RESET
+================================================================ */
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{overflow-x:hidden}
+img{display:block}
+button{font:inherit}
+/* ================================================================
+   3 · BACKGROUND / ATMOSFERA
+================================================================ */
 body{
-  min-height:100vh;color:var(--parch);overflow-x:hidden;
-  font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;
+  min-height:100vh;color:var(--c-parch);font-family:var(--f-body);font-size:18px;
   background:
-    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.09), transparent 60%),
-    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.10), transparent 62%),
+    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.08), transparent 60%),
+    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.09), transparent 62%),
     radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.05), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.013) 0 2px, transparent 2px 7px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 3px, transparent 3px 10px),
     linear-gradient(#0c0a08,#060505 60%,#0b0706);
 }
 .vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
-  background:radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.88) 100%);}
+  background:radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.88) 100%)}
 .fog{position:fixed;inset:-20%;pointer-events:none;z-index:0;opacity:.6;
   background:radial-gradient(40% 30% at 30% 40%, rgba(150,120,200,.04), transparent 70%),
              radial-gradient(35% 28% at 72% 62%, rgba(200,160,80,.035), transparent 70%);
-  animation:fogDrift 46s ease-in-out infinite alternate;}
+  animation:fogDrift 46s ease-in-out infinite alternate}
 @keyframes fogDrift{from{transform:translate(-2%,1%) scale(1)}to{transform:translate(2%,-2%) scale(1.06)}}
 #embers{position:fixed;inset:0;pointer-events:none;z-index:1}
 .ember{position:fixed;bottom:-12px;border-radius:50%;
   background:radial-gradient(circle,#ffd27a 0%,#ff7b2e 45%,rgba(255,90,20,0) 72%);
   animation:emberRise linear infinite;filter:blur(.4px)}
-@keyframes emberRise{
-  0%{transform:translate(0,0) scale(1);opacity:0}
-  8%{opacity:.9}
-  78%{opacity:.55}
+@keyframes emberRise{0%{transform:translate(0,0) scale(1);opacity:0}8%{opacity:.9}78%{opacity:.55}
   100%{transform:translate(var(--dx),-108vh) scale(.35);opacity:0}}
 main,header.top,footer.page{position:relative;z-index:2}
-h1,h2,h3{font-family:"Cinzel Decorative","Cinzel",serif;color:var(--gold-hi);font-weight:700}
-
-/* ============ CABEÇALHO ============ */
+/* ================================================================
+   4 · TIPOGRAFIA
+================================================================ */
+h1,h2,h3{font-family:var(--f-disp);color:var(--c-gold-hi);font-weight:700}
+.ic{width:15px;height:15px;flex:none}
+.ic-lg{width:22px;height:22px}
+/* ================================================================
+   5 · HEADER / BRASÃO / TOCHAS
+================================================================ */
 header.top{max-width:1040px;margin:0 auto;padding:2.6rem 1rem 1rem;
   display:flex;align-items:flex-end;justify-content:center;gap:1.6rem;text-align:center}
 .titles{max-width:720px}
-.coat-of-arms{width:94px;height:94px;margin:0 auto .8rem;display:grid;place-items:center;user-select:none;
-  filter:drop-shadow(0 4px 12px rgba(0,0,0,.75)) drop-shadow(0 0 18px rgba(201,162,39,.45));}
+.coat-of-arms{width:118px;height:118px;margin:0 auto .6rem;user-select:none;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.8)) drop-shadow(0 0 20px rgba(201,162,39,.4));
+  animation:armsIn 1s var(--ez) .15s both}
 .coat-of-arms svg{width:100%;height:100%}
+@keyframes armsIn{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
 h1{font-size:clamp(1.5rem,4.6vw,2.6rem);letter-spacing:.06em;line-height:1.15;
   background:linear-gradient(#f6e3a5,#c9a227 55%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#e8c96a;
-  filter:drop-shadow(0 2px 10px rgba(201,162,39,.35))}
-.tag{font-style:italic;color:#bda877;font-size:1.02rem;margin-top:.35rem}
-.ornament-row{margin-top:.7rem;color:rgba(201,162,39,.55);letter-spacing:.38em;font-size:.8rem;text-indent:.38em;
-  display:flex;justify-content:center;align-items:center;gap:.8em}
-.ornament-row .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.65}
+  filter:drop-shadow(0 2px 10px rgba(201,162,39,.35));animation:riseIn .9s var(--ez) .45s both}
+.tag{font-style:italic;color:var(--c-mute);font-size:1.02rem;margin-top:.35rem;animation:riseIn .9s var(--ez) .6s both}
+.ornament-row{margin-top:.7rem;color:rgba(201,162,39,.55);font-size:.8rem;
+  display:flex;justify-content:center;align-items:center;gap:.8em;animation:riseIn .9s var(--ez) .75s both}
+.ornament-row .dot{width:4px;height:4px;border-radius:50%;background:var(--c-gold);opacity:.65}
+@keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .torch{position:relative;width:22px;height:120px;flex:none;margin-bottom:6px}
 .torch .stick{position:absolute;bottom:0;width:10px;left:6px;height:82px;border-radius:2px;
   background:linear-gradient(#4a2f18,#2a1a0d);box-shadow:inset -2px 0 3px rgba(0,0,0,.5)}
@@ -73,195 +103,370 @@ h1{font-size:clamp(1.5rem,4.6vw,2.6rem);letter-spacing:.06em;line-height:1.15;
   background:radial-gradient(circle at 50% 72%,#fff8d8 0%,#ffd76a 28%,#ff8c2e 58%,#c23a14 82%,rgba(255,90,20,0) 95%);
   filter:drop-shadow(0 0 14px rgba(255,160,60,.95)) drop-shadow(0 -4px 20px rgba(255,120,30,.6));
   animation:flick 1.35s ease-in-out infinite}
-@keyframes flick{
-  0%,100%{transform:translateX(-50%) scale(1) rotate(-2deg)}
+@keyframes flick{0%,100%{transform:translateX(-50%) scale(1) rotate(-2deg)}
   25%{transform:translateX(-53%) scale(.93,1.08) rotate(2.6deg)}
   50%{transform:translateX(-47%) scale(1.05,.95) rotate(-1.8deg)}
   75%{transform:translateX(-50%) scale(.96,1.07) rotate(1.4deg)}}
-
-/* ============ ALTAR ============ */
+/* divisor com espada */
+.sword-divider{display:flex;align-items:center;gap:.8rem;justify-content:center;margin:.4rem auto 1.2rem;max-width:420px}
+.sword-divider .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,162,39,.55))}
+.sword-divider .line:last-child{background:linear-gradient(90deg,rgba(201,162,39,.55),transparent)}
+.sword-divider .ic{width:20px;height:20px;filter:drop-shadow(0 0 6px rgba(232,201,106,.5))}
+/* ================================================================
+   6 · PORTAL DE UPLOAD
+================================================================ */
 main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
-#altar{text-align:center;margin-top:1rem}
-.altar-title{font-size:clamp(1.15rem,3vw,1.6rem);margin-bottom:1.4rem;letter-spacing:.08em}
-.dropzone{position:relative;max-width:560px;min-height:360px;margin:0 auto;cursor:pointer;
-  display:grid;place-items:center;padding:2.4rem 1.6rem;color:var(--gold);
-  background:radial-gradient(70% 60% at 50% 42%, rgba(201,162,39,.05), transparent 75%);
-  transition:transform .25s ease}
-.dropzone:hover{transform:translateY(-2px)}
-.dropzone .arch{position:absolute;left:50%;top:50%;height:98%;transform:translate(-50%,-50%);opacity:.55;pointer-events:none}
-.dropzone.drag .arch{opacity:1}
-.dropzone.drag{background:radial-gradient(70% 60% at 50% 42%, rgba(201,162,39,.12), transparent 75%)}
+#altar{text-align:center;margin-top:.6rem;animation:riseIn 1s var(--ez) .9s both}
+.altar-title{font-size:clamp(1.15rem,3vw,1.6rem);letter-spacing:.08em;margin-bottom:.6rem}
+.portal{position:relative;max-width:600px;min-height:400px;margin:0 auto;cursor:pointer;
+  display:grid;place-items:center;padding:2.6rem 1.8rem;color:var(--c-gold);
+  border-radius:var(--r-lg);outline:none;
+  background:
+    linear-gradient(rgba(10,8,6,.55),rgba(10,8,6,.75)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 3px, transparent 3px 26px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.35) 0 2px, transparent 2px 54px),
+    linear-gradient(#171208,#0d0a06);
+  box-shadow:inset 0 0 0 1px rgba(201,162,39,.22), inset 0 0 80px rgba(0,0,0,.8), var(--sh-2);
+  transition:box-shadow .4s var(--ez2), transform .25s ease}
+.portal:hover{transform:translateY(-2px)}
+.portal::before,.portal::after{content:"";position:absolute;top:8%;bottom:6%;width:26px;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0 2px, transparent 2px 34px),
+    linear-gradient(90deg,#241c10,#3a2d18 45%,#171106);
+  box-shadow:inset 0 0 8px rgba(0,0,0,.8), 0 0 14px rgba(0,0,0,.6)}
+.portal::before{left:10px;border-radius:4px}
+.portal::after{right:10px;border-radius:4px}
+.portal-arch{position:absolute;left:50%;top:4%;height:52%;transform:translateX(-50%);opacity:.6;pointer-events:none;
+  transition:opacity .4s, filter .4s}
+.portal.drag .portal-arch{opacity:1;filter:drop-shadow(0 0 10px rgba(232,201,106,.6))}
+.portal-runes{position:absolute;inset:0;pointer-events:none}
+.portal-runes span{position:absolute;font-size:1rem;color:rgba(201,162,39,.35);
+  text-shadow:0 0 0 transparent;transition:color .35s, text-shadow .35s, transform .35s}
+.portal-runes span:nth-child(1){left:12%;top:26%}.portal-runes span:nth-child(2){left:9%;top:48%}
+.portal-runes span:nth-child(3){left:12%;top:70%}.portal-runes span:nth-child(4){left:20%;top:88%}
+.portal-runes span:nth-child(5){right:12%;top:26%}.portal-runes span:nth-child(6){right:9%;top:48%}
+.portal-runes span:nth-child(7){right:12%;top:70%}.portal-runes span:nth-child(8){right:20%;top:88%}
+.portal.drag .portal-runes span{color:#ffe9a8;text-shadow:0 0 12px rgba(232,201,106,.9);transform:scale(1.15)}
+.portal.drag .portal-runes span:nth-child(2){transition-delay:.05s}.portal.drag .portal-runes span:nth-child(3){transition-delay:.1s}
+.portal.drag .portal-runes span:nth-child(4){transition-delay:.15s}.portal.drag .portal-runes span:nth-child(5){transition-delay:.05s}
+.portal.drag .portal-runes span:nth-child(6){transition-delay:.1s}.portal.drag .portal-runes span:nth-child(7){transition-delay:.15s}
+.portal.drag .portal-runes span:nth-child(8){transition-delay:.2s}
+.portal-sigil{position:absolute;left:50%;top:50%;width:230px;height:230px;transform:translate(-50%,-50%);
+  opacity:.16;pointer-events:none;transition:opacity .4s}
+.portal-sigil svg{width:100%;height:100%;animation:sigilSpin 26s linear infinite}
+.portal.drag .portal-sigil{opacity:.5}
+.portal.drag .portal-sigil svg{animation-duration:7s}
+@keyframes sigilSpin{to{transform:rotate(360deg)}}
+.portal-glow{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .45s;
+  background:radial-gradient(60% 50% at 50% 55%, rgba(232,201,106,.16), transparent 70%)}
+.portal.drag .portal-glow{opacity:1}
+.portal.drag{box-shadow:inset 0 0 0 2px rgba(232,201,106,.65), inset 0 0 90px rgba(0,0,0,.75),
+  0 0 44px -8px rgba(232,201,106,.5), var(--sh-2)}
 .dz-in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:.7rem}
 .dz-in p{font-size:1.15rem;color:#d8c9a3}
 .dz-in .ou{font-style:italic;color:#8f7f58;font-size:.95rem}
-.ornament-line{color:rgba(201,162,39,.4);letter-spacing:.3em;font-size:.8rem;text-indent:.3em;margin-top:.5rem;
+.ornament-line{color:rgba(201,162,39,.4);font-size:.8rem;margin-top:.5rem;
   display:flex;justify-content:center;align-items:center;gap:.5em}
-.ornament-line .dot{width:3px;height:3px;border-radius:50%;background:var(--gold);opacity:.5}
-.altar-note{margin-top:1rem;font-style:italic;color:#7f7250;font-size:.95rem}
-
-/* ============ BOTÕES ============ */
-.btn{display:inline-block;font-family:"Cinzel",serif;font-weight:700;font-size:.8rem;
-  letter-spacing:.14em;text-transform:uppercase;color:#f1e3bd;cursor:pointer;text-decoration:none;
-  background:linear-gradient(#241d13,#141009);border:1px solid var(--gold-lo);
-  padding:.85rem 1.5rem;position:relative;overflow:hidden;transition:box-shadow .25s,border-color .25s,transform .25s}
-.btn::after{content:"";position:absolute;top:0;left:-90%;width:50%;height:100%;transform:skewX(-24deg);
-  background:linear-gradient(90deg,transparent,rgba(255,240,200,.22),transparent);transition:left .6s ease}
-.btn:hover{border-color:var(--gold-hi);box-shadow:0 0 20px -5px rgba(232,201,106,.6);transform:translateY(-1px)}
-.btn:hover::after{left:130%}
-.btn.ghost{background:transparent;border-color:#5b564e;color:#c9b98a}
-.btn.ghost:hover{border-color:#a99c74;box-shadow:0 0 16px -6px rgba(200,180,120,.5)}
-.btn[disabled]{opacity:.55;cursor:wait}
-input[type=file]{display:none}
-
-/* ============ ERRO / TOAST ============ */
-#errBox{display:flex;justify-content:center;margin:1.4rem 0}
-.err-card{max-width:560px;width:100%;text-align:center;padding:1.8rem 1.6rem;
-  border:1px solid #6d1420;background:linear-gradient(#180a0c,#0d0507);
-  box-shadow:0 0 34px -8px rgba(164,22,26,.55), inset 0 0 44px rgba(0,0,0,.6);
-  animation:errShake .4s ease}
-@keyframes errShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}60%{transform:translateX(6px)}}
-.err-rune{display:block;font-size:2.6rem;color:#d7263d;text-shadow:0 0 16px rgba(215,38,61,.8);font-family:"Cinzel Decorative"}
-.err-card h3{color:#e35d6a;margin:.4rem 0 .5rem;letter-spacing:.08em}
-.err-card p{color:#d8b8ad}
-.err-hint{font-style:italic;color:#96756c;font-size:.95rem;margin-top:.5rem}
-.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);z-index:50;max-width:560px;width:92%;
-  padding:.9rem 1.2rem;text-align:center;font-size:1rem;color:#e8d9b0;opacity:0;pointer-events:none;
-  background:linear-gradient(#241d13,#141009);border:1px solid var(--gold-lo);
-  box-shadow:0 10px 30px -10px rgba(0,0,0,.9),0 0 18px -6px rgba(232,201,106,.4);
-  transition:opacity .4s,transform .4s}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-
-/* ============ CARTA FULL-ART ============ */
+.ornament-line .dot{width:3px;height:3px;border-radius:50%;background:var(--c-gold);opacity:.5}
+.altar-note{margin-top:1rem;font-style:italic;color:var(--c-dim);font-size:.95rem}
+/* ================================================================
+   7 · DASHBOARD — PAINEL DO REINO (HUD)
+================================================================ */
 .stage-wrap{display:flex;gap:2.4rem;justify-content:center;align-items:flex-start;flex-wrap:wrap}
-.card-perspective{perspective:1500px}
+.hud{width:min(360px,94vw);position:relative;border-radius:var(--r-md);
+  background:linear-gradient(#161009,#0c0906);
+  box-shadow:inset 0 0 0 1px rgba(201,162,39,.25), inset 0 0 46px rgba(0,0,0,.65), var(--sh-1);
+  padding:1.1rem 1.1rem 1rem;display:flex;flex-direction:column;gap:.8rem}
+.hud::before{content:"";position:absolute;inset:5px;border:1px solid rgba(200,169,95,.22);border-radius:8px;pointer-events:none}
+.hud-head{display:flex;align-items:center;gap:.6rem}
+.hud-head .ic-lg{color:var(--c-gold);filter:drop-shadow(0 0 6px rgba(201,162,39,.5))}
+.hud-head h3{font-size:.98rem;letter-spacing:.12em;flex:1;text-align:left}
+.hud-rankchip{font-family:var(--f-ui);font-weight:700;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+  color:#0b0a08;background:linear-gradient(180deg,var(--rc,#999),color-mix(in srgb,var(--rc,#999) 60%,#000));
+  padding:.32rem .6rem;border-radius:999px;box-shadow:0 0 12px -2px var(--rc,#999), inset 0 1px 0 rgba(255,255,255,.4)}
+.hud-score{position:relative;border-radius:var(--r-sm);padding:.8rem .9rem .9rem;
+  background:linear-gradient(#1d1509,#120c06);box-shadow:inset 0 0 0 1px rgba(201,162,39,.3), inset 0 -14px 24px rgba(0,0,0,.5);
+  display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:.15rem .6rem;align-items:center;
+  transition:transform .3s var(--ez2), box-shadow .3s}
+.hud-score:hover{box-shadow:inset 0 0 0 1px rgba(232,201,106,.55), 0 0 22px -8px rgba(232,201,106,.5), inset 0 -14px 24px rgba(0,0,0,.5)}
+.hs-k{font-family:var(--f-ui);font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:#c8a95f}
+.hs-v{grid-row:1/3;font-family:var(--f-ui);font-weight:900;font-size:2.5rem;line-height:1;color:#f6ead0;
+  text-shadow:0 0 18px var(--aura), 0 2px 6px rgba(0,0,0,.9)}
+.hs-v small{font-size:.9rem;color:#c8a95f;font-weight:700}
+.hud-score .hub-bar{grid-column:1/3}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.hub{position:relative;border-radius:var(--r-sm);padding:.65rem .7rem .7rem;display:flex;flex-direction:column;gap:.3rem;
+  background:linear-gradient(#1b1309,#100b06);box-shadow:inset 0 0 0 1px rgba(201,162,39,.2), inset 0 -12px 20px rgba(0,0,0,.45);
+  transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:box-shadow .3s, transform .05s linear;outline:none}
+.hub:hover,.hub:focus-visible{box-shadow:inset 0 0 0 1px rgba(232,201,106,.5), 0 8px 20px -10px rgba(0,0,0,.9), 0 0 16px -8px var(--aura)}
+.hub .ic{width:16px;height:16px;filter:drop-shadow(0 0 5px rgba(201,162,39,.45));transition:transform .3s var(--ez)}
+.hub:hover .ic{transform:translateY(-1px) scale(1.12)}
+.hub-k{font-family:var(--f-ui);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:#c8a95f}
+.hub-v{font-weight:700;font-size:1.02rem;color:var(--c-parch);text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.hub-bar{display:block;height:5px;border-radius:99px;background:rgba(0,0,0,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.8);overflow:hidden}
+.hub-bar i{display:block;height:100%;border-radius:inherit;transform-origin:left;animation:barIn 1s var(--ez) .2s both;
+  box-shadow:0 0 8px -1px currentColor}
+@keyframes barIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hud-total{font-family:var(--f-ui);font-size:.78rem;letter-spacing:.12em;color:#c8a95f;text-align:center}
+.hud-total b{color:#f6e3a5;font-size:.95rem}
+/* tooltips */
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);
+  width:max-content;max-width:220px;white-space:normal;text-align:center;z-index:40;
+  background:#141008;border:1px solid var(--c-bronze);border-radius:6px;color:var(--c-parch);
+  font:600 .68rem/1.35 var(--f-ui);letter-spacing:.03em;padding:.4rem .6rem;
+  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+/* ================================================================
+   8 · CARTA HERO — CAMADAS 3D + HOLOGRAFIA
+================================================================ */
+.card-scene{perspective:1400px}
+.card-scene.anim{animation:invoke 1.15s var(--ez2) both}
+@keyframes invoke{0%{transform:rotateY(88deg) scale(.7);opacity:0;filter:brightness(2.6) blur(2px)}
+  55%{transform:rotateY(-9deg) scale(1.035);opacity:1}100%{transform:none;filter:none}}
+.card-tilt{will-change:transform;transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
 .card{position:relative;width:min(432px,92vw);aspect-ratio:1080/1512;border-radius:14px;
+  transform-style:preserve-3d;transform:translateZ(0);
   --frame:#6e675c;--frame2:#3a352c;--frameSoft:rgba(110,103,92,.5);--orn:var(--frame);
-  --aura:#8d8577;--medal1:#7a7264;--medal2:#3a352c;
+  --medal1:#7a7264;--medal2:#3a352c;
   background:#0c0a09;border:6px solid var(--frame);
   box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 36px -6px var(--aura),
-    inset 0 0 70px rgba(0,0,0,.78), 0 26px 50px -20px rgba(0,0,0,.9);
-  transition:transform .35s ease}
-.card:hover{transform:translateY(-4px)}
-.card::before{content:"";position:absolute;inset:7px;border:1px solid var(--frameSoft);pointer-events:none;z-index:5;border-radius:8px}
+    inset 0 0 70px rgba(0,0,0,.78), var(--sh-2);
+  transition:transform .35s var(--ez2), box-shadow .45s var(--ez2)}
+.card-tilt:hover .card{transform:translateY(-4px);
+  box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 52px -4px var(--aura),
+    inset 0 0 70px rgba(0,0,0,.78), 0 34px 60px -22px rgba(0,0,0,.95)}
+.card::before{content:"";position:absolute;inset:7px;border:1px solid var(--frameSoft);pointer-events:none;
+  z-index:5;border-radius:8px;transform:translateZ(40px)}
 .card[data-frame="steel"]::before{border:3px double var(--frameSoft)}
 .card[data-frame="gold"]::before{border:2px solid var(--frameSoft);box-shadow:0 0 14px -4px var(--aura)}
 .card[data-frame="obsidian"]{--frame:#17140f;--frame2:#2ee6a8;--frameSoft:rgba(46,230,168,.5);--orn:#2ee6a8;
   animation:obsidianPulse 2.6s ease-in-out infinite}
 @keyframes obsidianPulse{
-  0%,100%{box-shadow:0 0 0 2px #000,0 0 0 5px #0d3a2c,0 0 30px -6px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),0 26px 50px -20px rgba(0,0,0,.9)}
-  50%{box-shadow:0 0 0 2px #000,0 0 0 5px #14563e,0 0 66px -2px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),0 26px 50px -20px rgba(0,0,0,.9)}}
-
-/* arte de fundo (full-art) */
-.art-wrap{position:absolute;inset:0;border-radius:8px;overflow:hidden;z-index:1;background:#0c0a09}
+  0%,100%{box-shadow:0 0 0 2px #000,0 0 0 5px #0d3a2c,0 0 30px -6px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),var(--sh-2)}
+  50%{box-shadow:0 0 0 2px #000,0 0 0 5px #14563e,0 0 66px -2px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),var(--sh-2)}}
+.layer{position:absolute;inset:0;pointer-events:none}
+.layer-art{transform:translateZ(4px)}
+.layer-art .art-par{position:absolute;inset:0;border-radius:8px;overflow:hidden;
+  transform:translate(calc((var(--mx,.5) - .5)*-9px), calc((var(--my,.5) - .5)*-7px)) scale(1.03)}
 .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;
   opacity:0;transition:opacity .9s ease}
 .card.has-art .art{opacity:1;animation:kenburns 18s ease-in-out infinite alternate}
-@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.07)}}
 .art-fallback{position:absolute;left:7%;right:7%;top:15%;bottom:40%;display:grid;place-items:center}
 .card.has-art .art-fallback{display:none}
 .art-fallback svg{height:100%;width:auto;max-width:100%}
-.art-tint{position:absolute;inset:0;background:radial-gradient(90% 70% at 50% 40%,
-  color-mix(in srgb,var(--aura) 13%,transparent), transparent 75%);mix-blend-mode:screen}
-.art-vignette{position:absolute;inset:0;box-shadow:inset 0 0 90px 26px rgba(0,0,0,.78)}
-.art-top{position:absolute;inset:0 0 auto 0;height:32%;
+.layer-atmo{transform:translateZ(12px)}
+.art-tint{position:absolute;inset:0;border-radius:8px;mix-blend-mode:screen;
+  background:radial-gradient(90% 70% at 50% 40%, color-mix(in srgb,var(--aura) 13%,transparent), transparent 75%)}
+.art-vignette{position:absolute;inset:0;border-radius:8px;box-shadow:inset 0 0 90px 26px rgba(0,0,0,.78)}
+.art-top{position:absolute;inset:0 0 auto 0;height:32%;border-radius:8px 8px 0 0;
   background:linear-gradient(rgba(6,5,4,.95),rgba(6,5,4,.55) 55%,transparent)}
-.art-bottom{position:absolute;inset:auto 0 0 0;height:54%;
+.art-bottom{position:absolute;inset:auto 0 0 0;height:54%;border-radius:0 0 8px 8px;
   background:linear-gradient(transparent,rgba(6,5,4,.85) 42%,rgba(6,5,4,.98))}
-
-/* barra superior (medalhão + nome + pontuação) */
-.card-top{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:.7rem;
-  padding:12px 14px 30px}
+.layer-top{transform:translateZ(34px);top:0;left:0;right:0;bottom:auto;
+  display:flex;align-items:center;gap:.7rem;padding:12px 14px 30px}
 .medal{flex:none;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 32% 28%,var(--medal1),var(--medal2));
-  border:3px solid #0b0a08;font-family:"Cinzel Decorative";font-size:1.25rem;color:#f6ead0;
+  border:3px solid #0b0a08;font-family:var(--f-disp);font-size:1.25rem;color:#f6ead0;
   box-shadow:0 0 0 2px var(--frame),0 0 22px 1px var(--aura),inset 0 2px 6px rgba(255,255,255,.28),inset 0 -6px 10px rgba(0,0,0,.5);
   text-shadow:0 0 12px var(--aura)}
+.medal.pop{animation:medalPop .8s var(--ez)}
+@keyframes medalPop{0%{transform:scale(.4);filter:brightness(3)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 .top-name{flex:1;min-width:0;text-align:left}
-.top-name .cls{display:block;font-family:"Cinzel",serif;font-size:.52rem;letter-spacing:.3em;
-  text-transform:uppercase;color:#c8a95f}
-.top-name strong{display:block;font-family:"Cinzel Decorative","Cinzel",serif;font-weight:700;
-  font-size:clamp(.95rem,4.6vw,1.22rem);line-height:1.14;letter-spacing:.03em;
+.top-name .cls{display:block;font-family:var(--f-ui);font-size:.52rem;letter-spacing:.3em;text-transform:uppercase;color:#c8a95f}
+.top-name strong{display:block;font-family:var(--f-disp);font-weight:700;line-height:1.14;letter-spacing:.03em;
+  font-size:clamp(.95rem,4.6vw,1.22rem);
   background:linear-gradient(#f6e3a5,#c9a227 60%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#e8c96a;
   filter:drop-shadow(0 1px 6px rgba(0,0,0,.9)) drop-shadow(0 0 10px color-mix(in srgb,var(--aura) 45%,transparent))}
 .top-score{text-align:right;flex:none}
-.top-score b{display:block;font-family:"Cinzel",serif;font-weight:900;font-size:1.7rem;line-height:1;
-  color:#f6ead0;text-shadow:0 0 16px var(--aura),0 2px 6px rgba(0,0,0,.9)}
-.top-score small{display:block;font-family:"Cinzel",serif;font-size:.48rem;letter-spacing:.3em;color:#c8a95f}
-
-/* painel inferior */
-.card-bottom{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:8px 16px 12px;
-  display:flex;flex-direction:column;gap:.5rem}
-.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;
-  text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.top-score b{display:block;font-family:var(--f-ui);font-weight:900;font-size:1.7rem;line-height:1;color:#f6ead0;
+  text-shadow:0 0 16px var(--aura),0 2px 6px rgba(0,0,0,.9)}
+.top-score small{display:block;font-family:var(--f-ui);font-size:.48rem;letter-spacing:.3em;color:#c8a95f}
+.layer-bottom{transform:translateZ(30px);top:auto;left:0;right:0;bottom:0;
+  padding:8px 16px 12px;display:flex;flex-direction:column;gap:.5rem}
+.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 .attrs{list-style:none;display:flex;flex-direction:column;gap:.34rem;padding:0 .1rem}
 .attrs li{display:flex;align-items:baseline;gap:.5rem}
-.attrs .ico{flex:none;width:15px;height:15px;color:#c8a95f;transform:translateY(2px);
-  filter:drop-shadow(0 0 4px rgba(201,162,39,.5))}
-.attrs .ico svg{width:100%;height:100%;display:block}
-.attrs .k{font-family:"Cinzel",serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f}
+.attrs .ico{flex:none;width:15px;height:15px;color:#c8a95f;transform:translateY(2px);filter:drop-shadow(0 0 4px rgba(201,162,39,.5))}
+.attrs .ico .ic{width:15px;height:15px}
+.attrs .k{font-family:var(--f-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f}
 .attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.45);transform:translateY(-3px)}
-.attrs .v{font-weight:700;color:var(--parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.attrs .v{font-weight:700;color:var(--c-parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .card-foot{font-size:.8rem;font-style:italic;color:#a99a72;letter-spacing:.05em;text-align:center}
-
-/* ornamentos externos */
-.flourish{position:absolute;width:78px;height:78px;color:var(--orn);z-index:6;pointer-events:none;
-  filter:drop-shadow(0 0 5px rgba(0,0,0,.8))}
+.layer-frame{transform:translateZ(44px)}
+.flourish{position:absolute;width:78px;height:78px;color:var(--orn);filter:drop-shadow(0 0 5px rgba(0,0,0,.8))}
 .f-tl{top:-7px;left:-7px}.f-tr{top:-7px;right:-7px;transform:rotate(90deg)}
 .f-br{bottom:-7px;right:-7px;transform:rotate(180deg)}.f-bl{bottom:-7px;left:-7px;transform:rotate(270deg)}
-.gem{position:absolute;width:13px;height:13px;border-radius:50%;display:none;z-index:7;
+.gem{position:absolute;width:13px;height:13px;border-radius:50%;display:none;
   background:radial-gradient(circle at 35% 30%,#fff,var(--aura) 48%,rgba(0,0,0,.9));
-  box-shadow:0 0 12px var(--aura)}
+  box-shadow:0 0 12px var(--aura);transition:box-shadow .3s}
+.card-tilt:hover .gem{box-shadow:0 0 20px var(--aura)}
 .card[data-frame="gold"] .gem,.card[data-frame="obsidian"] .gem{display:block}
-.g1{top:-8px;left:50%;transform:translateX(-50%)}
-.g2{bottom:-8px;left:50%;transform:translateX(-50%)}
-.g3{left:-8px;top:50%;transform:translateY(-50%)}
-.g4{right:-8px;top:50%;transform:translateY(-50%)}
-.card-shine{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:8;border-radius:8px}
+.g1{top:-8px;left:50%;transform:translateX(-50%)}.g2{bottom:-8px;left:50%;transform:translateX(-50%)}
+.g3{left:-8px;top:50%;transform:translateY(-50%)}.g4{right:-8px;top:50%;transform:translateY(-50%)}
+.card-shine{transform:translateZ(50px);overflow:hidden;border-radius:8px}
 .card-shine::before{content:"";position:absolute;top:-60%;left:-90%;width:55%;height:220%;transform:rotate(22deg);
   background:linear-gradient(90deg,transparent,rgba(255,240,200,.17),transparent);transition:left 1s ease}
-.card:hover .card-shine::before{left:135%}
-.card.invoking{animation:invoke 1.15s cubic-bezier(.2,.7,.3,1) both}
-@keyframes invoke{
-  0%{transform:rotateY(88deg) scale(.7);opacity:0;filter:brightness(2.6) blur(2px)}
-  55%{transform:rotateY(-9deg) scale(1.035);opacity:1}
-  100%{transform:rotateY(0) scale(1);filter:brightness(1)}}
-.card-embers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:7;border-radius:8px}
+.card-tilt:hover .card-shine::before{left:135%}
+.layer-holo{transform:translateZ(55px);border-radius:8px;opacity:0;transition:opacity .35s;mix-blend-mode:screen;
+  background:linear-gradient(115deg,rgba(255,190,140,.09),rgba(140,200,255,.07) 40%,rgba(160,255,210,.09) 70%,rgba(255,190,140,.05));
+  -webkit-mask-image:radial-gradient(340px 260px at calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%),#000 0%,transparent 72%);
+  mask-image:radial-gradient(340px 260px at calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%),#000 0%,transparent 72%)}
+.layer-holo::before{content:"";position:absolute;inset:0;mix-blend-mode:overlay;
+  background:radial-gradient(300px 220px at calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%),rgba(255,246,220,.22),transparent 65%)}
+.card-tilt:hover .layer-holo{opacity:1}
+.layer-embers{transform:translateZ(60px);overflow:hidden;border-radius:8px}
 .card-ember{position:absolute;bottom:8px;border-radius:50%;opacity:0;
-  background:radial-gradient(circle,#eafff5 0%,var(--aura) 45%,transparent 75%);
-  animation:cember linear infinite}
+  background:radial-gradient(circle,#eafff5 0%,var(--aura) 45%,transparent 75%);animation:cember linear infinite}
 @keyframes cember{0%{transform:translate(0,0);opacity:0}12%{opacity:.95}100%{transform:translate(var(--dx),-580px);opacity:0}}
+.trail-p{position:absolute;width:4px;height:4px;border-radius:50%;background:#a4ffe0;
+  box-shadow:0 0 8px #2ee6a8;animation:trailFade .8s ease-out forwards}
+@keyframes trailFade{from{opacity:.9;transform:translate(0,0) scale(1)}to{opacity:0;transform:translate(var(--tx,0px),-46px) scale(.3)}}
+.spark{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;z-index:70;
+  box-shadow:0 0 8px currentColor;animation:sparkFly .7s ease-out forwards}
+@keyframes sparkFly{from{opacity:1;transform:translate(0,0) scale(1)}to{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.4)}}
+.card.reforging{animation:reforgeShake .65s var(--ez2)}
+@keyframes reforgeShake{0%{transform:translateY(0);filter:brightness(1)}20%{transform:translate(-3px,1px) rotate(-.6deg);filter:brightness(1.7)}
+  40%{transform:translate(3px,-1px) rotate(.6deg)}60%{transform:translate(-2px,0) rotate(-.4deg);filter:brightness(1.9)}
+  80%{transform:translate(2px,0)}100%{transform:none;filter:brightness(1)}}
+/* ================================================================
+   9 · TEMAS DE RANK (personalidade por classe)
+================================================================ */
+.card[data-rank="D"]{--aura:#8d8577;--medal1:#7a7264;--medal2:#3a352c}
+.card[data-rank="C"]{--aura:#8fa3b8;--medal1:#9aa9b8;--medal2:#46525e}
+.card[data-rank="B"]{--aura:#d7263d;--medal1:#c22f42;--medal2:#4a0d16}
+.card[data-rank="A"]{--aura:#ff7a33;--medal1:#ff8c42;--medal2:#5a2b12}
+.card[data-rank="S"]{--aura:#9d4edd;--medal1:#b06ef0;--medal2:#37135c}
+.card[data-rank="SS"]{--aura:#f2cf6b;--medal1:#ffd97a;--medal2:#7a5a12}
+.card[data-rank="SSS"]{--aura:#2ee6a8;--medal1:#5cffc0;--medal2:#0b4a37}
+/* ================================================================
+   10 · BOTÕES
+================================================================ */
 .actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
-
-/* ============ LEDGER ============ */
-.ledger{width:min(340px,92vw);padding:1.3rem 1.3rem 1.1rem;position:relative;
-  border:1px solid #4a3d22;background:linear-gradient(#141008,#0c0906);
-  box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 14px 34px -18px rgba(0,0,0,.9)}
-.ledger::before{content:"";position:absolute;inset:5px;border:1px solid rgba(200,169,95,.25);pointer-events:none}
-.ledger h3{font-size:1rem;letter-spacing:.1em;margin-bottom:.8rem;text-align:center}
-.ledger ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
-.ledger li{display:flex;align-items:baseline;gap:.5rem;font-size:.98rem}
-.ledger li span{color:#bda877}
-.ledger li i{flex:1;border-bottom:1px dotted rgba(200,169,95,.35);transform:translateY(-3px)}
-.ledger li b{color:var(--parch);font-weight:700}
-.ledger li em{font-style:normal;color:#8fd6a8;font-family:"Cinzel",serif;font-size:.68rem;letter-spacing:.06em}
-.ledger .total{margin-top:.9rem;text-align:center;font-family:"Cinzel",serif;font-size:.85rem;letter-spacing:.12em;color:#c8a95f}
-.ledger .total b{color:#f6e3a5;font-size:1.05rem}
-
+.btn{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--f-ui);font-weight:700;font-size:.8rem;
+  letter-spacing:.14em;text-transform:uppercase;color:#f1e3bd;cursor:pointer;
+  background:linear-gradient(#2a2113,#141009);border:1px solid var(--c-bronze);border-radius:4px;
+  padding:.85rem 1.5rem;position:relative;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 6px 16px -8px rgba(0,0,0,.9);
+  transition:box-shadow .25s,border-color .25s,transform .15s}
+.btn .ic{width:14px;height:14px}
+.btn::after{content:"";position:absolute;top:0;left:-90%;width:50%;height:100%;transform:skewX(-24deg);
+  background:linear-gradient(90deg,transparent,rgba(255,240,200,.22),transparent);transition:left .6s ease}
+.btn:hover{border-color:var(--c-gold-hi);box-shadow:var(--gl-gold), inset 0 1px 0 rgba(255,255,255,.12);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn:hover::after{left:130%}
+.btn.ghost{background:transparent;border-color:#5b564e;color:#c9b98a}
+.btn.ghost:hover{border-color:#a99c74;box-shadow:0 0 16px -6px rgba(200,180,120,.5)}
+.btn[disabled]{opacity:.55;cursor:wait;pointer-events:none}
+.btn.forging{animation:forgePulse .65s var(--ez2)}
+@keyframes forgePulse{0%{box-shadow:0 0 0 0 rgba(255,154,61,.7)}100%{box-shadow:0 0 0 22px rgba(255,154,61,0)}}
+input[type=file]{display:none}
+/* ================================================================
+   11 · ANIMAÇÕES DE ESTADO / INTRO / SUMMON / ERRO
+================================================================ */
+#intro{position:fixed;inset:0;z-index:100;background:var(--c-void);display:grid;place-items:center;
+  pointer-events:none;animation:introOut .55s ease 1.55s forwards}
+@keyframes introOut{to{opacity:0;visibility:hidden}}
+.intro-light{position:absolute;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(246,227,165,.5),rgba(201,162,39,.18) 45%,transparent 70%);
+  animation:lightIn 1.2s var(--ez) both}
+@keyframes lightIn{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+.intro-arms{width:150px;height:150px;position:relative;animation:armsIn .9s var(--ez) .35s both;
+  filter:drop-shadow(0 0 24px rgba(201,162,39,.55))}
+.intro-title{position:absolute;bottom:calc(50% - 130px);font-family:var(--f-disp);color:var(--c-gold-hi);
+  font-size:clamp(1rem,3.4vw,1.6rem);letter-spacing:.1em;animation:riseIn .8s var(--ez) .8s both;
+  text-shadow:0 0 22px rgba(201,162,39,.5)}
+#summon{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(4,3,2,.85);
+  opacity:0;transition:opacity .3s}
+#summon.on{opacity:1}
+.summon-ring{width:170px;height:170px}
+.summon-ring svg{width:100%;height:100%;animation:sigilSpin 5s linear infinite}
+.sr1,.sr2{fill:none;stroke:var(--c-gold);stroke-width:2;stroke-dasharray:6 10;filter:drop-shadow(0 0 8px rgba(232,201,106,.7))}
+.sr2{stroke:var(--c-arcane);stroke-dasharray:3 8}
+.sr-runes text{fill:#e8c96a;font-size:16px;text-anchor:middle;font-family:serif}
+.summon-text{margin-top:1rem;font-family:var(--f-ui);letter-spacing:.28em;text-transform:uppercase;
+  font-size:.75rem;color:var(--c-gold-hi);animation:runeBlink 1s ease-in-out infinite alternate}
+@keyframes runeBlink{from{opacity:.5}to{opacity:1;text-shadow:0 0 14px rgba(232,201,106,.8)}}
+#errBox{display:flex;justify-content:center;margin:1.4rem 0}
+.err-card{max-width:560px;width:100%;text-align:center;padding:1.8rem 1.6rem;border-radius:var(--r-md);
+  border:1px solid #6d1420;background:linear-gradient(#180a0c,#0d0507);
+  box-shadow:0 0 34px -8px rgba(164,22,26,.55), inset 0 0 44px rgba(0,0,0,.6);animation:errShake .4s ease}
+@keyframes errShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}60%{transform:translateX(6px)}}
+.err-rune{display:block;font-size:2.6rem;color:var(--c-blood-hi);text-shadow:0 0 16px rgba(215,38,61,.8);font-family:var(--f-disp)}
+.err-card h3{color:#e35d6a;margin:.4rem 0 .5rem;letter-spacing:.08em}
+.err-card p{color:#d8b8ad}
+.err-hint{font-style:italic;color:#96756c;font-size:.95rem;margin-top:.5rem}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);z-index:95;max-width:560px;width:92%;
+  padding:.9rem 1.2rem;text-align:center;font-size:1rem;color:#e8d9b0;opacity:0;pointer-events:none;border-radius:6px;
+  background:linear-gradient(#241d13,#141009);border:1px solid var(--c-bronze);
+  box-shadow:0 10px 30px -10px rgba(0,0,0,.9),0 0 18px -6px rgba(232,201,106,.4);transition:opacity .4s,transform .4s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* ================================================================
+   12 · PARTÍCULAS (ver #embers, .spark, .trail-p, .card-ember)
+================================================================ */
+/* ================================================================
+   13 · RESPONSIVO
+================================================================ */
 footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:italic;font-size:.92rem}
-
-@media (max-width:560px){
+@media (max-width:900px){.stage-wrap{flex-direction:column;align-items:center}}
+@media (max-width:640px){
   header.top{gap:.8rem}
-  .torch{height:96px}.torch .stick{height:64px}.torch .band{bottom:48px}.torch .wrap{bottom:58px}.torch .flame{bottom:74px}
+  .torch{height:96px;transform:scale(.85)}
+  .torch .stick{height:64px}.torch .band{bottom:48px}.torch .wrap{bottom:58px}.torch .flame{bottom:74px}
+  .portal{min-height:340px;padding:2rem 1.2rem}
+  .portal-runes span:nth-child(n+5){display:none}
+  .top-score b{font-size:1.4rem}
+  .hud-grid{gap:.5rem}
+  .coat-of-arms{width:96px;height:96px}
 }
+@media (hover:none){.layer-holo{display:none}}
+/* ================================================================
+   14 · ACESSIBILIDADE / MOVIMENTO REDUZIDO
+================================================================ */
+.btn:focus-visible,.portal:focus-visible,.hub:focus-visible{outline:2px solid var(--c-gold-hi);outline-offset:3px}
 @media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  #embers{display:none}
+  *,*::before,*::after{animation:none!important;transition:opacity .2s ease!important}
+  #embers,#intro{display:none}
+  .layer-holo{display:none}
   html{scroll-behavior:auto}
 }
 </style>
 </head>
 <body>
+
+<!-- Biblioteca de símbolos SVG (espadas, escudo, coroa, moeda, gema, martelo) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gBlade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8eef4"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#4a525c"/></linearGradient>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
+    <symbol id="i-sword" viewBox="0 0 24 24"><path d="M12 2 L13.8 5.5 V15 H10.2 V5.5 Z" fill="url(#gBlade)"/><path d="M7 15 h10 v2.2 h-10 Z" fill="url(#gGold)"/><path d="M10.8 17.2 h2.4 v3.6 h-2.4 Z" fill="#5a3a1f"/><circle cx="12" cy="22" r="1.6" fill="url(#gGold)"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4.5 3.5 L18 17 M19.5 3.5 L6 17" stroke="url(#gBlade)" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 19.5 l4 -4 M20.5 19.5 l-4 -4 M3.5 15.5 l4 4 M3.5 19.5 l4 -4" stroke="url(#gGold)" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 L20 5 V11 Q20 18 12 22 Q4 18 4 11 V5 Z" fill="none" stroke="url(#gGold)" stroke-width="2"/><path d="M12 6 v11 M8 9.5 h8" stroke="url(#gGold)" stroke-width="1.4"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 17 L4 9 L8.5 12.5 L12 6 L15.5 12.5 L20 9 L20 17 Z" fill="url(#gGold)"/><circle cx="12" cy="14" r="1.7" fill="#a4161a"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="url(#gGold)" stroke-width="2"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="url(#gGold)" stroke-width="1.4"/><path d="M9 5.5 L7.5 4" stroke="url(#gGold)" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path d="M12 3 L20 10 L12 21 L4 10 Z" fill="none" stroke="url(#gGold)" stroke-width="2"/><path d="M4 10 h16 M12 3 l-3 7 3 11 3 -11 -3 -7" stroke="url(#gGold)" stroke-width="1.1"/></symbol>
+    <symbol id="i-hammer" viewBox="0 0 24 24"><path d="M6.5 4 h11 v6 h-11 Z" fill="url(#gBlade)"/><path d="M10.8 10 h2.4 v11 h-2.4 Z" fill="#5a3a1f"/><path d="M6.5 4 h11" stroke="#e8eef4" stroke-width="1"/></symbol>
+  </defs>
+</svg>
+
+<!-- INTRO CINEMATOGRÁFICA -->
+<div id="intro" aria-hidden="true">
+  <div class="intro-light"></div>
+  <svg class="intro-arms" viewBox="0 0 140 140">
+    <g opacity=".95">
+      <g transform="rotate(45 70 70)"><path d="M70 16 L74 25 V96 H66 V25 Z" fill="url(#gBlade)"/><rect x="58" y="96" width="24" height="5" rx="2" fill="url(#gGold)"/><rect x="67" y="101" width="6" height="13" fill="#5a3a1f"/><circle cx="70" cy="116" r="4" fill="url(#gGold)"/></g>
+      <g transform="rotate(-45 70 70)"><path d="M70 16 L74 25 V96 H66 V25 Z" fill="url(#gBlade)"/><rect x="58" y="96" width="24" height="5" rx="2" fill="url(#gGold)"/><rect x="67" y="101" width="6" height="13" fill="#5a3a1f"/><circle cx="70" cy="116" r="4" fill="url(#gGold)"/></g>
+    </g>
+    <path d="M70 34 L104 44 V76 Q104 104 70 118 Q36 104 36 76 V44 Z" fill="#0c0a08" stroke="url(#gGold)" stroke-width="3"/>
+    <path d="M70 44 L73 50 V88 H67 V50 Z" fill="url(#gBlade)"/><rect x="60" y="88" width="20" height="4" rx="2" fill="url(#gGold)"/>
+  </svg>
+  <div class="intro-title">Fluxo · Grimório das Fortunas</div>
+</div>
+
 <div class="fog" aria-hidden="true"></div>
 <div id="embers" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>
@@ -270,34 +475,25 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   <div class="torch" aria-hidden="true"><div class="flame"></div><div class="wrap"></div><div class="band"></div><div class="stick"></div></div>
   <div class="titles">
     <div class="coat-of-arms" aria-hidden="true">
-      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#f6e3a5"/><stop offset=".45" stop-color="#c9a227"/><stop offset="1" stop-color="#5a4410"/>
-          </linearGradient>
-          <linearGradient id="bladeGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#f0f4f8"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#3a4048"/>
-          </linearGradient>
-          <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#a87720"/>
-          </linearGradient>
-          <filter id="coaGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
+          <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e3a5"/><stop offset=".45" stop-color="#c9a227"/><stop offset="1" stop-color="#5a4410"/></linearGradient>
+          <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#a87720"/></linearGradient>
         </defs>
-        <path d="M60 12 L100 24 L100 62 Q100 96 60 114 Q20 96 20 62 L20 24 Z" fill="url(#shieldGrad)" stroke="#3a2810" stroke-width="2.5"/>
-        <path d="M60 20 L94 30 L94 62 Q94 90 60 106 Q26 90 26 62 L26 30 Z" fill="none" stroke="#6b4e18" stroke-width="1.2" opacity=".8"/>
-        <path d="M26 52 H94 M26 72 H94" stroke="#6b4e18" stroke-width="1" opacity=".5"/>
-        <g filter="url(#coaGlow)">
-          <path d="M42 22 L42 14 L50 20 L60 8 L70 20 L78 14 L78 22 Z" fill="url(#crownGrad)" stroke="#5a4410" stroke-width="1.5"/>
-          <circle cx="50" cy="18" r="2" fill="#d7263d"/><circle cx="60" cy="12" r="2" fill="#2e6fd0"/><circle cx="70" cy="18" r="2" fill="#d7263d"/>
+        <g opacity=".9">
+          <g transform="rotate(45 70 70)"><path d="M70 16 L74 25 V96 H66 V25 Z" fill="url(#gBlade)"/><rect x="58" y="96" width="24" height="5" rx="2" fill="url(#gGold)"/><rect x="67" y="101" width="6" height="13" fill="#5a3a1f"/><circle cx="70" cy="116" r="4" fill="url(#gGold)"/></g>
+          <g transform="rotate(-45 70 70)"><path d="M70 16 L74 25 V96 H66 V25 Z" fill="url(#gBlade)"/><rect x="58" y="96" width="24" height="5" rx="2" fill="url(#gGold)"/><rect x="67" y="101" width="6" height="13" fill="#5a3a1f"/><circle cx="70" cy="116" r="4" fill="url(#gGold)"/></g>
         </g>
-        <path d="M60 32 L64 38 V82 H56 V38 Z" fill="url(#bladeGrad)" stroke="#1a1d22" stroke-width="1.2"/>
-        <path d="M60 36 V80" stroke="#d0d7e0" stroke-width=".8" opacity=".7"/>
-        <rect x="48" y="82" width="24" height="4" rx="2" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
-        <rect x="57" y="86" width="6" height="14" rx="2" fill="#5a3a1f" stroke="#1a1d22" stroke-width="1"/>
-        <circle cx="60" cy="103" r="4" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
-        <path d="M34 50 l4 -5 4 5 -4 5 Z M78 50 l4 -5 4 5 -4 5 Z M34 78 l4 -5 4 5 -4 5 Z M78 78 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
+        <path d="M70 22 L110 34 V72 Q110 106 70 124 Q30 106 30 72 V34 Z" fill="url(#shieldGrad)" stroke="#3a2810" stroke-width="2.5"/>
+        <path d="M70 30 L104 40 V72 Q104 100 70 116 Q36 100 36 72 V40 Z" fill="none" stroke="#6b4e18" stroke-width="1.2" opacity=".8"/>
+        <g><path d="M52 32 L52 24 L60 30 L70 18 L80 30 L88 24 L88 32 Z" fill="url(#crownGrad)" stroke="#5a4410" stroke-width="1.5"/>
+        <circle cx="60" cy="28" r="2" fill="#d7263d"/><circle cx="70" cy="22" r="2" fill="#2e6fd0"/><circle cx="80" cy="28" r="2" fill="#d7263d"/></g>
+        <path d="M70 42 L74 48 V92 H66 V48 Z" fill="url(#gBlade)" stroke="#1a1d22" stroke-width="1.2"/>
+        <path d="M70 46 V90" stroke="#d0d7e0" stroke-width=".8" opacity=".7"/>
+        <rect x="58" y="92" width="24" height="4" rx="2" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
+        <rect x="67" y="96" width="6" height="14" rx="2" fill="#5a3a1f" stroke="#1a1d22" stroke-width="1"/>
+        <circle cx="70" cy="113" r="4" fill="#8a94a0" stroke="#1a1d22" stroke-width="1"/>
+        <path d="M44 60 l4 -5 4 5 -4 5 Z M88 60 l4 -5 4 5 -4 5 Z M44 88 l4 -5 4 5 -4 5 Z M88 88 l4 -5 4 5 -4 5 Z" fill="#a87720"/>
       </svg>
     </div>
     <h1>Fluxo · Grimório das Fortunas</h1>
@@ -310,14 +506,19 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
 <main>
   <section id="altar">
     <h2 class="altar-title">Entregai o Tomo de Vossas Finanças</h2>
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Entregar backup JSON do Fluxo">
-      <svg class="arch" viewBox="0 0 320 400" aria-hidden="true">
-        <path d="M24 392 V170 Q24 52 160 24 Q296 52 296 170 V392" fill="none" stroke="currentColor" stroke-width="3"/>
-        <path d="M40 392 V176 Q40 66 160 42 Q280 66 280 176 V392" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".6"/>
-        <circle cx="160" cy="22" r="6" fill="currentColor"/>
-        <path d="M160 22 l-11 -13 M160 22 l11 -13" stroke="currentColor" stroke-width="2" fill="none"/>
-        <path d="M24 392 h272" stroke="currentColor" stroke-width="3"/>
+    <div class="sword-divider" aria-hidden="true"><span class="line"></span><svg class="ic"><use href="#i-sword"/></svg><span class="line"></span></div>
+    <div class="portal" id="dropzone" tabindex="0" role="button" aria-label="Entregar backup JSON do Fluxo">
+      <svg class="portal-arch" viewBox="0 0 320 210" aria-hidden="true">
+        <path d="M24 206 V120 Q24 40 160 14 Q296 40 296 120 V206" fill="none" stroke="currentColor" stroke-width="3"/>
+        <path d="M40 206 V126 Q40 54 160 32 Q280 54 280 126 V206" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".6"/>
+        <circle cx="160" cy="14" r="6" fill="currentColor"/>
+        <path d="M160 14 l-11 -12 M160 14 l11 -12" stroke="currentColor" stroke-width="2" fill="none"/>
       </svg>
+      <div class="portal-runes" aria-hidden="true"><span>ᚠ</span><span>ᚢ</span><span>ᚦ</span><span>ᚨ</span><span>ᚱ</span><span>ᚲ</span><span>ᚷ</span><span>ᚹ</span></div>
+      <div class="portal-sigil" aria-hidden="true">
+        <svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" fill="none" stroke="#e8c96a" stroke-width="1.5" stroke-dasharray="6 10"/><circle cx="100" cy="100" r="64" fill="none" stroke="#e8c96a" stroke-width="1" stroke-dasharray="3 8"/><path d="M100 58 L104 68 V128 H96 V68 Z" fill="#e8c96a"/><rect x="86" y="128" width="28" height="5" rx="2" fill="#e8c96a"/></svg>
+      </div>
+      <div class="portal-glow" aria-hidden="true"></div>
       <div class="dz-in">
         <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
           <path d="M14 10 h30 a6 6 0 0 1 6 6 v34 a4 4 0 0 0 4 4 H22 a6 6 0 0 1 -6 -6 Z" fill="#e7d7ac" stroke="#6b5a33" stroke-width="2.5"/>
@@ -326,7 +527,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
         </svg>
         <p>Arrastai e soltai aqui o pergaminho <strong>.json</strong> exportado pelo Fluxo</p>
         <span class="ou">— ou —</span>
-        <label class="btn" for="fileInput">📜 Entregar backup (.json)</label>
+        <label class="btn" for="fileInput"><svg class="ic"><use href="#i-scrollx"/></svg>📜 Entregar backup (.json)</label>
         <input type="file" id="fileInput" accept=".json,application/json">
         <div class="ornament-line" aria-hidden="true">⚜<span class="dot"></span>⚔<span class="dot"></span>⚜</div>
       </div>
@@ -346,110 +547,92 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   <section id="stage" hidden>
     <div class="stage-wrap">
       <div>
-        <div class="card-perspective">
-          <article class="card" id="card" data-rank="D" data-frame="iron" aria-label="Carta de rank do Fluxo">
-            <div class="art-wrap">
-              <img class="art" id="artImg" alt="">
-              <div class="art-fallback" id="artFallback" aria-hidden="true"></div>
-              <div class="art-tint"></div>
-              <div class="art-vignette"></div>
-              <div class="art-top"></div>
-              <div class="art-bottom"></div>
-            </div>
-            <svg class="flourish f-tl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-            <svg class="flourish f-tr" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-            <svg class="flourish f-br" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-            <svg class="flourish f-bl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-            <span class="gem g1"></span><span class="gem g2"></span><span class="gem g3"></span><span class="gem g4"></span>
-            <header class="card-top">
-              <div class="medal"><span id="medalLetter">D</span></div>
-              <div class="top-name">
-                <span class="cls">Classe · Rank <span id="rankKey">D</span></span>
-                <strong id="rankName"></strong>
+        <div class="card-scene" id="cardScene">
+          <div class="card-tilt" id="cardTilt">
+            <article class="card" id="card" data-rank="D" data-frame="iron" aria-label="Carta de rank do Fluxo">
+              <div class="layer layer-art"><div class="art-par">
+                <img class="art" id="artImg" alt="">
+                <div class="art-fallback" id="artFallback" aria-hidden="true"></div>
+              </div></div>
+              <div class="layer layer-atmo"><div class="art-tint"></div><div class="art-vignette"></div><div class="art-top"></div><div class="art-bottom"></div></div>
+              <header class="layer layer-top">
+                <div class="medal" id="medalBox"><span id="medalLetter">D</span></div>
+                <div class="top-name">
+                  <span class="cls">Classe · Rank <span id="rankKey">D</span></span>
+                  <strong id="rankName"></strong>
+                </div>
+                <div class="top-score"><b id="scoreVal">0</b><small>PONTUAÇÃO</small></div>
+              </header>
+              <footer class="layer layer-bottom">
+                <p class="phrase" id="phrase"></p>
+                <ul class="attrs">
+                  <li><span class="ico"><svg class="ic"><use href="#i-coin"/></svg></span><span class="k">Ouro</span><i class="dots"></i><span class="v" id="vOuro"></span></li>
+                  <li><span class="ico"><svg class="ic"><use href="#i-gem"/></svg></span><span class="k">Tesouro</span><i class="dots"></i><span class="v" id="vTesouro"></span></li>
+                  <li><span class="ico"><svg class="ic"><use href="#i-shield"/></svg></span><span class="k">Honra</span><i class="dots"></i><span class="v" id="vHonra"></span></li>
+                  <li><span class="ico"><svg class="ic"><use href="#i-swords"/></svg></span><span class="k">Disciplina</span><i class="dots"></i><span class="v" id="vDisc"></span></li>
+                </ul>
+                <div class="card-foot" id="cardFoot"></div>
+              </footer>
+              <div class="layer layer-frame">
+                <svg class="flourish f-tl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+                <svg class="flourish f-tr" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+                <svg class="flourish f-br" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+                <svg class="flourish f-bl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+                <span class="gem g1"></span><span class="gem g2"></span><span class="gem g3"></span><span class="gem g4"></span>
               </div>
-              <div class="top-score"><b id="scoreVal">0</b><small>PONTUAÇÃO</small></div>
-            </header>
-            <footer class="card-bottom">
-              <p class="phrase" id="phrase"></p>
-              <ul class="attrs">
-                <li><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M9 6.5 l-1.5 -1.5"/></svg></span><span class="k">Ouro</span><i class="dots"></i><span class="v" id="vOuro"></span></li>
-                <li><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 L20 10 L12 21 L4 10 Z"/><path d="M4 10 h16 M12 3 l-3 7 3 11 3 -11 -3 -7"/></svg></span><span class="k">Tesouro</span><i class="dots"></i><span class="v" id="vTesouro"></span></li>
-                <li><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 L20 7 V12 Q20 19 12 21 Q4 19 4 12 V7 Z"/><path d="M12 8 v6 M9 11 h6"/></svg></span><span class="k">Honra</span><i class="dots"></i><span class="v" id="vHonra"></span></li>
-                <li><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4 L19 18 M19 4 L5 18"/><path d="M3.5 7 L7 3.5 M20.5 7 L17 3.5"/><path d="M19 18 l2 3 M5 18 l-2 3"/></svg></span><span class="k">Disciplina</span><i class="dots"></i><span class="v" id="vDisc"></span></li>
-              </ul>
-              <div class="card-foot" id="cardFoot"></div>
-            </footer>
-            <span class="card-shine" aria-hidden="true"></span>
-            <div class="card-embers" id="cardEmbers" aria-hidden="true"></div>
-          </article>
+              <span class="layer card-shine" aria-hidden="true"></span>
+              <div class="layer layer-holo" aria-hidden="true"></div>
+              <div class="layer layer-embers" id="cardEmbers" aria-hidden="true"></div>
+            </article>
+          </div>
         </div>
         <div class="actions">
-          <button class="btn" id="btnPng" type="button">⬇ Baixar carta (PNG)</button>
-          <button class="btn ghost" id="btnReforge" type="button">↺ Reforjar</button>
+          <button class="btn" id="btnPng" type="button"><svg class="ic"><use href="#i-sword"/></svg>Baixar carta (PNG)</button>
+          <button class="btn ghost" id="btnReforge" type="button"><svg class="ic"><use href="#i-hammer"/></svg>Reforjar</button>
         </div>
       </div>
-      <aside class="ledger" id="ledger" aria-label="Detalhes do julgamento"></aside>
+      <aside class="hud" id="ledger" aria-label="Painel do Reino"></aside>
     </div>
   </section>
 </main>
 
 <footer class="page">Fluxo · Grimório das Fortunas — extensão decorativa que lê apenas backups locais do tomo principal.</footer>
 
+<div id="summon" hidden aria-hidden="true">
+  <div style="display:grid;place-items:center">
+    <div class="summon-ring"><svg viewBox="0 0 200 200"><circle class="sr1" cx="100" cy="100" r="86"/><circle class="sr2" cx="100" cy="100" r="64"/><g class="sr-runes"><text x="100" y="26">ᚠ</text><text x="174" y="70">ᛟ</text><text x="174" y="150">ᚱ</text><text x="100" y="192">ᛗ</text><text x="26" y="150">ᛉ</text><text x="26" y="70">ᛏ</text></g></svg></div>
+    <p class="summon-text">Invocando o julgamento…</p>
+  </div>
+</div>
+
 <script>
 (function(){
 'use strict';
 /* =====================================================================
-   ⚔ RETRATOS DOS RANKS — COLOQUE SUAS IMAGENS NA MESMA PASTA DESTE HTML
-   ---------------------------------------------------------------------
-   Nomeie exatamente assim (jpg ou png; edite a extensão se preciso):
-     rankD.jpg · rankC.jpg · rankB.jpg · rankA.jpg · rankS.jpg · rankSS.jpg · rankSSS.jpg
-   Se a imagem não existir, o retrato vetorial (SVG) entra como reserva.
-   ---------------------------------------------------------------------
-   PROMPTS PRONTOS (IA de imagem — Midjourney/DALL·E/Flux), estilo único:
-   BASE: "Epic dark fantasy medieval painterly illustration, dramatic
-   chiaroscuro, rich muted palette, vertical trading-card FULL ART,
-   character centered, atmospheric depth, highly detailed, NO text,
-   NO border, NO frame, NO watermark." + prompt do rank:
-   D  : "a poor indebted peasant in a torn hooded cloak, hunched, holding an
-        empty wooden alms bowl with two copper coins, rainy muddy village at
-        dusk, desaturated browns, somber mood"
-   C  : "a young wandering squire in stitched leather gambeson, cracked
-        wooden shield with iron boss, broken sword in hand, determined eyes,
-        misty battlefield road, steel-blue palette"
-   B  : "a sinister knight in blackened full plate armor, closed helm with
-        glowing crimson eyes through the visor, crimson plume, abyssal fog,
-        blood-red rim light"
-   A  : "a veteran iron warrior, scarred face and grey beard, red war cape,
-        two crossed greatswords behind his shoulders, forge-fire orange glow,
-        imposing stance"
-   S  : "a mysterious shadow lord in elegant purple cloak with gold trim,
-        hooded, glowing violet eyes, small arcane medallion in pale hands,
-        floating runes, moonlit night"
-   SS : "a crowned king, golden crown set with rubies and a sapphire, crimson
-        royal mantle trimmed with white ermine, golden scepter, regal grey
-        beard, sun rays behind"
-   SSS: "an arcane emperor in black ornate armor engraved with glowing
-        emerald runes, floating emerald crown of flames above his head,
-        glowing green eyes, emerald fire and particles, obsidian hall"
-   Tamanho sugerido: 1024×1434 (ou maior), retrato vertical.
+   ⚔ RETRATOS — imagens rankD.jpg … rankSSS.jpg na mesma pasta deste HTML.
+   Sem arquivo → retrato vetorial (SVG) de reserva.
+   PROMPTS (IA de imagem) — BASE + rank:
+   BASE: "Epic dark fantasy medieval painterly illustration, dramatic chiaroscuro,
+   rich muted palette, vertical trading-card FULL ART, character centered,
+   atmospheric depth, highly detailed, NO text, NO border, NO watermark."
+   D: poor indebted peasant, torn hooded cloak, empty alms bowl, rainy dusk.
+   C: young squire, leather gambeson, cracked wooden shield, broken sword.
+   B: sinister knight, blackened plate, glowing crimson eyes, abyssal fog.
+   A: veteran warrior, scar + grey beard, red cape, crossed greatswords.
+   S: shadow lord, purple cloak gold trim, violet eyes, arcane medallion.
+   SS: crowned king, ruby/sapphire crown, ermine mantle, golden scepter.
+   SSS: arcane emperor, black armor, glowing emerald runes, flame crown.
 ===================================================================== */
-const RANK_IMAGES={
-  D:'rankD.jpg',
-  C:'rankC.jpg',
-  B:'rankB.jpg',
-  A:'rankA.jpg',
-  S:'rankS.jpg',
-  SS:'rankSS.jpg',
-  SSS:'rankSSS.jpg'
-};
+const RANK_IMAGES={D:'rankD.jpg',C:'rankC.jpg',B:'rankB.jpg',A:'rankA.jpg',S:'rankS.jpg',SS:'rankSS.jpg',SSS:'rankSSS.jpg'};
 
 const $=s=>document.querySelector(s);
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 const fmtBRL=c=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100);
 const fmtPct=t=>(t*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 const hojeISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const hojeFmt=()=>new Date().toLocaleDateString('pt-BR');
-const RUNES='⚜⚔♛♝♞';
+const RUNES='⚜♛♝♞';
 function serieRunica(){let s='';for(let i=0;i<2;i++)s+=RUNES[Math.floor(Math.random()*RUNES.length)];return s+'-'+(100+Math.floor(Math.random()*900));}
 
 const RANKS={
@@ -462,16 +645,11 @@ const RANKS={
   SSS:{key:'SSS',name:'Imperador Arcano',phrase:'“O arcano flui: meu império é de ouro eterno.”',aura:'#2ee6a8',frame:'obsidian',medal:['#5cffc0','#0b4a37']}
 };
 function rankFor(score){
-  if(score>=95)return RANKS.SSS;
-  if(score>=85)return RANKS.SS;
-  if(score>=70)return RANKS.S;
-  if(score>=55)return RANKS.A;
-  if(score>=40)return RANKS.B;
-  if(score>=20)return RANKS.C;
-  return RANKS.D;
+  if(score>=95)return RANKS.SSS;if(score>=85)return RANKS.SS;if(score>=70)return RANKS.S;
+  if(score>=55)return RANKS.A;if(score>=40)return RANKS.B;if(score>=20)return RANKS.C;return RANKS.D;
 }
 
-/* ============ RETRATOS SVG (reserva, caso a imagem do rank não exista) ============ */
+/* ---------- retratos SVG de reserva ---------- */
 function molduraRetrato(key,defs,corpo){
   const aura=RANKS[key].aura, nome=RANKS[key].name;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Retrato: ${nome}">
@@ -528,20 +706,16 @@ C(){return molduraRetrato('C',
 <path d="M144 142 q6 -2 12 0 M164 142 q6 -2 12 0" stroke="#3a2812" stroke-width="1.5" fill="none"/>
 <path d="M160 150 v10 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
 <path d="M152 170 q8 3 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
-<g transform="translate(90, 196)">
-  <path d="M0 20 Q-6 52 0 88 Q40 108 80 88 Q86 52 80 20 Q40 6 0 20 Z" fill="url(#cWood)" stroke="#1a1208" stroke-width="3"/>
-  <path d="M20 14 V94 M40 10 V96 M60 14 V94" stroke="#1a1208" stroke-width="1" opacity=".6"/>
-  <circle cx="20" cy="34" r="3" fill="url(#cSteel)"/><circle cx="40" cy="30" r="3" fill="url(#cSteel)"/><circle cx="60" cy="34" r="3" fill="url(#cSteel)"/>
-  <path d="M40 30 l-6 24 l4 14 l-2 20" stroke="#1a1208" stroke-width="2" fill="none"/>
-  <path d="M40 48 l8 -12 8 12 -8 12 Z" fill="#8a1a1a" stroke="#1a1208" stroke-width="1"/>
-</g>
-<g transform="translate(230, 180)">
-  <rect x="-6" y="80" width="12" height="32" rx="3" fill="#3a2812" stroke="#1a1208" stroke-width="1.5"/>
-  <rect x="-18" y="70" width="36" height="10" rx="2" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
-  <circle cx="0" cy="116" r="7" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
-  <path d="M-4 70 L-5 40 L0 20 L5 40 L4 70 Z" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
-  <path d="M-3 42 l3 -4 4 3" stroke="#1a1208" stroke-width="1.5" fill="none"/>
-</g>
+<g transform="translate(90, 196)"><path d="M0 20 Q-6 52 0 88 Q40 108 80 88 Q86 52 80 20 Q40 6 0 20 Z" fill="url(#cWood)" stroke="#1a1208" stroke-width="3"/>
+<path d="M20 14 V94 M40 10 V96 M60 14 V94" stroke="#1a1208" stroke-width="1" opacity=".6"/>
+<circle cx="20" cy="34" r="3" fill="url(#cSteel)"/><circle cx="40" cy="30" r="3" fill="url(#cSteel)"/><circle cx="60" cy="34" r="3" fill="url(#cSteel)"/>
+<path d="M40 30 l-6 24 l4 14 l-2 20" stroke="#1a1208" stroke-width="2" fill="none"/>
+<path d="M40 48 l8 -12 8 12 -8 12 Z" fill="#8a1a1a" stroke="#1a1208" stroke-width="1"/></g>
+<g transform="translate(230, 180)"><rect x="-6" y="80" width="12" height="32" rx="3" fill="#3a2812" stroke="#1a1208" stroke-width="1.5"/>
+<rect x="-18" y="70" width="36" height="10" rx="2" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="116" r="7" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<path d="M-4 70 L-5 40 L0 20 L5 40 L4 70 Z" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<path d="M-3 42 l3 -4 4 3" stroke="#1a1208" stroke-width="1.5" fill="none"/></g>
 <circle cx="90" cy="242" r="12" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>
 <circle cx="230" cy="240" r="11" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>`);},
 B(){return molduraRetrato('B',
@@ -587,18 +761,14 @@ A(){return molduraRetrato('A',
 <path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.5" fill="none"/>
 <path d="M140 158 Q160 174 180 158 Q178 170 160 174 Q142 170 140 158 Z" fill="#6a5a48" stroke="#2a1808" stroke-width="1"/>
 <path d="M152 162 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
-<g transform="translate(160,158) rotate(-45)">
-  <path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
-  <rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
-  <rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
-  <circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
-</g>
-<g transform="translate(160,158) rotate(45)">
-  <path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
-  <rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
-  <rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
-  <circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
-</g>
+<g transform="translate(160,158) rotate(-45)"><path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+<rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+<rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/></g>
+<g transform="translate(160,158) rotate(45)"><path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+<rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+<rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/></g>
 <path d="M96 228 q10 -22 24 -36" stroke="url(#aArmorLight)" stroke-width="2.5" fill="none" opacity=".8"/>`);},
 S(){return molduraRetrato('S',
 `<linearGradient id="sCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a2d8a"/><stop offset=".5" stop-color="#2f1848"/><stop offset="1" stop-color="#120a1d"/></linearGradient>
@@ -622,9 +792,8 @@ S(){return molduraRetrato('S',
 <path d="M154 184 q6 -1 12 0" stroke="#3a1a2a" stroke-width="1.2" fill="none"/>
 <circle cx="160" cy="228" r="7" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.2" filter="url(#sglow)"/><circle cx="160" cy="228" r="3" fill="#9d4edd"/>
 <g opacity=".7" filter="url(#sglow)" fill="#b06ef0" font-family="serif" text-anchor="middle">
-  <text x="90" y="140" font-size="18">ᚠ</text><text x="230" y="140" font-size="18">ᛟ</text>
-  <text x="80" y="250" font-size="14">ᚱ</text><text x="240" y="250" font-size="14">ᛗ</text>
-</g>`);},
+<text x="90" y="140" font-size="18">ᚠ</text><text x="230" y="140" font-size="18">ᛟ</text>
+<text x="80" y="250" font-size="14">ᚱ</text><text x="240" y="250" font-size="14">ᛗ</text></g>`);},
 SS(){return molduraRetrato('SS',
 `<linearGradient id="ssGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
 <linearGradient id="ssRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a4161a"/><stop offset=".5" stop-color="#6a0a0e"/><stop offset="1" stop-color="#2a0406"/></linearGradient>
@@ -646,18 +815,14 @@ SS(){return molduraRetrato('SS',
 <path d="M144 132 q6 -2 12 0 M164 132 q6 -2 12 0" stroke="#6a5a48" stroke-width="2" fill="none"/>
 <path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
 <path d="M152 166 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
-<g filter="url(#ssglow)">
-  <path d="M124 108 L124 78 L142 96 L160 62 L178 96 L196 78 L196 108 Q160 118 124 108 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2.5"/>
-  <circle cx="136" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
-  <circle cx="160" cy="96" r="6" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1.2"/>
-  <circle cx="184" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
-  <circle cx="124" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="160" cy="62" r="5" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="196" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/>
-</g>
-<g transform="translate(232, 186)">
-  <rect x="-4" y="0" width="8" height="120" rx="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.5"/>
-  <circle cx="0" cy="-6" r="14" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2" filter="url(#ssglow)"/>
-  <circle cx="0" cy="-6" r="8" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1"/>
-</g>
+<g filter="url(#ssglow)"><path d="M124 108 L124 78 L142 96 L160 62 L178 96 L196 78 L196 108 Q160 118 124 108 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2.5"/>
+<circle cx="136" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="160" cy="96" r="6" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="184" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="124" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="160" cy="62" r="5" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="196" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/></g>
+<g transform="translate(232, 186)"><rect x="-4" y="0" width="8" height="120" rx="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.5"/>
+<circle cx="0" cy="-6" r="14" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2" filter="url(#ssglow)"/>
+<circle cx="0" cy="-6" r="8" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1"/></g>
 <circle cx="228" cy="228" r="14" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.5"/>
 <circle cx="234" cy="228" r="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width=".8"/><circle cx="234" cy="228" r="1.5" fill="#d7263d"/>`);},
 SSS(){return molduraRetrato('SSS',
@@ -666,16 +831,14 @@ SSS(){return molduraRetrato('SSS',
 <radialGradient id="sssCore" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#eafff5"/><stop offset=".4" stop-color="#2ee6a8"/><stop offset="1" stop-color="#0b4a37"/></radialGradient>`,
 `<circle cx="160" cy="160" r="130" fill="none" stroke="#2ee6a8" stroke-opacity=".25" stroke-width="2" stroke-dasharray="4 10"/>
 <g fill="#5cffc0" opacity=".85" font-size="22" text-anchor="middle" font-family="serif" filter="url(#sssglow)">
-  <text x="160" y="60">ᚠ</text><text x="250" y="110">ᛟ</text><text x="250" y="220">ᚱ</text>
-  <text x="160" y="268">ᛗ</text><text x="70" y="220">ᛉ</text><text x="70" y="110">ᛏ</text>
-</g>
+<text x="160" y="60">ᚠ</text><text x="250" y="110">ᛟ</text><text x="250" y="220">ᚱ</text>
+<text x="160" y="268">ᛗ</text><text x="70" y="220">ᛉ</text><text x="70" y="110">ᛏ</text></g>
 <path d="M96 300 C86 260 108 244 100 214 C122 236 118 264 112 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
 <path d="M224 300 C234 260 212 244 220 214 C198 236 202 264 208 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
 <path d="M84 304 C88 240 112 208 160 200 C208 208 232 240 236 304 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".55" stroke-width="2.5"/>
 <path d="M118 220 Q160 210 202 220 L198 270 Q160 280 122 270 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
 <g filter="url(#sssglow)" fill="#2ee6a8" text-anchor="middle" font-family="serif">
-  <text x="160" y="252" font-size="24">ᚠ</text><text x="140" y="266" font-size="14">ᛟ</text><text x="180" y="266" font-size="14">ᚱ</text>
-</g>
+<text x="160" y="252" font-size="24">ᚠ</text><text x="140" y="266" font-size="14">ᛟ</text><text x="180" y="266" font-size="14">ᚱ</text></g>
 <path d="M78 220 q-12 -22 4 -40 l26 6 q-6 16 -4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
 <path d="M242 220 q12 -22 -4 -40 l-26 6 q6 16 4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
 <ellipse cx="160" cy="156" rx="28" ry="32" fill="#0d1210" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="2"/>
@@ -683,16 +846,14 @@ SSS(){return molduraRetrato('SSS',
 <circle cx="150" cy="158" r="1.5" fill="#fff" opacity=".95"/><circle cx="170" cy="158" r="1.5" fill="#fff" opacity=".95"/>
 <path d="M100 200 C94 180 104 168 98 152 C112 166 108 184 104 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
 <path d="M220 200 C226 180 216 168 222 152 C208 166 212 184 216 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
-<g filter="url(#sssglow)">
-  <path d="M124 94 Q124 70 132 76 L140 64 L148 78 L160 50 L172 78 L180 64 L188 76 Q196 70 196 94 Q160 104 124 94 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
-  <circle cx="160" cy="46" r="6" fill="url(#sssCore)"/><circle cx="140" cy="62" r="4" fill="url(#sssCore)"/><circle cx="180" cy="62" r="4" fill="url(#sssCore)"/>
-</g>
+<g filter="url(#sssglow)"><path d="M124 94 Q124 70 132 76 L140 64 L148 78 L160 50 L172 78 L180 64 L188 76 Q196 70 196 94 Q160 104 124 94 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
+<circle cx="160" cy="46" r="6" fill="url(#sssCore)"/><circle cx="140" cy="62" r="4" fill="url(#sssCore)"/><circle cx="180" cy="62" r="4" fill="url(#sssCore)"/></g>
 <circle cx="160" cy="248" r="18" fill="url(#sssCore)" filter="url(#sssglow)" opacity=".95"/>
 <circle cx="160" cy="248" r="8" fill="#eafff5" opacity=".95"/>
 <g fill="#a4ffe0" opacity=".8" filter="url(#sssglow)"><circle cx="100" cy="140" r="2"/><circle cx="220" cy="140" r="2"/><circle cx="130" cy="110" r="1.5"/><circle cx="190" cy="110" r="1.5"/></g>`);}
 };
 
-/* ================= ANÁLISE ================= */
+/* ---------- análise do backup (intocada) ---------- */
 function validar(obj){
   if(!obj||typeof obj!=='object'||Array.isArray(obj))return 'O arquivo não contém um objeto JSON.';
   if(!obj.meta||obj.meta.app!=='fluxo')return 'Este JSON não parece um backup do Fluxo (meta.app ≠ "fluxo").';
@@ -727,32 +888,37 @@ function analisar(d){
   return {patrimonio,investido,vencidas,taxa,rec,desp,ptsP,ptsS,ptsT,ptsD,score};
 }
 
-/* ================= RENDER ================= */
+/* ---------- refs ---------- */
 let state=null;
 const altar=$('#altar'),errBox=$('#errBox'),errMsg=$('#errMsg'),stage=$('#stage');
-const card=$('#card'),medalLetter=$('#medalLetter'),rankKey=$('#rankKey'),scoreVal=$('#scoreVal'),
-      artImg=$('#artImg'),artFallback=$('#artFallback'),rankName=$('#rankName'),phrase=$('#phrase'),
-      vOuro=$('#vOuro'),vTesouro=$('#vTesouro'),vHonra=$('#vHonra'),vDisc=$('#vDisc'),
-      cardFoot=$('#cardFoot'),cardEmbers=$('#cardEmbers'),ledger=$('#ledger'),btnPng=$('#btnPng'),btnReforge=$('#btnReforge');
+const card=$('#card'),cardTilt=$('#cardTilt'),cardScene=$('#cardScene'),medalBox=$('#medalBox'),
+  medalLetter=$('#medalLetter'),rankKey=$('#rankKey'),scoreVal=$('#scoreVal'),
+  artImg=$('#artImg'),artFallback=$('#artFallback'),rankName=$('#rankName'),phrase=$('#phrase'),
+  vOuro=$('#vOuro'),vTesouro=$('#vTesouro'),vHonra=$('#vHonra'),vDisc=$('#vDisc'),
+  cardFoot=$('#cardFoot'),cardEmbers=$('#cardEmbers'),ledger=$('#ledger'),
+  btnPng=$('#btnPng'),btnReforge=$('#btnReforge'),summon=$('#summon');
 
 function showError(msg){stage.hidden=true;errMsg.textContent=msg;errBox.hidden=false;errBox.scrollIntoView({block:'center'});}
 function toast(msg){let t=$('.toast');
   if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
   t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),7000);}
 
-function renderLedger(st){
-  const linha=(n,v,p)=>`<li><span>${n}</span><i></i><b>${v}</b><em>+${p} pts</em></li>`;
-  ledger.innerHTML=`<h3>⚖ O Julgamento do Tomo</h3><ul>
-    ${linha('Patrimônio (Ouro)',fmtBRL(st.patrimonio),st.ptsP)}
-    ${linha('Tesouro Investido',fmtBRL(st.investido),st.ptsT)}
-    ${linha('Honra (Taxa de Poupança)',fmtPct(st.taxa),st.ptsS)}
-    ${linha('Despesas Vencidas',st.vencidas,st.ptsD)}
-  </ul><p class="total">SCORE FINAL · <b>${st.score}/100</b></p>`;
+/* ---------- partículas ---------- */
+function sparkBurst(host,n,color){
+  if(reducedMotion)return;
+  for(let i=0;i<n;i++){
+    const s=document.createElement('span');s.className='spark';
+    const a=Math.random()*Math.PI*2,d=40+Math.random()*90;
+    s.style.setProperty('--sx',Math.cos(a)*d+'px');s.style.setProperty('--sy',Math.sin(a)*d+'px');
+    s.style.background=color;s.style.color=color;
+    s.style.animationDuration=(0.5+Math.random()*0.5)+'s';
+    host.appendChild(s);s.addEventListener('animationend',()=>s.remove());
+  }
 }
-function embersDaCarta(rankKeyStr){
+function embersDaCarta(rk){
   cardEmbers.innerHTML='';
   if(reducedMotion)return;
-  const n=rankKeyStr==='SSS'?16:rankKeyStr==='SS'?9:0;
+  const n=rk==='SSS'?16:rk==='SS'?9:0;
   for(let i=0;i<n;i++){
     const e=document.createElement('span');e.className='card-ember';
     const s=(2+Math.random()*3.5).toFixed(1);
@@ -764,39 +930,111 @@ function embersDaCarta(rankKeyStr){
     cardEmbers.appendChild(e);
   }
 }
-function mostrarCarta(st){
-  state=st;errBox.hidden=true;altar.hidden=true;stage.hidden=false;
-  card.dataset.rank=st.rank.key;card.dataset.frame=st.rank.frame;
-  card.style.setProperty('--aura',st.rank.aura);
-  card.style.setProperty('--medal1',st.rank.medal[0]);
-  card.style.setProperty('--medal2',st.rank.medal[1]);
-  medalLetter.textContent=st.rank.key;
-  rankKey.textContent=st.rank.key;
-  scoreVal.textContent=st.score;
-  rankName.textContent=st.rank.name;
-  phrase.textContent=st.rank.phrase;
-  vOuro.textContent=fmtBRL(st.patrimonio);
-  vTesouro.textContent=fmtBRL(st.investido);
-  vHonra.textContent=fmtPct(st.taxa);
-  vDisc.textContent=Math.max(0,10-st.vencidas)+' / 10';
-  cardFoot.textContent=`Forjado em ${hojeFmt()} · Série ${st.serie}`;
-  /* arte full-art: tenta a imagem do rank; sem arquivo → retrato vetorial */
-  st.hasArt=false;st.artEl=artImg;
-  card.classList.remove('has-art');
-  artFallback.innerHTML='';
-  artImg.removeAttribute('src');
-  artImg.onload=()=>{st.hasArt=true;card.classList.add('has-art');};
-  artImg.onerror=()=>{st.hasArt=false;card.classList.remove('has-art');artFallback.innerHTML=PORTRAITS[st.rank.key]();};
-  artImg.src=RANK_IMAGES[st.rank.key];
-  renderLedger(st);embersDaCarta(st.rank.key);
-  card.classList.remove('invoking');void card.offsetWidth;card.classList.add('invoking');
-  stage.scrollIntoView({block:'start'});
+
+/* ---------- tilt 3D + holografia (rAF, lerp suave) ---------- */
+function attachTilt(el,max){
+  if(reducedMotion||!finePointer)return;
+  let tx=0,ty=0,cx=0,cy=0,mx=.5,my=.5,raf=0,active=false;
+  const step=()=>{
+    cx+=(tx-cx)*.12;cy+=(ty-cy)*.12;
+    el.style.setProperty('--rx',cy.toFixed(2)+'deg');
+    el.style.setProperty('--ry',cx.toFixed(2)+'deg');
+    el.style.setProperty('--mx',mx.toFixed(3));
+    el.style.setProperty('--my',my.toFixed(3));
+    if(active||Math.abs(tx-cx)>.02||Math.abs(ty-cy)>.02){raf=requestAnimationFrame(step);}else{raf=0;}
+  };
+  const kick=()=>{if(!raf)raf=requestAnimationFrame(step);};
+  el.addEventListener('pointerenter',()=>{active=true;kick();});
+  el.addEventListener('pointermove',e=>{
+    const r=el.getBoundingClientRect();
+    const px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+    const py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
+    mx=px;my=py;tx=(px-.5)*2*max;ty=-(py-.5)*2*max;kick();
+  });
+  el.addEventListener('pointerleave',()=>{active=false;tx=0;ty=0;mx=.5;my=.5;kick();});
+}
+attachTilt(cardTilt,8);
+/* rastro arcano do SSS seguindo o mouse */
+let lastTrail=0;
+cardTilt.addEventListener('pointermove',e=>{
+  if(!state||state.rank.key!=='SSS'||reducedMotion||!finePointer)return;
+  const now=performance.now();if(now-lastTrail<50)return;lastTrail=now;
+  const r=cardTilt.getBoundingClientRect();
+  const p=document.createElement('span');p.className='trail-p';
+  p.style.left=(e.clientX-r.left)+'px';p.style.top=(e.clientY-r.top)+'px';
+  p.style.setProperty('--tx',(Math.random()*24-12)+'px');
+  cardEmbers.appendChild(p);p.addEventListener('animationend',()=>p.remove());
+});
+
+/* ---------- HUD / Painel do Reino ---------- */
+function statCard(icon,label,value,tip,pct,barBg){
+  return `<div class="hub" data-tilt-hub tabindex="0" data-tip="${tip}" role="group" aria-label="${label}: ${value}">
+    <svg class="ic"><use href="#${icon}"/></svg>
+    <span class="hub-k">${label}</span><span class="hub-v">${value}</span>
+    <span class="hub-bar"><i style="width:${Math.max(4,Math.min(100,pct))}%;background:${barBg};color:${barBg}"></i></span>
+  </div>`;
+}
+function renderLedger(st){
+  const bar=(a,b)=>`linear-gradient(90deg, ${a}, ${b})`;
+  ledger.innerHTML=`
+    <div class="hud-head">
+      <svg class="ic ic-lg"><use href="#i-shield"/></svg>
+      <h3>Painel do Reino</h3>
+      <span class="hud-rankchip" style="--rc:${st.rank.aura}">Rank ${st.rank.key}</span>
+    </div>
+    <div class="hud-score" tabindex="0" data-tip="Julgamento completo: patrimônio, tesouro, honra e disciplina.">
+      <span class="hs-k">Pontuação</span>
+      <span class="hs-v">${st.score}<small>/100</small></span>
+      <span class="hub-bar"><i style="width:${st.score}%;background:${bar('#c9a227',st.rank.aura)};color:${st.rank.aura}"></i></span>
+    </div>
+    <div class="hud-grid">
+      ${statCard('i-coin','Ouro',fmtBRL(st.patrimonio),`Patrimônio somado de todas as contas · +${st.ptsP} pts`,st.ptsP/40*100,bar('#8a6d1f','#e8c96a'))}
+      ${statCard('i-gem','Tesouro',fmtBRL(st.investido),`Investido em poupança e investimentos · +${st.ptsT} pts`,st.ptsT/20*100,bar('#0b4a37','#2ee6a8'))}
+      ${statCard('i-shield','Honra',fmtPct(st.taxa),`Taxa de poupança do histórico · +${st.ptsS} pts`,st.ptsS/30*100,bar('#37135c','#9d4edd'))}
+      ${statCard('i-swords','Disciplina',Math.max(0,10-st.vencidas)+' / 10',`Despesas vencidas: ${st.vencidas} · +${st.ptsD} pts`,st.ptsD/10*100,bar('#5a0a10','#d7263d'))}
+    </div>
+    <p class="hud-total">SCORE FINAL <b>${st.score}/100</b> · ${st.rank.name}</p>`;
+  ledger.querySelectorAll('[data-tilt-hub]').forEach(h=>attachTilt(h,5));
 }
 
-/* ================= PNG 1080×1512 ================= */
+/* ---------- revelação da carta ---------- */
+function mostrarCarta(st){
+  state=st;
+  const reveal=()=>{
+    errBox.hidden=true;altar.hidden=true;stage.hidden=false;
+    card.dataset.rank=st.rank.key;card.dataset.frame=st.rank.frame;
+    card.style.setProperty('--aura',st.rank.aura);
+    card.style.setProperty('--medal1',st.rank.medal[0]);
+    card.style.setProperty('--medal2',st.rank.medal[1]);
+    medalLetter.textContent=st.rank.key;
+    rankKey.textContent=st.rank.key;
+    scoreVal.textContent=st.score;
+    rankName.textContent=st.rank.name;
+    phrase.textContent=st.rank.phrase;
+    vOuro.textContent=fmtBRL(st.patrimonio);
+    vTesouro.textContent=fmtBRL(st.investido);
+    vHonra.textContent=fmtPct(st.taxa);
+    vDisc.textContent=Math.max(0,10-st.vencidas)+' / 10';
+    cardFoot.textContent=`Forjado em ${hojeFmt()} · Série ${st.serie}`;
+    st.hasArt=false;st.artEl=artImg;
+    card.classList.remove('has-art');artFallback.innerHTML='';artImg.removeAttribute('src');
+    artImg.onload=()=>{st.hasArt=true;card.classList.add('has-art');};
+    artImg.onerror=()=>{st.hasArt=false;card.classList.remove('has-art');artFallback.innerHTML=PORTRAITS[st.rank.key]();};
+    artImg.src=RANK_IMAGES[st.rank.key];
+    renderLedger(st);embersDaCarta(st.rank.key);
+    cardScene.classList.remove('anim');void cardScene.offsetWidth;cardScene.classList.add('anim');
+    medalBox.classList.remove('pop');void medalBox.offsetWidth;medalBox.classList.add('pop');
+    sparkBurst(card,18,'#e8c96a');
+    stage.scrollIntoView({block:'start'});
+  };
+  if(reducedMotion){reveal();return;}
+  summon.hidden=false;requestAnimationFrame(()=>summon.classList.add('on'));
+  setTimeout(()=>{summon.classList.remove('on');summon.hidden=true;reveal();},780);
+}
+
+/* ---------- PNG 1080×1512 (render próprio, isolado dos efeitos DOM) ---------- */
 const CW=1080,CH=1512;
-const FRAME_COLORS={iron:{hi:'#6e675c',lo:'#3a352c'},steel:{hi:'#b6c2cd',lo:'#5d6b78'},
-  gold:{hi:'#e8c96a',lo:'#8a6d1f'},obsidian:{hi:'#e8c96a',lo:'#2ee6a8'}};
+const FRAME_COLORS={iron:{hi:'#6e675c',lo:'#3a352c'},steel:{hi:'#b6c2cd',lo:'#5d6b78'},gold:{hi:'#e8c96a',lo:'#8a6d1f'},obsidian:{hi:'#e8c96a',lo:'#2ee6a8'}};
 function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
 function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
 function flourishAt(c,cx,cy,rot,color){
@@ -821,7 +1059,7 @@ function wrapText(c,text,maxW){
 function drawCover(c,img,W,H){
   const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
   const s=Math.max(W/iw,H/ih), dw=iw*s, dh=ih*s;
-  c.drawImage(img,(W-dw)/2,(H-dh)/2*0.85,dw,dh); /* leve viés p/ manter o rosto acima do painel */
+  c.drawImage(img,(W-dw)/2,(H-dh)/2*0.85,dw,dh);
 }
 function drawIcon(c,type,x,y,col){
   c.save();c.strokeStyle=col;c.lineWidth=2.6;c.lineCap='round';c.lineJoin='round';
@@ -852,7 +1090,6 @@ async function pintarCarta(st,useArt){
   const cv=document.createElement('canvas');cv.width=CW;cv.height=CH;
   const c=cv.getContext('2d'),rk=st.rank,fc=FRAME_COLORS[rk.frame];
   c.fillStyle='#070605';c.fillRect(0,0,CW,CH);
-  /* arte de fundo (full-art) ou reserva vetorial */
   const artOk=useArt&&st.hasArt&&st.artEl&&st.artEl.complete&&st.artEl.naturalWidth>0;
   if(artOk){drawCover(c,st.artEl,CW,CH);}
   else{
@@ -861,7 +1098,6 @@ async function pintarCarta(st,useArt){
     c.fillStyle=g;c.fillRect(0,0,CW,CH);
     try{const im=await svgParaImagem(PORTRAITS[rk.key](),760);c.drawImage(im,(CW-760)/2,240,760,760);}catch(e){}
   }
-  /* overlays de legibilidade */
   let g=c.createLinearGradient(0,0,0,470);
   g.addColorStop(0,'rgba(6,5,4,.96)');g.addColorStop(.6,'rgba(6,5,4,.5)');g.addColorStop(1,'rgba(6,5,4,0)');
   c.fillStyle=g;c.fillRect(0,0,CW,470);
@@ -871,7 +1107,6 @@ async function pintarCarta(st,useArt){
   g=c.createRadialGradient(CW/2,CH/2,CH*.32,CW/2,CH/2,CH*.78);
   g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.5)');
   c.fillStyle=g;c.fillRect(0,0,CW,CH);
-  /* moldura */
   if(rk.frame==='obsidian'){
     roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=16;c.strokeStyle='#191614';c.stroke();
     roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=3;c.strokeStyle='#e8c96a';c.stroke();
@@ -889,7 +1124,6 @@ async function pintarCarta(st,useArt){
     const gc=rk.frame==='obsidian'?'#2ee6a8':'#d7263d';
     gemAt(c,CW/2,33,gc);gemAt(c,CW/2,CH-33,gc);gemAt(c,33,CH/2,gc);gemAt(c,CW-33,CH/2,gc);
   }
-  /* barra superior: medalhão + nome + pontuação */
   c.save();c.shadowColor=rk.aura;c.shadowBlur=26;
   g=c.createRadialGradient(96,104,8,120,128,72);
   g.addColorStop(0,rk.medal[0]);g.addColorStop(1,rk.medal[1]);
@@ -910,7 +1144,6 @@ async function pintarCarta(st,useArt){
   c.font='700 20px Cinzel';c.fillStyle='#c8a95f';c.fillText('P O N T U A Ç Ã O',CW-72,96);
   c.font='900 88px Cinzel';
   c.save();c.shadowColor=rk.aura;c.shadowBlur=22;c.fillStyle='#f6ead0';c.fillText(String(st.score),CW-72,176);c.restore();
-  /* painel inferior */
   c.textAlign='center';
   c.strokeStyle='rgba(200,169,95,.55)';c.lineWidth=2;
   c.beginPath();c.moveTo(240,952);c.lineTo(CW/2-40,952);c.stroke();
@@ -961,7 +1194,7 @@ async function baixarPNG(){
   finally{btnPng.disabled=false;btnPng.textContent='⬇ Baixar carta (PNG)';}
 }
 
-/* ================= UPLOAD ================= */
+/* ---------- upload / drag&drop ---------- */
 function handleFile(file){
   if(!file)return;
   const nomeOk=/\.json$/i.test(file.name),tipoOk=!file.type||file.type==='application/json';
@@ -984,16 +1217,28 @@ dz.addEventListener('click',e=>{if(e.target===dz||e.target.closest('.dz-in')&&!e
 dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}});
 ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();if(ev==='dragleave')dz.classList.remove('drag');}));
-dz.addEventListener('drop',e=>{dz.classList.remove('drag');handleFile(e.dataTransfer.files&&e.dataTransfer.files[0]);});
+dz.addEventListener('dragenter',()=>sparkBurst(dz,6,'#e8c96a'));
+dz.addEventListener('drop',e=>{dz.classList.remove('drag');sparkBurst(dz,16,'#e8c96a');handleFile(e.dataTransfer.files&&e.dataTransfer.files[0]);});
 fileInput.addEventListener('change',()=>{handleFile(fileInput.files&&fileInput.files[0]);fileInput.value='';});
 ['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>e.preventDefault()));
 btnPng.addEventListener('click',baixarPNG);
+
+/* ---------- Reforjar: sequência de forja ---------- */
 btnReforge.addEventListener('click',()=>{
-  stage.hidden=true;errBox.hidden=true;altar.hidden=false;state=null;
-  window.scrollTo({top:0,behavior:reducedMotion?'auto':'smooth'});
+  const go=()=>{stage.hidden=true;errBox.hidden=true;altar.hidden=false;state=null;
+    window.scrollTo({top:0,behavior:reducedMotion?'auto':'smooth'});};
+  if(reducedMotion){go();return;}
+  btnReforge.disabled=true;btnReforge.classList.add('forging');
+  card.classList.add('reforging');
+  sparkBurst(card,14,'#ff9a3d');
+  setTimeout(()=>{
+    card.classList.remove('reforging');
+    btnReforge.classList.remove('forging');btnReforge.disabled=false;
+    go();
+  },700);
 });
 
-/* ================= BRASAS ================= */
+/* ---------- ambiente ---------- */
 (function spawnEmbers(){
   if(reducedMotion)return;
   const layer=$('#embers');
@@ -1008,6 +1253,7 @@ btnReforge.addEventListener('click',()=>{
     layer.appendChild(e);
   }
 })();
+setTimeout(()=>{const i=$('#intro');if(i)i.remove();},2400);
 })();
 </script>
 </body>
