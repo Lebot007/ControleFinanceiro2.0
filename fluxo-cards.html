@@ -428,12 +428,6 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
    14 · ACESSIBILIDADE / MOVIMENTO REDUZIDO
 ================================================================ */
 .btn:focus-visible,.portal:focus-visible,.hub:focus-visible{outline:2px solid var(--c-gold-hi);outline-offset:3px}
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none!important;transition:opacity .2s ease!important}
-  #embers,#intro{display:none}
-  .layer-holo{display:none}
-  html{scroll-behavior:auto}
-}
 </style>
 </head>
 <body>
@@ -626,7 +620,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
 const RANK_IMAGES={D:'rankD.jpg',C:'rankC.jpg',B:'rankB.jpg',A:'rankA.jpg',S:'rankS.jpg',SS:'rankSS.jpg',SSS:'rankSSS.jpg'};
 
 const $=s=>document.querySelector(s);
-const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reducedMotion=false; /* animações independentes da configuração do sistema */
 const finePointer=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 const fmtBRL=c=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100);
 const fmtPct=t=>(t*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
