@@ -442,12 +442,16 @@ function periodRange(scope){ const p=ui.per[scope]||ui.per.dashboard; return ran
 function bindPeriodInputs(scope, fromEl, toEl){
 if(!fromEl || !toEl) return;
 const p = ui.per[scope];
-let t1=null, t2=null;
-const apply=(el,which)=>{ if(!validDate(el.value)) return; p[which]=el.value; render(); };
-fromEl.addEventListener("input", ()=>{ clearTimeout(t1); t1=setTimeout(()=>apply(fromEl,"from"),650); });
-toEl.addEventListener("input",   ()=>{ clearTimeout(t2); t2=setTimeout(()=>apply(toEl,"to"),650); });
-fromEl.addEventListener("change", ()=>{ clearTimeout(t1); apply(fromEl,"from"); });
-toEl.addEventListener("change",   ()=>{ clearTimeout(t2); apply(toEl,"to"); });
+const grab=(el,which)=>{ if(validDate(el.value)) p[which]=el.value; };
+[[fromEl,"from"],[toEl,"to"]].forEach(([el,which])=>{
+el.addEventListener("input",  ()=>grab(el,which));
+el.addEventListener("change", ()=>grab(el,which));
+el.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } });
+el.addEventListener("blur", ()=>{ grab(el,which);
+setTimeout(()=>{ const a=document.activeElement;
+if(a===fromEl || a===toEl) return;
+render(); },0); });
+});
 }
 const inRange = (d,s,e) => d>=s && d<=e;
 function lastMonths(n){
