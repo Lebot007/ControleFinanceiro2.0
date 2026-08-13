@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluxo — Grimório das Fortunas</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="%230b0908"/><text x="50" y="72" font-size="62" text-anchor="middle" fill="%23c9a227">ᛟ</text></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+/* ============ BASE / FUNDO ============ */
+:root{
+  --ink:#0a0806; --gold:#c9a227; --gold-hi:#e8c96a; --gold-lo:#8a6d1f;
+  --blood:#a4161a; --arcane:#9d4edd; --emerald:#2ee6a8; --parch:#efe6cf;
+  --runic:"Segoe UI Historic","Segoe UI Symbol","Noto Sans Runic",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;color:var(--parch);overflow-x:hidden;
+  font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;
+  background:
+    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.14), transparent 60%),
+    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.13), transparent 62%),
+    radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.07), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 3px, transparent 3px 10px),
+    linear-gradient(#0c0a08,#060505 60%,#0b0706);
+}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.88) 100%);}
+.fog{position:fixed;inset:-20%;pointer-events:none;z-index:0;opacity:.6;
+  background:radial-gradient(40% 30% at 30% 40%, rgba(150,120,200,.05), transparent 70%),
+             radial-gradient(35% 28% at 72% 62%, rgba(200,160,80,.045), transparent 70%);
+  animation:fogDrift 46s ease-in-out infinite alternate;}
+@keyframes fogDrift{from{transform:translate(-2%,1%) scale(1)}to{transform:translate(2%,-2%) scale(1.06)}}
+#embers{position:fixed;inset:0;pointer-events:none;z-index:1}
+.ember{position:fixed;bottom:-12px;border-radius:50%;
+  background:radial-gradient(circle,#ffd27a 0%,#ff7b2e 45%,rgba(255,90,20,0) 72%);
+  animation:emberRise linear infinite;filter:blur(.4px)}
+@keyframes emberRise{
+  0%{transform:translate(0,0) scale(1);opacity:0}
+  8%{opacity:.9}
+  78%{opacity:.55}
+  100%{transform:translate(var(--dx),-108vh) scale(.35);opacity:0}}
+main,header.top,footer.page{position:relative;z-index:2}
+
+/* ============ TIPOS ============ */
+h1,h2,h3{font-family:"Cinzel Decorative","Cinzel",serif;color:var(--gold-hi);font-weight:700}
+.runic{font-family:var(--runic)}
+
+/* ============ CABEÇALHO ============ */
+header.top{max-width:1040px;margin:0 auto;padding:2.6rem 1rem 1rem;
+  display:flex;align-items:flex-end;justify-content:center;gap:1.6rem;text-align:center}
+.titles{max-width:720px}
+.seal{width:72px;height:72px;margin:0 auto .8rem;display:grid;place-items:center;
+  font-family:"Cinzel Decorative";font-size:2rem;color:#f3d9a0;user-select:none;
+  border-radius:47% 53% 50% 50%/50% 48% 52% 50%;
+  background:radial-gradient(circle at 35% 28%,#c22b33,#7c1420 62%,#560d16);
+  box-shadow:inset 0 3px 6px rgba(255,255,255,.28),inset 0 -7px 12px rgba(0,0,0,.6),0 8px 18px rgba(0,0,0,.65);
+  text-shadow:0 1px 2px rgba(0,0,0,.7)}
+h1{font-size:clamp(1.5rem,4.6vw,2.6rem);letter-spacing:.06em;line-height:1.15;
+  background:linear-gradient(#f6e3a5,#c9a227 55%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#e8c96a;
+  filter:drop-shadow(0 2px 10px rgba(201,162,39,.35))}
+.tag{font-style:italic;color:#bda877;font-size:1.02rem;margin-top:.35rem}
+.rune-row{margin-top:.6rem;color:rgba(201,162,39,.55);letter-spacing:.9em;font-size:.95rem;text-indent:.9em}
+.candle{position:relative;width:26px;height:96px;flex:none;margin-bottom:14px}
+.candle .wax{position:absolute;bottom:0;width:100%;height:64px;border-radius:6px 6px 4px 4px;
+  background:linear-gradient(#f3e6c8,#cbb28a 60%,#8a6f4d);box-shadow:inset -5px 0 8px rgba(0,0,0,.35)}
+.candle .wick{position:absolute;bottom:62px;left:50%;width:3px;height:9px;background:#2b1d12;transform:translateX(-50%)}
+.candle .flame{position:absolute;bottom:69px;left:50%;width:16px;height:28px;transform-origin:50% 100%;
+  border-radius:50% 50% 46% 54%/62% 62% 38% 38%;
+  background:radial-gradient(circle at 50% 78%,#fff8d8 0%,#ffd76a 34%,#ff8c2e 62%,rgba(255,90,20,0) 80%);
+  filter:drop-shadow(0 0 10px rgba(255,160,60,.85));animation:flick 1.35s ease-in-out infinite}
+@keyframes flick{
+  0%,100%{transform:translateX(-50%) scale(1) rotate(-2deg)}
+  25%{transform:translateX(-53%) scale(.93,1.07) rotate(2.6deg)}
+  50%{transform:translateX(-47%) scale(1.05,.95) rotate(-1.8deg)}
+  75%{transform:translateX(-50%) scale(.96,1.06) rotate(1.4deg)}}
+
+/* ============ ALTAR DE ENTREGA ============ */
+main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
+#altar{text-align:center;margin-top:1rem}
+.altar-title{font-size:clamp(1.15rem,3vw,1.6rem);margin-bottom:1.4rem;letter-spacing:.08em}
+.dropzone{position:relative;max-width:560px;min-height:360px;margin:0 auto;cursor:pointer;
+  display:grid;place-items:center;padding:2.4rem 1.6rem;color:var(--gold);
+  background:radial-gradient(70% 60% at 50% 42%, rgba(201,162,39,.05), transparent 75%);
+  transition:transform .25s ease}
+.dropzone:hover{transform:translateY(-2px)}
+.dropzone .arch{position:absolute;left:50%;top:50%;height:98%;transform:translate(-50%,-50%);
+  opacity:.55;pointer-events:none}
+.dropzone.drag .arch{opacity:1}
+.dropzone.drag{background:radial-gradient(70% 60% at 50% 42%, rgba(201,162,39,.12), transparent 75%)}
+.dz-in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:.7rem}
+.dz-in p{font-size:1.15rem;color:#d8c9a3}
+.dz-in .ou{font-style:italic;color:#8f7f58;font-size:.95rem}
+.rune-line{color:rgba(201,162,39,.4);letter-spacing:.7em;font-size:.85rem;text-indent:.7em;margin-top:.4rem}
+.altar-note{margin-top:1rem;font-style:italic;color:#7f7250;font-size:.95rem}
+
+/* ============ BOTÕES ============ */
+.btn{display:inline-block;font-family:"Cinzel",serif;font-weight:700;font-size:.8rem;
+  letter-spacing:.14em;text-transform:uppercase;color:#f1e3bd;cursor:pointer;text-decoration:none;
+  background:linear-gradient(#241d13,#141009);border:1px solid var(--gold-lo);
+  padding:.85rem 1.5rem;position:relative;overflow:hidden;transition:box-shadow .25s,border-color .25s,transform .25s}
+.btn::after{content:"";position:absolute;top:0;left:-90%;width:50%;height:100%;transform:skewX(-24deg);
+  background:linear-gradient(90deg,transparent,rgba(255,240,200,.22),transparent);transition:left .6s ease}
+.btn:hover{border-color:var(--gold-hi);box-shadow:0 0 20px -5px rgba(232,201,106,.6);transform:translateY(-1px)}
+.btn:hover::after{left:130%}
+.btn.ghost{background:transparent;border-color:#5b564e;color:#c9b98a}
+.btn.ghost:hover{border-color:#a99c74;box-shadow:0 0 16px -6px rgba(200,180,120,.5)}
+.btn[disabled]{opacity:.55;cursor:wait}
+input[type=file]{display:none}
+
+/* ============ ERRO ============ */
+#errBox{display:flex;justify-content:center;margin:1.4rem 0}
+.err-card{max-width:560px;width:100%;text-align:center;padding:1.8rem 1.6rem;
+  border:1px solid #6d1420;background:linear-gradient(#180a0c,#0d0507);
+  box-shadow:0 0 34px -8px rgba(164,22,26,.55), inset 0 0 44px rgba(0,0,0,.6);
+  animation:errShake .4s ease}
+@keyframes errShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}60%{transform:translateX(6px)}}
+.err-rune{display:block;font-size:2.6rem;color:#d7263d;text-shadow:0 0 16px rgba(215,38,61,.8);font-family:var(--runic)}
+.err-card h3{color:#e35d6a;margin:.4rem 0 .5rem;letter-spacing:.08em}
+.err-card p{color:#d8b8ad}
+.err-hint{font-style:italic;color:#96756c;font-size:.95rem;margin-top:.5rem}
+
+/* ============ PALCO / CARTA ============ */
+.stage-wrap{display:flex;gap:2.4rem;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.card-perspective{perspective:1500px}
+.card{position:relative;width:min(432px,92vw);aspect-ratio:1080/1512;
+  --frame:#6e675c;--frame2:#3a352c;--frameSoft:rgba(110,103,92,.5);--orn:var(--frame);
+  --aura:#8d8577;--medal1:#7a7264;--medal2:#3a352c;
+  background:linear-gradient(#100d0a,#0a0808 70%,#0d0a08);
+  border:6px solid var(--frame);
+  box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 36px -6px var(--aura),
+    inset 0 0 70px rgba(0,0,0,.78), 0 26px 50px -20px rgba(0,0,0,.9);
+  transition:transform .35s ease}
+.card:hover{transform:translateY(-4px)}
+.card::before{content:"";position:absolute;inset:7px;border:1px solid var(--frameSoft);pointer-events:none;z-index:3}
+.card[data-frame="steel"]::before{border:3px double var(--frameSoft)}
+.card[data-frame="gold"]::before{border:2px solid var(--frameSoft);box-shadow:0 0 14px -4px var(--aura)}
+.card[data-frame="obsidian"]{--frame:#17140f;--frame2:#2ee6a8;--frameSoft:rgba(46,230,168,.5);--orn:#2ee6a8;
+  animation:obsidianPulse 2.6s ease-in-out infinite}
+@keyframes obsidianPulse{
+  0%,100%{box-shadow:0 0 0 2px #000,0 0 0 5px #0d3a2c,0 0 30px -6px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),0 26px 50px -20px rgba(0,0,0,.9)}
+  50%{box-shadow:0 0 0 2px #000,0 0 0 5px #14563e,0 0 66px -2px #2ee6a8,inset 0 0 70px rgba(0,0,0,.8),0 26px 50px -20px rgba(0,0,0,.9)}}
+.flourish{position:absolute;width:78px;height:78px;color:var(--orn);z-index:4;pointer-events:none;
+  filter:drop-shadow(0 0 5px rgba(0,0,0,.8))}
+.f-tl{top:-7px;left:-7px}.f-tr{top:-7px;right:-7px;transform:rotate(90deg)}
+.f-br{bottom:-7px;right:-7px;transform:rotate(180deg)}.f-bl{bottom:-7px;left:-7px;transform:rotate(270deg)}
+.gem{position:absolute;width:13px;height:13px;border-radius:50%;display:none;z-index:5;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--aura) 48%,rgba(0,0,0,.9));
+  box-shadow:0 0 12px var(--aura)}
+.card[data-frame="gold"] .gem,.card[data-frame="obsidian"] .gem{display:block}
+.g1{top:-8px;left:50%;transform:translateX(-50%)}
+.g2{bottom:-8px;left:50%;transform:translateX(-50%)}
+.g3{left:-8px;top:50%;transform:translateY(-50%)}
+.g4{right:-8px;top:50%;transform:translateY(-50%)}
+.card-shine{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:6;border-radius:inherit}
+.card-shine::before{content:"";position:absolute;top:-60%;left:-90%;width:55%;height:220%;transform:rotate(22deg);
+  background:linear-gradient(90deg,transparent,rgba(255,240,200,.16),transparent);transition:left 1s ease}
+.card:hover .card-shine::before{left:135%}
+.card.invoking{animation:invoke 1.15s cubic-bezier(.2,.7,.3,1) both}
+@keyframes invoke{
+  0%{transform:rotateY(88deg) scale(.7);opacity:0;filter:brightness(2.6) blur(2px)}
+  55%{transform:rotateY(-9deg) scale(1.035);opacity:1}
+  100%{transform:rotateY(0) scale(1);filter:brightness(1)}}
+.card-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;
+  gap:.34rem;padding:14px 15px 12px;text-align:center}
+.medal{flex:none;width:82px;height:82px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 32% 28%,var(--medal1),var(--medal2));
+  border:3px solid #0b0a08;font-family:"Cinzel Decorative";font-size:1.7rem;color:#f6ead0;
+  box-shadow:0 0 0 2px var(--frame),0 0 24px 1px var(--aura),inset 0 2px 7px rgba(255,255,255,.28),inset 0 -6px 12px rgba(0,0,0,.5);
+  text-shadow:0 0 12px var(--aura)}
+.scoreline{flex:none;font-family:"Cinzel",serif;font-size:.6rem;letter-spacing:.32em;text-transform:uppercase;
+  color:#c8a95f;text-indent:.32em}
+.portrait{flex:1;min-height:0;width:100%;display:grid;place-items:center}
+.portrait svg{height:100%;width:auto;max-width:100%;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--aura) 35%,transparent))}
+.rank-name{flex:none;font-size:clamp(1.15rem,5.6vw,1.5rem);line-height:1.16;letter-spacing:.05em;
+  background:linear-gradient(#f6e3a5,#c9a227 60%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#e8c96a;text-shadow:none;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--aura) 45%,transparent))}
+.phrase{flex:none;font-style:italic;color:#cfc3a5;font-size:.98rem;line-height:1.25;max-width:92%}
+.attrs{flex:none;list-style:none;width:100%;padding:0 .4rem;display:flex;flex-direction:column;gap:.28rem}
+.attrs li{display:flex;align-items:baseline;gap:.5rem}
+.attrs .k{font-family:"Cinzel",serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f}
+.attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.4);transform:translateY(-3px)}
+.attrs .v{font-weight:700;color:var(--parch);font-size:1rem}
+.card-foot{flex:none;font-size:.82rem;font-style:italic;color:#9b8c66;letter-spacing:.04em}
+.card-embers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:5;border-radius:inherit}
+.card-ember{position:absolute;bottom:8px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,#eafff5 0%,var(--aura) 45%,transparent 75%);
+  animation:cember linear infinite}
+@keyframes cember{0%{transform:translate(0,0);opacity:0}12%{opacity:.95}100%{transform:translate(var(--dx),-580px);opacity:0}}
+.actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+
+/* ============ PERGAMINHO DE JULGAMENTO ============ */
+.ledger{width:min(340px,92vw);padding:1.3rem 1.3rem 1.1rem;position:relative;
+  border:1px solid #4a3d22;background:linear-gradient(#141008,#0c0906);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 14px 34px -18px rgba(0,0,0,.9)}
+.ledger::before{content:"";position:absolute;inset:5px;border:1px solid rgba(200,169,95,.25);pointer-events:none}
+.ledger h3{font-size:1rem;letter-spacing:.1em;margin-bottom:.8rem;text-align:center}
+.ledger ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+.ledger li{display:flex;align-items:baseline;gap:.5rem;font-size:.98rem}
+.ledger li span{color:#bda877}
+.ledger li i{flex:1;border-bottom:1px dotted rgba(200,169,95,.35);transform:translateY(-3px)}
+.ledger li b{color:var(--parch);font-weight:700}
+.ledger li em{font-style:normal;color:#8fd6a8;font-family:"Cinzel",serif;font-size:.68rem;letter-spacing:.06em}
+.ledger li em.neg{color:#e35d6a}
+.ledger .total{margin-top:.9rem;text-align:center;font-family:"Cinzel",serif;font-size:.85rem;letter-spacing:.12em;color:#c8a95f}
+.ledger .total b{color:#f6e3a5;font-size:1.05rem}
+
+footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:italic;font-size:.92rem}
+
+@media (max-width:560px){
+  header.top{gap:.8rem}
+  .candle{height:80px}.candle .wax{height:50px}.candle .wick{bottom:48px}.candle .flame{bottom:55px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  #embers{display:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="fog" aria-hidden="true"></div>
+<div id="embers" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="candle" aria-hidden="true"><div class="flame"></div><div class="wick"></div><div class="wax"></div></div>
+  <div class="titles">
+    <div class="seal" aria-hidden="true">F</div>
+    <h1>Fluxo · Grimório das Fortunas</h1>
+    <p class="tag">O julgamento arcano de vossas finanças — extensão decorativa do tomo principal</p>
+    <div class="rune-row runic" aria-hidden="true">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ</div>
+  </div>
+  <div class="candle" aria-hidden="true"><div class="flame"></div><div class="wick"></div><div class="wax"></div></div>
+</header>
+
+<main>
+  <!-- ALTAR DE ENTREGA -->
+  <section id="altar">
+    <h2 class="altar-title">Entregai o Tomo de Vossas Finanças</h2>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Entregar backup JSON do Fluxo">
+      <svg class="arch" viewBox="0 0 320 400" aria-hidden="true">
+        <path d="M24 392 V170 Q24 52 160 24 Q296 52 296 170 V392" fill="none" stroke="currentColor" stroke-width="3"/>
+        <path d="M40 392 V176 Q40 66 160 42 Q280 66 280 176 V392" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".6"/>
+        <circle cx="160" cy="22" r="6" fill="currentColor"/>
+        <path d="M160 22 l-11 -13 M160 22 l11 -13" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="M24 392 h272" stroke="currentColor" stroke-width="3"/>
+      </svg>
+      <div class="dz-in">
+        <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+          <path d="M14 10 h30 a6 6 0 0 1 6 6 v34 a4 4 0 0 0 4 4 H22 a6 6 0 0 1 -6 -6 Z" fill="#e7d7ac" stroke="#6b5a33" stroke-width="2.5"/>
+          <path d="M14 10 a6 6 0 0 0 -6 6 v4 a4 4 0 0 0 4 4 h6" fill="#d9c48f" stroke="#6b5a33" stroke-width="2.5"/>
+          <path d="M24 24 h22 M24 32 h22 M24 40 h14" stroke="#7a6a45" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <p>Arrastai e soltai aqui o pergaminho <strong>.json</strong> exportado pelo Fluxo</p>
+        <span class="ou">— ou —</span>
+        <label class="btn" for="fileInput">📜 Entregar backup (.json)</label>
+        <input type="file" id="fileInput" accept=".json,application/json">
+        <div class="rune-line runic" aria-hidden="true">ᛏ ᛟ ᛗ ᛟ</div>
+      </div>
+    </div>
+    <p class="altar-note">O grimório apenas lê o backup em vosso navegador — nada é enviado, guardado ou alterado no Fluxo.</p>
+  </section>
+
+  <!-- ERRO -->
+  <section id="errBox" hidden>
+    <div class="err-card">
+      <span class="err-rune runic" aria-hidden="true">ᚦ</span>
+      <h3>O feitiço falhou</h3>
+      <p id="errMsg"></p>
+      <p class="err-hint">Exportai o backup no Fluxo (index.html) e entregai o arquivo .json válido aqui.</p>
+    </div>
+  </section>
+
+  <!-- PALCO DA CARTA -->
+  <section id="stage" hidden>
+    <div class="stage-wrap">
+      <div>
+        <div class="card-perspective">
+          <article class="card" id="card" data-rank="D" data-frame="iron" aria-label="Carta de rank do Fluxo">
+            <svg class="flourish f-tl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+            <svg class="flourish f-tr" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+            <svg class="flourish f-br" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+            <svg class="flourish f-bl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
+            <span class="gem g1"></span><span class="gem g2"></span><span class="gem g3"></span><span class="gem g4"></span>
+            <div class="card-in">
+              <div class="medal"><span id="medalLetter">D</span></div>
+              <div class="scoreline" id="scoreLine">Pontuação 0/100</div>
+              <div class="portrait" id="portrait"></div>
+              <h2 class="rank-name" id="rankName"></h2>
+              <p class="phrase" id="phrase"></p>
+              <ul class="attrs">
+                <li><span class="k">Ouro</span><i class="dots"></i><span class="v" id="vOuro"></span></li>
+                <li><span class="k">Tesouro</span><i class="dots"></i><span class="v" id="vTesouro"></span></li>
+                <li><span class="k">Honra</span><i class="dots"></i><span class="v" id="vHonra"></span></li>
+                <li><span class="k">Disciplina</span><i class="dots"></i><span class="v" id="vDisc"></span></li>
+              </ul>
+              <div class="card-foot" id="cardFoot"></div>
+            </div>
+            <span class="card-shine" aria-hidden="true"></span>
+            <div class="card-embers" id="cardEmbers" aria-hidden="true"></div>
+          </article>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnPng" type="button">⬇ Baixar carta (PNG)</button>
+          <button class="btn ghost" id="btnReforge" type="button">↺ Reforjar</button>
+        </div>
+      </div>
+      <aside class="ledger" id="ledger" aria-label="Detalhes do julgamento"></aside>
+    </div>
+  </section>
+</main>
+
+<footer class="page">Fluxo · Grimório das Fortunas — extensão decorativa que lê apenas backups locais do tomo principal.</footer>
+
+<script>
+(function(){
+'use strict';
+/* ================= UTILITÁRIOS ================= */
+const $=s=>document.querySelector(s);
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmtBRL=c=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100);
+const fmtPct=t=>(t*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+const hojeISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const hojeFmt=()=>new Date().toLocaleDateString('pt-BR');
+const RUNES='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
+function serieRunica(){let s='';for(let i=0;i<2;i++)s+=RUNES[Math.floor(Math.random()*RUNES.length)];return s+'-'+(100+Math.floor(Math.random()*900));}
+
+/* ================= RANKS ================= */
+const RANKS={
+  D:{key:'D',name:'Plebeu Endividado',phrase:'“As moedas fogem de quem jamais as governou.”',aura:'#8d8577',frame:'iron',medal:['#7a7264','#3a352c']},
+  C:{key:'C',name:'Escudeiro Errante',phrase:'“Um escudo partido ainda sonha com glória.”',aura:'#8fa3b8',frame:'iron',medal:['#9aa9b8','#46525e']},
+  B:{key:'B',name:'Cavalheiro do Abismo',phrase:'“Foi no abismo que aprendi o peso de cada moeda.”',aura:'#d7263d',frame:'steel',medal:['#c22f42','#4a0d16']},
+  A:{key:'A',name:'Guerreiro de Ferro',phrase:'“Ferro não mente: meu ouro foi forjado em batalha.”',aura:'#ff7a33',frame:'steel',medal:['#ff8c42','#5a2b12']},
+  S:{key:'S',name:'Lorde das Sombras',phrase:'“As sombras contam meu tesouro em silêncio.”',aura:'#9d4edd',frame:'gold',medal:['#b06ef0','#37135c']},
+  SS:{key:'SS',name:'Rei Coroado',phrase:'“A coroa pesa, mas o cofre canta.”',aura:'#f2cf6b',frame:'gold',medal:['#ffd97a','#7a5a12']},
+  SSS:{key:'SSS',name:'Imperador Arcano',phrase:'“O arcano flui: meu império é de ouro eterno.”',aura:'#2ee6a8',frame:'obsidian',medal:['#5cffc0','#0b4a37']}
+};
+function rankFor(score){
+  if(score>=95)return RANKS.SSS;
+  if(score>=85)return RANKS.SS;
+  if(score>=70)return RANKS.S;
+  if(score>=55)return RANKS.A;
+  if(score>=40)return RANKS.B;
+  if(score>=20)return RANKS.C;
+  return RANKS.D;
+}
+
+/* ================= RETRATOS SVG (inline, um por classe) ================= */
+function molduraRetrato(key,defs,corpo){
+  const aura=RANKS[key].aura, nome=RANKS[key].name;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Retrato: ${nome}">
+  <defs>${defs}
+    <radialGradient id="${key}au" cx="50%" cy="42%" r="66%">
+      <stop offset="0" stop-color="${aura}" stop-opacity=".48"/>
+      <stop offset="1" stop-color="${aura}" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="${key}clip"><path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z"/></clipPath>
+  </defs>
+  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="#0c0a09" stroke="${aura}" stroke-opacity=".55" stroke-width="3"/>
+  <g clip-path="url(#${key}clip)">
+    <rect x="46" y="20" width="228" height="286" fill="url(#${key}au)"/>
+    ${corpo}
+  </g>
+  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="none" stroke="rgba(232,201,106,.3)" stroke-width="1.4"/>
+  </svg>`;
+}
+
+const PORTRAITS={
+/* D — plebeu de capuz, curvado, com tigela de esmolas */
+D(){return molduraRetrato('D',
+`<linearGradient id="dCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4f3f"/><stop offset="1" stop-color="#2c261d"/></linearGradient>`,
+`<circle cx="238" cy="66" r="18" fill="#b9b09a" opacity=".22"/>
+<path d="M62 304 C64 236 92 200 138 184 C124 172 118 150 128 132 C140 110 172 106 188 124 C202 140 200 166 184 180 C238 196 258 244 260 304 Z" fill="url(#dCloak)" stroke="#171310" stroke-width="3"/>
+<path d="M132 122 C146 104 178 104 190 124" stroke="#171310" stroke-width="3" fill="none"/>
+<ellipse cx="158" cy="152" rx="26" ry="30" fill="#120e0a"/>
+<circle cx="150" cy="150" r="2.4" fill="#8d8577" opacity=".85"/>
+<circle cx="166" cy="150" r="2.4" fill="#8d8577" opacity=".85"/>
+<rect x="206" y="238" width="26" height="22" fill="#6b5c44" stroke="#171310" stroke-width="2"/>
+<path d="M206 245 h26 M206 253 h26 M213 238 v22 M224 238 v22" stroke="#171310" stroke-width="1" opacity=".6"/>
+<path d="M128 282 a34 12 0 0 0 68 0 z" fill="#3c3122" stroke="#171310" stroke-width="2"/>
+<ellipse cx="162" cy="282" rx="34" ry="8" fill="#241d13" stroke="#171310" stroke-width="2"/>
+<circle cx="156" cy="280" r="3" fill="#8d8577" opacity=".7"/>`);},
+
+/* C — escudeiro com escudo e espada quebrada */
+C(){return molduraRetrato('C',
+`<linearGradient id="cSteel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d3dae0"/><stop offset="1" stop-color="#93a0ab"/></linearGradient>`,
+`<circle cx="152" cy="116" r="26" fill="#c9a58a" stroke="#241a12" stroke-width="2"/>
+<path d="M128 108 q24 -22 48 0 l-5 -15 q-19 -13 -38 0 Z" fill="#5a4632"/>
+<path d="M108 304 C108 220 124 180 152 172 C180 180 196 220 196 304 Z" fill="#4a5440" stroke="#20241c" stroke-width="3"/>
+<path d="M152 176 V304" stroke="#20241c" stroke-width="2" opacity=".5"/>
+<circle cx="104" cy="240" r="56" fill="#6b4a2f" stroke="#241a12" stroke-width="5"/>
+<path d="M104 184 V296 M48 240 H160" stroke="#4a3018" stroke-width="4" opacity=".8"/>
+<circle cx="104" cy="240" r="56" fill="none" stroke="#8f9ba6" stroke-width="3" stroke-dasharray="2 14"/>
+<circle cx="104" cy="240" r="13" fill="#9aa7b2" stroke="#241a12" stroke-width="3"/>
+<rect x="224" y="242" width="12" height="30" rx="4" fill="#5b4028" stroke="#241a12" stroke-width="2"/>
+<circle cx="230" cy="278" r="7" fill="#9aa7b2" stroke="#241a12" stroke-width="2"/>
+<rect x="206" y="232" width="48" height="9" rx="4" fill="#9aa7b2" stroke="#241a12" stroke-width="2"/>
+<path d="M223 232 V178 L226 168 L230 176 L234 162 L238 174 V232 Z" fill="url(#cSteel)" stroke="#39424b" stroke-width="2"/>
+<path d="M226 150 L231 132 L238 152 L231 146 Z" fill="#c3ccd4" stroke="#39424b" stroke-width="2" transform="rotate(14 231 142)" opacity=".95"/>`);},
+
+/* B — cavalheiro com elmo e olhos vermelhos brilhantes */
+B(){return molduraRetrato('B',
+`<linearGradient id="bHelm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#98a4b0"/><stop offset="1" stop-color="#39434e"/></linearGradient>
+<filter id="bGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
+`<ellipse cx="160" cy="300" rx="120" ry="26" fill="#12060c" opacity=".85"/>
+<ellipse cx="160" cy="292" rx="70" ry="14" fill="#2a0a14" opacity=".6"/>
+<path d="M84 304 C86 244 104 214 160 208 C216 214 234 244 236 304 Z" fill="#2e3640" stroke="#12161b" stroke-width="3"/>
+<path d="M96 262 H224 M102 276 H218 M110 290 H210" stroke="#4d5866" stroke-width="5" stroke-dasharray="1 7" opacity=".85"/>
+<path d="M118 216 V118 Q118 72 160 68 Q202 72 202 118 V216 Q160 230 118 216 Z" fill="url(#bHelm)" stroke="#0d1116" stroke-width="4"/>
+<path d="M160 68 V142" stroke="#0d1116" stroke-width="3" opacity=".6"/>
+<rect x="126" y="142" width="68" height="13" rx="6" fill="#05070a"/>
+<circle cx="146" cy="148" r="5.5" fill="#ff2a2a" filter="url(#bGlow)"/>
+<circle cx="174" cy="148" r="5.5" fill="#ff2a2a" filter="url(#bGlow)"/>
+<g fill="#9fb0bf" opacity=".75"><circle cx="124" cy="120" r="2.5"/><circle cx="124" cy="182" r="2.5"/><circle cx="196" cy="120" r="2.5"/><circle cx="196" cy="182" r="2.5"/><circle cx="132" cy="210" r="2.5"/><circle cx="188" cy="210" r="2.5"/></g>`);},
+
+/* A — guerreiro com duas espadas cruzadas */
+A(){return molduraRetrato('A',
+`<linearGradient id="aHelm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aeb7bf"/><stop offset="1" stop-color="#4a525a"/></linearGradient>
+<filter id="aGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
+`<g transform="rotate(45 160 170)">
+  <path d="M160 36 L170 60 V200 H150 V60 Z" fill="#cdd5db" stroke="#39424b" stroke-width="2.5"/>
+  <path d="M160 48 V196" stroke="#8d979f" stroke-width="2"/>
+  <rect x="130" y="200" width="60" height="11" rx="5" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+  <rect x="153" y="211" width="14" height="26" rx="5" fill="#5b4028" stroke="#20262b" stroke-width="2"/>
+  <circle cx="160" cy="243" r="8" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+</g>
+<g transform="rotate(-45 160 170)">
+  <path d="M160 36 L170 60 V200 H150 V60 Z" fill="#cdd5db" stroke="#39424b" stroke-width="2.5"/>
+  <path d="M160 48 V196" stroke="#8d979f" stroke-width="2"/>
+  <rect x="130" y="200" width="60" height="11" rx="5" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+  <rect x="153" y="211" width="14" height="26" rx="5" fill="#5b4028" stroke="#20262b" stroke-width="2"/>
+  <circle cx="160" cy="243" r="8" fill="#8f9ba6" stroke="#20262b" stroke-width="2"/>
+</g>
+<path d="M92 304 C94 252 112 226 160 220 C208 226 226 252 228 304 Z" fill="#3a4149" stroke="#12161b" stroke-width="3"/>
+<path d="M96 262 q22 -26 52 -30 M224 262 q-22 -26 -52 -30" stroke="#9aa3ab" stroke-width="6" fill="none" opacity=".65"/>
+<path d="M128 214 V128 Q128 86 160 82 Q192 86 192 128 V214 Q160 224 128 214 Z" fill="url(#aHelm)" stroke="#0e1216" stroke-width="3.5"/>
+<path d="M160 82 V150" stroke="#0e1216" stroke-width="4"/>
+<rect x="136" y="150" width="48" height="10" rx="5" fill="#05070a"/>
+<circle cx="150" cy="155" r="4" fill="#ff8c42" filter="url(#aGlow)"/>
+<circle cx="170" cy="155" r="4" fill="#ff8c42" filter="url(#aGlow)"/>
+<path d="M142 184 h36 M146 196 h28" stroke="#0e1216" stroke-width="3"/>`);},
+
+/* S — lorde com manto, capuz e coroa de espinhos */
+S(){return molduraRetrato('S',
+`<linearGradient id="sCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f2148"/><stop offset="1" stop-color="#120a1d"/></linearGradient>
+<filter id="sGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="sSoft"><feGaussianBlur stdDeviation="3"/></filter>`,
+`<circle cx="242" cy="74" r="20" fill="#cbb7ff" opacity=".55"/>
+<circle cx="250" cy="68" r="17" fill="#120e18"/>
+<path d="M84 300 C76 268 92 252 84 224 M236 300 C244 268 228 252 236 224" stroke="#9d4edd" stroke-width="7" fill="none" opacity=".3" filter="url(#sSoft)"/>
+<path d="M64 304 C66 224 92 186 128 172 L160 186 L192 172 C228 186 254 224 256 304 Z" fill="url(#sCloak)" stroke="#0a0612" stroke-width="3"/>
+<path d="M96 196 L116 130 L136 178 Z" fill="#1c1230" stroke="#0a0612" stroke-width="2"/>
+<path d="M224 196 L204 130 L184 178 Z" fill="#1c1230" stroke="#0a0612" stroke-width="2"/>
+<path d="M120 168 C114 104 206 104 200 168 C188 142 132 142 120 168 Z" fill="#241a33" stroke="#0a0612" stroke-width="3"/>
+<ellipse cx="160" cy="172" rx="22" ry="26" fill="#d9cfe8"/>
+<path d="M140 156 q20 -12 40 0 l0 9 q-20 -9 -40 0 Z" fill="#5c4a75" opacity=".55"/>
+<circle cx="151" cy="172" r="3.2" fill="#b06ef0" filter="url(#sGlow)"/>
+<circle cx="169" cy="172" r="3.2" fill="#b06ef0" filter="url(#sGlow)"/>
+<path d="M154 188 q6 4 12 0" stroke="#8a7ba6" stroke-width="2" fill="none"/>
+<path d="M134 142 Q160 128 186 142" stroke="#4a3416" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M140 138 l-7 -11 M152 133 l-3 -13 M166 132 l3 -13 M178 137 l8 -11" stroke="#4a3416" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M136 150 Q160 138 184 150" stroke="#3a280f" stroke-width="4" fill="none" opacity=".8"/>`);},
+
+/* SS — rei coroado com cetro */
+SS(){return molduraRetrato('SS',
+`<linearGradient id="ssGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#c9962e"/></linearGradient>
+<linearGradient id="ssRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a2432"/><stop offset="1" stop-color="#3f0d15"/></linearGradient>
+<filter id="ssGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
+`<g opacity=".3" stroke="#f2cf6b" stroke-width="3" stroke-linecap="round">
+  <path d="M160 44 v-22 M202 56 l15 -17 M118 56 l-15 -17 M230 88 l22 -8 M90 88 l-22 -8"/>
+</g>
+<path d="M76 304 C80 232 108 196 160 188 C212 196 240 232 244 304 Z" fill="url(#ssRobe)" stroke="#1c070c" stroke-width="3"/>
+<path d="M104 244 C130 222 190 222 216 244 L208 266 C186 250 134 250 112 266 Z" fill="#e8e2d4"/>
+<g fill="#26201a"><path d="M132 250 l4 8 M160 246 l0 9 M188 250 l-4 8" stroke="#26201a" stroke-width="2.5"/></g>
+<circle cx="160" cy="150" r="30" fill="#d8b48f" stroke="#3a2410" stroke-width="2"/>
+<path d="M136 158 q24 40 48 0 q-4 28 -24 32 q-20 -4 -24 -32 Z" fill="#cfc6ba"/>
+<circle cx="150" cy="148" r="3" fill="#3a2410"/>
+<circle cx="170" cy="148" r="3" fill="#3a2410"/>
+<path d="M126 122 L126 96 L142 112 L160 84 L178 112 L194 96 L194 122 Q160 132 126 122 Z" fill="url(#ssGold)" stroke="#5e470f" stroke-width="3"/>
+<circle cx="136" cy="116" r="4" fill="#d7263d"/><circle cx="160" cy="118" r="4.5" fill="#2e6fd0"/><circle cx="184" cy="116" r="4" fill="#d7263d"/>
+<g transform="rotate(16 236 210)">
+  <rect x="232" y="122" width="8" height="180" rx="4" fill="url(#ssGold)" stroke="#5e470f" stroke-width="2"/>
+  <circle cx="236" cy="112" r="13" fill="#f6dd8f" stroke="#5e470f" stroke-width="2.5" filter="url(#ssGlow)"/>
+  <path d="M236 90 l7 13 h-14 Z" fill="#f6dd8f" stroke="#5e470f" stroke-width="1.5"/>
+</g>
+<circle cx="230" cy="228" r="12" fill="#d8b48f" stroke="#3a2410" stroke-width="2"/>`);},
+
+/* SSS — imperador arcano: coroa flutuante, chamas e runas esmeralda */
+SSS(){return molduraRetrato('SSS',
+`<linearGradient id="sssArmor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2a24"/><stop offset="1" stop-color="#050706"/></linearGradient>
+<linearGradient id="sssFlame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0b8f6a" stop-opacity=".9"/><stop offset=".55" stop-color="#2ee6a8" stop-opacity=".85"/><stop offset="1" stop-color="#a4ffe0" stop-opacity=".95"/></linearGradient>
+<filter id="sssGlow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="sssSoft"><feGaussianBlur stdDeviation="3"/></filter>`,
+`<circle cx="160" cy="160" r="126" fill="none" stroke="#2ee6a8" stroke-opacity=".32" stroke-width="2" stroke-dasharray="4 10"/>
+<g fill="#7dffce" opacity=".85" font-size="20" text-anchor="middle" font-family="serif" filter="url(#sssGlow)">
+  <text x="160" y="60">ᚠ</text><text x="250" y="110">ᛟ</text><text x="250" y="220">ᚱ</text>
+  <text x="160" y="268">ᛗ</text><text x="70" y="220">ᛉ</text><text x="70" y="110">ᛏ</text>
+</g>
+<path d="M96 300 C86 260 108 244 100 214 C122 236 118 264 112 300 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#sssSoft)"/>
+<path d="M224 300 C234 260 212 244 220 214 C198 236 202 264 208 300 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#sssSoft)"/>
+<path d="M84 304 C88 240 112 208 160 200 C208 208 232 240 236 304 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".5" stroke-width="2.5"/>
+<path d="M120 262 q40 -18 80 0 M128 282 q32 -14 64 0" stroke="#2ee6a8" stroke-width="2" opacity=".5" fill="none"/>
+<path d="M148 234 l12 -10 12 10 -12 22 Z" fill="none" stroke="#2ee6a8" stroke-width="2.5" filter="url(#sssGlow)"/>
+<ellipse cx="160" cy="156" rx="26" ry="30" fill="#0d1210" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="2"/>
+<circle cx="150" cy="158" r="4" fill="#5cffc0" filter="url(#sssGlow)"/>
+<circle cx="170" cy="158" r="4" fill="#5cffc0" filter="url(#sssGlow)"/>
+<path d="M116 122 C108 106 116 94 112 78 C124 90 124 108 120 122 Z" fill="url(#sssFlame)" opacity=".85"/>
+<path d="M204 122 C212 106 204 94 208 78 C196 90 196 108 200 122 Z" fill="url(#sssFlame)" opacity=".85"/>
+<g filter="url(#sssGlow)">
+  <path d="M128 106 L128 78 L146 96 L160 66 L174 96 L192 78 L192 106 Q160 116 128 106 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
+  <circle cx="160" cy="60" r="5" fill="#5cffc0"/>
+  <circle cx="136" cy="72" r="3" fill="#5cffc0"/><circle cx="184" cy="72" r="3" fill="#5cffc0"/>
+</g>`);}
+};
+
+/* ================= ANÁLISE DO BACKUP ================= */
+function validar(obj){
+  if(!obj||typeof obj!=='object'||Array.isArray(obj))return 'O arquivo não contém um objeto JSON.';
+  if(!obj.meta||obj.meta.app!=='fluxo')return 'Este JSON não parece um backup do Fluxo (meta.app ≠ "fluxo").';
+  const d=obj.data;
+  if(!d||typeof d!=='object')return 'Backup sem a chave "data".';
+  if(!Array.isArray(d.accounts)||!Array.isArray(d.transactions))return 'Estrutura inválida: "accounts" e "transactions" devem ser listas.';
+  return null;
+}
+function analisar(d){
+  const contas=d.accounts||[], txs=d.transactions||[];
+  const saldo={};
+  contas.forEach(a=>{saldo[a.id]=Math.round(Number(a.initial)||0);});
+  let rec=0, desp=0;
+  txs.forEach(t=>{
+    const v=Math.round(Number(t.value)||0);
+    if(t.type==='receita')rec+=v; else if(t.type==='despesa')desp+=v;
+    if(t.status==='pago'&&(t.accountId in saldo)){
+      saldo[t.accountId]+= t.type==='receita'? v : -v;
+    }
+  });
+  let patrimonio=0, investido=0;
+  contas.forEach(a=>{
+    const s=saldo[a.id]||0; patrimonio+=s;
+    if((a.type==='poupanca'||a.type==='investimento')&&s>0)investido+=s;
+  });
+  const hoje=hojeISO();
+  const vencidas=txs.filter(t=>t.type==='despesa'&&t.status!=='pago'&&typeof t.date==='string'&&t.date<hoje).length;
+  const taxa=rec>0?Math.max(0,(rec-desp)/rec):0;
+  const ptsP=Math.min(40,Math.max(0,Math.floor(patrimonio/100/500)));
+  const ptsS=Math.min(30,Math.max(0,Math.round(taxa*60)));
+  const ptsT=Math.min(20,Math.max(0,Math.floor(investido/100/1000)));
+  const ptsD=Math.max(0,10-2*vencidas);
+  const score=Math.max(0,Math.min(100,ptsP+ptsS+ptsT+ptsD));
+  return {patrimonio,investido,vencidas,taxa,rec,desp,ptsP,ptsS,ptsT,ptsD,score};
+}
+
+/* ================= ESTADO / RENDER ================= */
+let state=null;
+const altar=$('#altar'),errBox=$('#errBox'),errMsg=$('#errMsg'),stage=$('#stage');
+const card=$('#card'),medalLetter=$('#medalLetter'),scoreLine=$('#scoreLine'),portrait=$('#portrait'),
+      rankName=$('#rankName'),phrase=$('#phrase'),vOuro=$('#vOuro'),vTesouro=$('#vTesouro'),
+      vHonra=$('#vHonra'),vDisc=$('#vDisc'),cardFoot=$('#cardFoot'),cardEmbers=$('#cardEmbers'),
+      ledger=$('#ledger'),btnPng=$('#btnPng'),btnReforge=$('#btnReforge');
+
+function showError(msg){stage.hidden=true;errMsg.textContent=msg;errBox.hidden=false;errBox.scrollIntoView({block:'center'});}
+
+function renderLedger(st){
+  const linha=(n,v,p)=>`<li><span>${n}</span><i></i><b>${v}</b><em>+${p} pts</em></li>`;
+  ledger.innerHTML=`<h3>⚖ O Julgamento do Tomo</h3><ul>
+    ${linha('Patrimônio (Ouro)',fmtBRL(st.patrimonio),st.ptsP)}
+    ${linha('Tesouro Investido',fmtBRL(st.investido),st.ptsT)}
+    ${linha('Honra (Taxa de Poupança)',fmtPct(st.taxa),st.ptsS)}
+    ${linha('Despesas Vencidas',st.vencidas,st.ptsD)}
+  </ul><p class="total">SCORE FINAL · <b>${st.score}/100</b></p>`;
+}
+function embersDaCarta(rankKey){
+  cardEmbers.innerHTML='';
+  if(reducedMotion)return;
+  const n=rankKey==='SSS'?16:rankKey==='SS'?9:0;
+  for(let i=0;i<n;i++){
+    const e=document.createElement('span');e.className='card-ember';
+    const s=(2+Math.random()*3.5).toFixed(1);
+    e.style.width=s+'px';e.style.height=s+'px';
+    e.style.left=(6+Math.random()*88)+'%';
+    e.style.animationDuration=(2.6+Math.random()*3)+'s';
+    e.style.animationDelay=(Math.random()*3)+'s';
+    e.style.setProperty('--dx',(Math.random()*70-35)+'px');
+    cardEmbers.appendChild(e);
+  }
+}
+function mostrarCarta(st){
+  state=st;errBox.hidden=true;altar.hidden=true;stage.hidden=false;
+  card.dataset.rank=st.rank.key;card.dataset.frame=st.rank.frame;
+  card.style.setProperty('--aura',st.rank.aura);
+  card.style.setProperty('--medal1',st.rank.medal[0]);
+  card.style.setProperty('--medal2',st.rank.medal[1]);
+  medalLetter.textContent=st.rank.key;
+  scoreLine.textContent=`Pontuação ${st.score}/100`;
+  portrait.innerHTML=PORTRAITS[st.rank.key]();
+  rankName.textContent=st.rank.name;
+  phrase.textContent=st.rank.phrase;
+  vOuro.textContent=fmtBRL(st.patrimonio);
+  vTesouro.textContent=fmtBRL(st.investido);
+  vHonra.textContent=fmtPct(st.taxa);
+  vDisc.textContent=Math.max(0,10-st.vencidas)+' / 10';
+  cardFoot.textContent=`Forjado em ${hojeFmt()} · Série ${st.serie}`;
+  renderLedger(st);embersDaCarta(st.rank.key);
+  card.classList.remove('invoking');void card.offsetWidth;card.classList.add('invoking');
+  stage.scrollIntoView({block:'start'});
+}
+
+/* ================= EXPORTAÇÃO PNG (canvas 1080×1512) ================= */
+const CW=1080,CH=1512;
+const FRAME_COLORS={
+  iron:{hi:'#6e675c',lo:'#3a352c'},
+  steel:{hi:'#b6c2cd',lo:'#5d6b78'},
+  gold:{hi:'#e8c96a',lo:'#8a6d1f'},
+  obsidian:{hi:'#e8c96a',lo:'#2ee6a8'}
+};
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function flourishAt(c,cx,cy,rot,color){
+  c.save();c.translate(cx,cy);c.rotate(rot);c.strokeStyle=color;c.fillStyle=color;c.lineCap='round';
+  c.lineWidth=5;c.beginPath();c.moveTo(6,120);c.bezierCurveTo(6,60,30,18,120,8);c.stroke();
+  c.lineWidth=2;c.beginPath();c.moveTo(12,120);c.bezierCurveTo(16,74,36,44,78,30);c.stroke();
+  c.lineWidth=3;c.beginPath();c.arc(26,96,12,Math.PI*0.2,Math.PI*1.5);c.stroke();
+  c.beginPath();c.arc(120,8,5,0,Math.PI*2);c.fill();
+  c.restore();
+}
+function gemAt(c,x,y,color){
+  const g=c.createRadialGradient(x-3,y-3,1,x,y,10);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.5,color);g.addColorStop(1,'rgba(0,0,0,.9)');
+  c.fillStyle=g;c.beginPath();c.arc(x,y,9,0,Math.PI*2);c.fill();
+  c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1.5;c.stroke();
+}
+function wrapText(c,text,maxW){
+  const words=text.split(' '),lines=[];let line='';
+  for(const w of words){const t=line?line+' '+w:w;
+    if(c.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;}
+  if(line)lines.push(line);return lines;
+}
+function svgParaImagem(svgStr,tam){
+  return new Promise((res,rej)=>{
+    const s=svgStr.replace('<svg ','<svg width="'+tam+'" height="'+tam+'" ');
+    const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});
+    const url=URL.createObjectURL(blob);const im=new Image();
+    im.onload=()=>{URL.revokeObjectURL(url);res(im);};
+    im.onerror=e=>{URL.revokeObjectURL(url);rej(e);};
+    im.src=url;
+  });
+}
+async function pintarCarta(st){
+  try{await Promise.all([
+    document.fonts.load('900 88px "Cinzel Decorative"'),
+    document.fonts.load('700 30px Cinzel'),
+    document.fonts.load('600 38px "Cormorant Garamond"'),
+    document.fonts.load('italic 600 38px "Cormorant Garamond"')
+  ]);}catch(e){/* segue sem bloquear */}
+  const cv=document.createElement('canvas');cv.width=CW;cv.height=CH;
+  const c=cv.getContext('2d'),rk=st.rank,fc=FRAME_COLORS[rk.frame];
+  // fundo + aura
+  c.fillStyle='#070605';c.fillRect(0,0,CW,CH);
+  let g=c.createRadialGradient(CW/2,440,80,CW/2,440,780);
+  g.addColorStop(0,hexA(rk.aura,.34));g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;c.fillRect(0,0,CW,CH);
+  for(let i=0;i<70;i++){c.fillStyle=`rgba(255,255,255,${Math.random()*.03})`;
+    c.fillRect(Math.random()*CW,Math.random()*CH,1.4,1.4);}
+  g=c.createRadialGradient(CW/2,CH/2,CH*.3,CW/2,CH/2,CH*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');
+  c.fillStyle=g;c.fillRect(0,0,CW,CH);
+  // moldura
+  if(rk.frame==='obsidian'){
+    roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=16;c.strokeStyle='#191614';c.stroke();
+    roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=3;c.strokeStyle='#e8c96a';c.stroke();
+    c.save();c.shadowColor='#2ee6a8';c.shadowBlur=20;
+    roundRect(c,50,50,CW-100,CH-100,18);c.lineWidth=3;c.strokeStyle='#2ee6a8';c.stroke();c.restore();
+  }else{
+    roundRect(c,26,26,CW-52,CH-52,26);c.lineWidth=14;c.strokeStyle=fc.hi;c.stroke();
+    roundRect(c,50,50,CW-100,CH-100,18);c.lineWidth=rk.frame==='steel'?5:3;
+    if(rk.frame==='steel'){c.setLineDash([14,6]);}
+    c.strokeStyle=fc.lo;c.stroke();c.setLineDash([]);
+  }
+  flourishAt(c,64,64,0,fc.hi);flourishAt(c,CW-64,64,Math.PI/2,fc.hi);
+  flourishAt(c,CW-64,CH-64,Math.PI,fc.hi);flourishAt(c,64,CH-64,-Math.PI/2,fc.hi);
+  if(rk.frame==='gold'||rk.frame==='obsidian'){
+    const gc=rk.frame==='obsidian'?'#2ee6a8':'#d7263d';
+    gemAt(c,CW/2,33,gc);gemAt(c,CW/2,CH-33,gc);gemAt(c,33,CH/2,gc);gemAt(c,CW-33,CH/2,gc);
+  }
+  // medalhão
+  const my=176;
+  c.save();c.shadowColor=rk.aura;c.shadowBlur=30;
+  g=c.createRadialGradient(CW/2-26,my-30,10,CW/2,my,86);
+  g.addColorStop(0,rk.medal[0]);g.addColorStop(1,rk.medal[1]);
+  c.fillStyle=g;c.beginPath();c.arc(CW/2,my,84,0,Math.PI*2);c.fill();c.restore();
+  c.lineWidth=7;c.strokeStyle='#0b0a08';c.beginPath();c.arc(CW/2,my,84,0,Math.PI*2);c.stroke();
+  c.lineWidth=3;c.strokeStyle=fc.hi;c.beginPath();c.arc(CW/2,my,91,0,Math.PI*2);c.stroke();
+  c.font='900 84px "Cinzel Decorative"';c.textAlign='center';c.textBaseline='alphabetic';
+  c.save();c.shadowColor=rk.aura;c.shadowBlur=18;c.fillStyle='#f6ead0';
+  c.fillText(rk.key,CW/2,my+30);c.restore();
+  c.font='700 28px Cinzel';c.fillStyle='#c8a95f';
+  c.fillText('· ᛝ ·   PONTUAÇÃO '+st.score+' / 100   · ᛝ ·',CW/2,306);
+  // retrato
+  const ps=580,px=(CW-ps)/2,py=324;
+  try{const im=await svgParaImagem(PORTRAITS[rk.key](),ps);c.drawImage(im,px,py,ps,ps);}
+  catch(e){c.fillStyle='#0c0a09';c.fillRect(px,py,ps,ps);}
+  // nome do rank
+  c.font='900 64px "Cinzel Decorative"';
+  const nomeGrad=c.createLinearGradient(0,930,0,1110);
+  nomeGrad.addColorStop(0,'#f6e3a5');nomeGrad.addColorStop(.6,'#c9a227');nomeGrad.addColorStop(1,'#8a6d1f');
+  const linhasNome=wrapText(c,rk.name,900);let ny=984;
+  c.save();c.shadowColor=hexA(rk.aura,.6);c.shadowBlur=22;c.fillStyle=nomeGrad;
+  linhasNome.forEach(l=>{c.fillText(l,CW/2,ny);ny+=80;});c.restore();
+  // frase
+  c.font='italic 600 38px "Cormorant Garamond"';c.fillStyle='#cfc3a5';
+  let fy=(ny-80)+58;
+  wrapText(c,rk.phrase,800).forEach(l=>{c.fillText(l,CW/2,fy);fy+=46;});
+  // divisor
+  const dy=fy+14;
+  c.strokeStyle='rgba(200,169,95,.5)';c.lineWidth=2;
+  c.beginPath();c.moveTo(200,dy);c.lineTo(CW/2-46,dy);c.stroke();
+  c.beginPath();c.moveTo(CW/2+46,dy);c.lineTo(CW-200,dy);c.stroke();
+  c.fillStyle='#c9a227';c.save();c.translate(CW/2,dy);c.rotate(Math.PI/4);c.fillRect(-9,-9,18,18);c.restore();
+  // atributos
+  const disc=Math.max(0,10-st.vencidas);
+  const linhas=[['OURO',fmtBRL(st.patrimonio)],['TESOURO',fmtBRL(st.investido)],
+                ['HONRA',fmtPct(st.taxa)],['DISCIPLINA',disc+' / 10']];
+  let ay=dy+44;
+  linhas.forEach(([k,v])=>{
+    c.font='700 28px Cinzel';c.fillStyle='#c8a95f';c.textAlign='left';
+    const kw=c.measureText(k).width;c.fillText(k,150,ay);
+    c.font='600 38px "Cormorant Garamond"';c.fillStyle='#efe6cf';c.textAlign='right';
+    const vw=c.measureText(v).width;c.fillText(v,CW-150,ay);
+    c.strokeStyle='rgba(200,169,95,.35)';c.setLineDash([2,7]);c.lineWidth=2;
+    c.beginPath();c.moveTo(166+kw,ay-9);c.lineTo(CW-166-vw,ay-9);c.stroke();c.setLineDash([]);
+    ay+=54;
+  });
+  // rodapé
+  c.textAlign='center';c.font='600 28px "Cormorant Garamond"';c.fillStyle='#9b8c66';
+  c.fillText(`Forjado em ${hojeFmt()}  ·  Série ${st.serie}`,CW/2,CH-66);
+  return cv;
+}
+async function baixarPNG(){
+  if(!state)return;
+  btnPng.disabled=true;btnPng.textContent='⚒ Forjando…';
+  try{
+    const cv=await pintarCarta(state);
+    cv.toBlob(b=>{
+      if(!b)return;
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download='fluxo-carta-'+state.rank.key.toLowerCase()+'.png';
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    },'image/png');
+  }catch(e){showError('A forja do PNG falhou: '+(e&&e.message?e.message:'erro desconhecido'));}
+  finally{btnPng.disabled=false;btnPng.textContent='⬇ Baixar carta (PNG)';}
+}
+
+/* ================= UPLOAD / DRAG & DROP ================= */
+function handleFile(file){
+  if(!file)return;
+  const nomeOk=/\.json$/i.test(file.name),tipoOk=!file.type||file.type==='application/json';
+  if(!nomeOk&&!tipoOk){showError('O arquivo deve ser um .json exportado pelo Fluxo.');return;}
+  const rd=new FileReader();
+  rd.onerror=()=>showError('Não foi possível ler o arquivo.');
+  rd.onload=()=>{
+    let obj;
+    try{obj=JSON.parse(rd.result);}
+    catch(e){showError('JSON inválido ou corrompido: '+(e.message||'erro de sintaxe'));return;}
+    const erro=validar(obj);
+    if(erro){showError(erro);return;}
+    const an=analisar(obj.data);
+    mostrarCarta({...an,rank:rankFor(an.score),serie:serieRunica()});
+  };
+  rd.readAsText(file,'utf-8');
+}
+const dz=$('#dropzone'),fileInput=$('#fileInput');
+dz.addEventListener('click',e=>{if(e.target===dz||e.target.closest('.dz-in')&&!e.target.closest('label'))fileInput.click();});
+dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}});
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();if(ev==='dragleave')dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{dz.classList.remove('drag');handleFile(e.dataTransfer.files&&e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',()=>{handleFile(fileInput.files&&fileInput.files[0]);fileInput.value='';});
+['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>e.preventDefault()));
+btnPng.addEventListener('click',baixarPNG);
+btnReforge.addEventListener('click',()=>{
+  stage.hidden=true;errBox.hidden=true;altar.hidden=false;state=null;
+  window.scrollTo({top:0,behavior:reducedMotion?'auto':'smooth'});
+});
+
+/* ================= BRASAS AMBIENTE ================= */
+(function spawnEmbers(){
+  if(reducedMotion)return;
+  const layer=$('#embers');
+  for(let i=0;i<26;i++){
+    const e=document.createElement('span');e.className='ember';
+    const s=(2+Math.random()*4).toFixed(1);
+    e.style.width=s+'px';e.style.height=s+'px';
+    e.style.left=(Math.random()*100)+'vw';
+    e.style.animationDuration=(7+Math.random()*9)+'s';
+    e.style.animationDelay=(-Math.random()*16)+'s';
+    e.style.setProperty('--dx',(Math.random()*140-70)+'px');
+    layer.appendChild(e);
+  }
+})();
+})();
+</script>
+</body>
+</html>
