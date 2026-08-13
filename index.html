@@ -1791,13 +1791,13 @@ demo:state.demo, initialized:true}};
 download(`backup-financeiro-${todayISO()}.json`, JSON.stringify(payload,null,2), "application/json");
 toast("Backup exportado.");
 }
-function autoBackupCurrent(){
+function snapshotCurrent(){
 const payload={meta:{app:APP_ID,version:state.meta.version,exportedAt:new Date().toISOString(),auto:true},
 data:{settings:state.settings,categories:state.categories,accounts:state.accounts,cards:state.cards,
 transactions:state.transactions,recurrences:state.recurrences,budgets:state.budgets,goals:state.goals,demo:state.demo,initialized:true}};
 const json=JSON.stringify(payload,null,2);
 try{ localStorage.setItem(AUTO_KEY, json); }catch(e){}
-download(`backup-automatico-${todayISO()}.json`, json, "application/json");
+return json;
 }
 function handleImportFile(file){
 const rd=new FileReader();
@@ -1810,16 +1810,27 @@ return toast("Este backup não é compatível.","err");
 const d=obj.data;
 const counts={lanc:(d.transactions||[]).length, cat:(d.categories||[]).length, contas:(d.accounts||[]).length,
 cartoes:(d.cards||[]).length, recorr:(d.recurrences||[]).length};
-confirmModal({title:"Restaurar backup", okLabel:"Restaurar",
-msg:`Backup de <b>${esc((obj.meta.exportedAt||"").slice(0,10))}</b> encontrado:<br><br>
-• ${counts.lanc} lançamentos<br>• ${counts.cat} categorias<br>• ${counts.contas} contas<br>• ${counts.cartoes} cartões<br>• ${counts.recorr} recorrências<br><br>
-<b>Os dados atuais serão substituídos.</b> Um backup automático dos dados atuais será baixado antes da restauração.`,
-onOk:()=>{
-autoBackupCurrent();
+const ov=openModal({title:"Restaurar backup",
+body:`<p style="font-size:14px;color:var(--ink2);line-height:1.6">Backup de <b>${esc((obj.meta.exportedAt||"").slice(0,10))}</b> encontrado:</p>
+<p style="font-size:13px;color:var(--ink2);line-height:1.8;margin-top:6px">
+• ${counts.lanc} lançamentos<br>• ${counts.cat} categorias<br>• ${counts.contas} contas<br>• ${counts.cartoes} cartões<br>• ${counts.recorr} recorrências</p>
+<p style="font-size:13px;margin-top:12px"><b>Os dados atuais serão substituídos.</b></p>
+<label style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:11px 13px;border:1px dashed var(--line2);border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:600">
+<input type="checkbox" id="ck-backup" checked style="width:auto;margin-top:2px">
+<span>Baixar um backup da versão atual antes de substituir (recomendado)</span>
+</label>
+<p style="font-size:12px;color:var(--ink2);margin-top:8px">Uma cópia interna também fica salva neste navegador, mesmo se você desmarcar a opção.</p>`,
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok>${icon("upload",15)} Restaurar</button>`});
+ov.querySelector("[data-x]").onclick=ov._close;
+ov.querySelector("[data-ok]").onclick=()=>{
+const wantFile=ov.querySelector("#ck-backup").checked;
+const json=snapshotCurrent();
+ov._close();
+if(wantFile) download(`backup-automatico-${todayISO()}.json`, json, "application/json");
 state=mergeDefaults({meta:{app:APP_ID,version:1}, ...d});
 materializeAll(); save(); _fmtCache={}; applyTheme(); render();
-toast("Backup restaurado com sucesso.");
-}});
+toast(wantFile?"Backup restaurado — cópia da versão anterior baixada.":"Backup restaurado com sucesso.");
+};
 };
 rd.readAsText(file);
 }
