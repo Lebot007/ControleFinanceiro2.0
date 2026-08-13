@@ -387,7 +387,9 @@ demo:false, initialized:false
 };
 }
 let state = loadState() || defaultState();
-const ui = { period:"mes", from:"", to:"", txF:{q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false},
+const ui = {
+per:{ dashboard:{period:"mes",from:"",to:""}, reports:{period:"mes",from:"",to:""}, csv:{period:"all",from:"",to:""} },
+txF:{q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false},
 sel:{lanc:new Set(), contas:new Set(), receitas:new Set()} };
 let _billGroups = {};
 let _viewIds = {lanc:[], contas:[], receitas:[]};
@@ -436,7 +438,17 @@ if(p==="ano")  return [`${t.getFullYear()}-01-01`, `${t.getFullYear()}-12-31`];
 if(p==="custom"){ let f=from||`${t.getFullYear()}-01-01`, g=to||todayISO(); if(f>g){ const tmp=f; f=g; g=tmp; } return [f,g]; }
 return cycle(t);
 }
-function periodRange(){ return rangeForPeriod(ui.period, ui.from, ui.to); }
+function periodRange(scope){ const p=ui.per[scope]||ui.per.dashboard; return rangeForPeriod(p.period, p.from, p.to); }
+function bindPeriodInputs(scope, fromEl, toEl){
+if(!fromEl || !toEl) return;
+const p = ui.per[scope];
+let t1=null, t2=null;
+const apply=(el,which)=>{ if(!validDate(el.value)) return; p[which]=el.value; render(); };
+fromEl.addEventListener("input", ()=>{ clearTimeout(t1); t1=setTimeout(()=>apply(fromEl,"from"),650); });
+toEl.addEventListener("input",   ()=>{ clearTimeout(t2); t2=setTimeout(()=>apply(toEl,"to"),650); });
+fromEl.addEventListener("change", ()=>{ clearTimeout(t1); apply(fromEl,"from"); });
+toEl.addEventListener("change",   ()=>{ clearTimeout(t2); apply(toEl,"to"); });
+}
 const inRange = (d,s,e) => d>=s && d<=e;
 function lastMonths(n){
 const out=[], d=new Date();
@@ -1242,7 +1254,7 @@ function emptyBlock(ic, title, msg, btn){
 return `<div class="empty"><div class="e-art">${icon(ic,32)}</div><h4>${title}</h4><p>${msg}</p>${btn||""}</div>`;
 }
 function renderDashboard(){
-const [ps,pe] = periodRange();
+const [ps,pe] = periodRange("dashboard");
 const inP = t => inRange(t.date, ps, pe);
 const txP = state.transactions.filter(inP);
 const rec = txP.filter(t=>t.type==="receita").reduce((s,t)=>s+t.value,0);
@@ -1287,8 +1299,8 @@ viewEl().innerHTML = `
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-<div class="seg" id="period-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.period===k?'on':''}">${l}</button>`).join("")}</div>
-${ui.period==="custom"?`<input type="date" id="p-from" value="${ui.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.to}">`:""}
+<div class="seg" id="period-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.per.dashboard.period===k?'on':''}">${l}</button>`).join("")}</div>
+${ui.per.dashboard.period==="custom"?`<input type="date" id="p-from" value="${ui.per.dashboard.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.dashboard.to}">`:""}
 <span style="margin-left:auto;font-size:12.5px;color:var(--ink2)">${icon("calendar",13)} ${fmtDate(ps)} — ${fmtDate(pe)}</span>
 </div>
 <div class="grid kpis" style="margin-bottom:16px">
@@ -1316,9 +1328,8 @@ return `<div class="bill"><span class="b-ic" style="background:${c?c.color+"22":
 </div>
 </div>`;
 $("#period-seg").onclick=e=>{ const b=e.target.closest("[data-period]"); if(!b)return;
-ui.period=b.dataset.period; render(); };
-const pf=$("#p-from"), pt=$("#p-to");
-if(pf){ pf.onchange=()=>{ui.from=pf.value;render();}; pt.onchange=()=>{ui.to=pt.value;render();}; }
+ui.per.dashboard.period=b.dataset.period; render(); };
+bindPeriodInputs("dashboard", $("#p-from"), $("#p-to"));
 }
 function filteredTx(){
 const f=ui.txF;
@@ -1744,7 +1755,7 @@ save(); ov._close(); render(); toast("Meta salva.");
 };
 }
 function renderReports(){
-const [ps,pe]=periodRange();
+const [ps,pe]=periodRange("reports");
 const inP=t=>inRange(t.date,ps,pe);
 const txP=state.transactions.filter(inP);
 const rec=txP.filter(t=>t.type==="receita").reduce((s,t)=>s+t.value,0);
@@ -1777,8 +1788,8 @@ viewEl().innerHTML=`
 <div class="page-head"><div><h1>Relatórios</h1><p>Análise completa do período <b>${fmtDate(ps)} — ${fmtDate(pe)}</b>.</p></div>
 <button class="btn btn-ghost no-print" data-action="print">${icon("printer",15)} Imprimir / PDF</button></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center" class="no-print">
-<div class="seg" id="rep-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.period===k?'on':''}">${l}</button>`).join("")}</div>
-${ui.period==="custom"?`<input type="date" id="p-from" value="${ui.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.to}">`:""}
+<div class="seg" id="rep-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.per.reports.period===k?'on':''}">${l}</button>`).join("")}</div>
+${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.per.reports.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.reports.to}">`:""}
 </div>
 <div class="grid kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
 <div class="card kpi" style="--kc:#0e9f6e22"><div class="k-top">Receitas no período</div><div class="k-val num pos">${fmtMoney(rec)}</div></div>
@@ -1813,9 +1824,8 @@ return `<tr><td data-label="#" class="td-first">${i+1}</td><td data-label="Descr
 <td data-label="Data" class="num">${fmtDate(t.date)}</td><td data-label="Categoria">${c?esc(c.name):"—"}</td>
 <td data-label="Conta">${a?esc(a.name):"—"}</td><td data-label="Valor" class="num val-down">${fmtMoney(t.value)}</td></tr>`;}).join("")}</tbody></table>`
 :"<p style='color:var(--ink2);padding:10px'>Sem despesas no período.</p>"}</div>`;
-$("#rep-seg").onclick=e=>{const b=e.target.closest("[data-period]"); if(b){ui.period=b.dataset.period; render();}};
-const pf=$("#p-from"),pt=$("#p-to");
-if(pf){pf.onchange=()=>{ui.from=pf.value;render();}; pt.onchange=()=>{ui.to=pt.value;render();};}
+$("#rep-seg").onclick=e=>{const b=e.target.closest("[data-period]"); if(b){ui.per.reports.period=b.dataset.period; render();}};
+bindPeriodInputs("reports", $("#p-from"), $("#p-to"));
 }
 function renderSettings(){
 const s=state.settings;
@@ -1946,9 +1956,12 @@ ${opt("all","Todos os lançamentos",true)}${opt("mes","Este mês")}${opt("prev",
 <p id="csv-count" style="font-size:12.5px;color:var(--ink2)"></p>`,
 foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok>${icon("download",15)} Exportar</button>`});
 const q=s=>ov.querySelector(s);
-const [csvPs,csvPe]=periodRange();
-q("#csv-from").value = csvPs;
-q("#csv-to").value = csvPe;
+const cp=ui.per.csv;
+if(!validDate(cp.from)||!validDate(cp.to)){ const [csvPs,csvPe]=rangeForPeriod("mes"); cp.from=csvPs; cp.to=csvPe; }
+q("#csv-period").value=cp.period;
+q("#csv-custom").style.display = cp.period==="custom"?"":"none";
+q("#csv-from").value = cp.from;
+q("#csv-to").value = cp.to;
 const csvRange=()=>{
 const p=q("#csv-period").value;
 if(p==="all") return ["0000-01-01","9999-12-31"];
@@ -1958,8 +1971,9 @@ return rangeForPeriod(p);
 const updateCount=()=>{ const [ps,pe]=csvRange();
 const n=state.transactions.filter(t=>t.date>=ps&&t.date<=pe).length;
 q("#csv-count").textContent=`${n} lançamento(s) no período selecionado.`; };
-q("#csv-period").onchange=()=>{ q("#csv-custom").style.display=q("#csv-period").value==="custom"?"":"none"; updateCount(); };
-q("#csv-from").onchange=updateCount; q("#csv-to").onchange=updateCount;
+q("#csv-period").onchange=()=>{ cp.period=q("#csv-period").value; q("#csv-custom").style.display= cp.period==="custom"?"":"none"; updateCount(); };
+q("#csv-from").onchange=()=>{ if(validDate(q("#csv-from").value)) cp.from=q("#csv-from").value; updateCount(); };
+q("#csv-to").onchange=()=>{ if(validDate(q("#csv-to").value)) cp.to=q("#csv-to").value; updateCount(); };
 updateCount();
 q("[data-x]").onclick=ov._close;
 q("[data-ok]").onclick=()=>{ if(ov._saving) return; ov._saving=true; q("[data-ok]").disabled=true;
