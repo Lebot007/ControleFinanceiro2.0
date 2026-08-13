@@ -1379,6 +1379,12 @@ const rOut=list.filter(t=>t.type==="despesa").reduce((s,t)=>s+t.value,0);
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Lançamentos</h1><p>Todas as suas movimentações financeiras em um só lugar.</p></div>
 <button class="btn btn-primary no-print" data-action="new-tx">${icon("plus",16)} Novo lançamento</button></div>
+<div class="card stat-strip no-print" style="margin-bottom:16px;padding:12px 20px">
+<div class="ss"><b class="num val-up">${fmtMoney(rIn)}</b><span>Receitas</span></div>
+<div class="ss"><b class="num val-down">${fmtMoney(rOut)}</b><span>Despesas</span></div>
+<div class="ss"><b class="num" style="color:${(rIn-rOut)>=0?"var(--up)":"var(--down)"}">${fmtMoney(rIn-rOut)}</b><span>Saldo do filtro</span></div>
+<span style="margin-left:auto;font-size:12.5px;color:var(--ink2)">${list.length} lançamento(s)</span>
+</div>
 <div class="card filters no-print">
 <input type="search" id="tf-q" placeholder="Pesquisar por descrição…" value="${esc(f.q)}">
 <select data-filter="type"><option value="">Tipo: todos</option>${opt("receita","Receitas",f.type==="receita")}${opt("despesa","Despesas",f.type==="despesa")}</select>
@@ -1398,13 +1404,7 @@ ${list.length?`<table class="responsive"><thead><tr>
 <th class="ck-cell"><input type="checkbox" data-ckall="lanc" aria-label="Selecionar todos"></th>
 <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Forma</th><th>Status</th><th style="text-align:right">Ações</th>
 </tr></thead><tbody>${shown.map(txRow).join("")}</tbody></table>
-<div class="table-foot">
-<span>Receitas: <b class="val-up num">${fmtMoney(rIn)}</b></span>
-<span>Despesas: <b class="val-down num">${fmtMoney(rOut)}</b></span>
-<span>Saldo do filtro: <b class="num">${fmtMoney(rIn-rOut)}</b></span>
-${list.length>400?`<span style="color:var(--warn)">Exibindo 400 de ${list.length} — refine o filtro para ver menos.</span>`:""}
-<span style="margin-left:auto;color:var(--ink2)">${list.length} lançamento(s)</span>
-</div>`
+${list.length>400?`<div class="table-foot"><span style="color:var(--warn)">Exibindo 400 de ${list.length} — refine o filtro para ver menos.</span></div>`:""}`
 : emptyBlock("receipt","Nenhum lançamento encontrado","Ajuste os filtros ou crie seu primeiro lançamento.",
 `<button class="btn btn-primary" data-action="new-tx">${icon("plus",15)} Novo lançamento</button>`)}
 </div>`;
@@ -1481,7 +1481,7 @@ _viewIds.receitas=list.map(t=>t.id);
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Receitas</h1><p>Salário, freelance, vendas, rendimentos — tudo o que entra.</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
-${pendCount?`<button class="btn btn-ghost" data-action="receive-all">${icon("check",15)} Receber todas (${pendCount})</button>`:""}
+<button class="btn btn-ghost" data-action="receive-sel" ${ui.sel.receitas.size?"":"disabled"}>${icon("check",15)} Receber selecionadas${ui.sel.receitas.size?` (${ui.sel.receitas.size})`:""}</button>
 <button class="btn btn-ghost" data-action="new-rec-income">${icon("repeat",15)} Receita recorrente</button>
 <button class="btn btn-primary" data-action="new-income">${icon("plus",16)} Nova receita</button></div></div>
 <div class="grid kpis no-print" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
@@ -2191,13 +2191,15 @@ items.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); }); save(); render();
 }
 }});
 break; }
-case "receive-all": {
-const pend = state.transactions.filter(t=>t.type==="receita" && t.status!=="pago");
-if(!pend.length){ toast("Nenhuma receita pendente.","warn"); break; }
+case "receive-sel": {
+const ids = new Set([...ui.sel.receitas].filter(id=>state.transactions.some(t=>t.id===id)));
+if(!ids.size){ toast("Marque ao menos uma receita na lista.","warn"); break; }
+const pend = state.transactions.filter(t=>ids.has(t.id) && t.type==="receita" && t.status!=="pago");
+if(!pend.length){ toast("Nenhuma receita pendente entre as selecionadas.","warn"); break; }
 const total = pend.reduce((s,t)=>s+t.value,0);
-confirmModal({title:"Receber todas as receitas pendentes", okLabel:`Receber ${pend.length}`,
-msg:`Marcar <b>${pend.length}</b> receita(s) como recebida(s), totalizando <b>${fmtMoney(total)}</b>?`,
-onOk:()=>{ pend.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); }); save(); render(); toast(`${pend.length} receita(s) recebidas.`); }});
+confirmModal({title:"Receber receitas selecionadas", okLabel:`Receber ${pend.length}`,
+msg:`Marcar <b>${pend.length}</b> receita(s) selecionada(s) como recebida(s), totalizando <b>${fmtMoney(total)}</b>?${pend.length<ids.size?`<br><span style="color:var(--ink2)">(${ids.size-pend.length} já recebida(s) serão ignoradas.)</span>`:""}`,
+onOk:()=>{ pend.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); }); save(); render(); toast(`${pend.length} receita(s) recebida(s).`); }});
 break; }
 case "rec-edit": { const r=state.recurrences.find(x=>x.id===id); if(r) openRecurrenceModal(r); break; }
 case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active){ if(!r.nextDate) r.nextDate=todayISO(); materializeRecurrence(r); } save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
