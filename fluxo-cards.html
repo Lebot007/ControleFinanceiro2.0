@@ -244,15 +244,18 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 @keyframes invoke{0%{transform:rotateY(88deg) scale(.7);opacity:0;filter:brightness(2.6) blur(2px)}
   55%{transform:rotateY(-9deg) scale(1.035);opacity:1}100%{transform:none;filter:none}}
 .card-tilt{will-change:transform;transform-style:preserve-3d;
-  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  -webkit-backface-visibility:hidden;backface-visibility:hidden}
 .card{position:relative;width:min(432px,92vw);aspect-ratio:1080/1512;border-radius:14px;
-  transform-style:preserve-3d;transform:translateZ(0);
+  transform-style:preserve-3d;
+  -webkit-transform:translateZ(0);transform:translateZ(0);
   --frame:#6e675c;--frame2:#3a352c;--frameSoft:rgba(110,103,92,.5);--orn:var(--frame);
   --medal1:#7a7264;--medal2:#3a352c;
   background:#0c0a09;border:6px solid var(--frame);
   box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 36px -6px var(--aura),
     inset 0 0 70px rgba(0,0,0,.78), var(--sh-2);
-  transition:transform .35s var(--ez2), box-shadow .45s var(--ez2)}
+  transition:transform .35s var(--ez2), box-shadow .45s var(--ez2);
+  -webkit-backface-visibility:hidden;backface-visibility:hidden}
 .card-tilt:hover .card{transform:translateY(-4px);
   box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 52px -4px var(--aura),
     inset 0 0 70px rgba(0,0,0,.78), 0 34px 60px -22px rgba(0,0,0,.95)}
@@ -296,7 +299,8 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 .art-bottom{position:absolute;inset:auto 0 0 0;height:54%;border-radius:0 0 8px 8px;
   background:linear-gradient(transparent,rgba(6,5,4,.85) 42%,rgba(6,5,4,.98))}
 .layer-top{transform:translateZ(34px);top:0;left:0;right:0;bottom:auto;
-  display:flex;align-items:center;gap:.7rem;padding:12px 14px 30px}
+  display:flex;align-items:center;gap:.7rem;padding:12px 14px 30px;
+  overflow:hidden}
 .medal{flex:none;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 32% 28%,var(--medal1),var(--medal2));
   border:3px solid #0b0a08;font-family:var(--f-disp);font-size:1.25rem;color:#f6ead0;
@@ -316,16 +320,21 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
   text-shadow:0 0 16px var(--aura),0 2px 6px rgba(0,0,0,.9)}
 .top-score small{display:block;font-family:var(--f-ui);font-size:.48rem;letter-spacing:.3em;color:#c8a95f}
 .layer-bottom{transform:translateZ(30px);top:auto;left:0;right:0;bottom:0;
-  padding:8px 16px 12px;display:flex;flex-direction:column;gap:.5rem}
-.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+  padding:8px 16px 12px;display:flex;flex-direction:column;gap:.5rem;
+  overflow:hidden}
+.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.9);
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .attrs{list-style:none;display:flex;flex-direction:column;gap:.34rem;padding:0 .1rem}
-.attrs li{display:flex;align-items:baseline;gap:.5rem}
+.attrs li{display:flex;align-items:baseline;gap:.5rem;min-width:0}
 .attrs .ico{flex:none;width:15px;height:15px;color:#c8a95f;transform:translateY(2px);filter:drop-shadow(0 0 4px rgba(201,162,39,.5))}
 .attrs .ico .ic{width:15px;height:15px}
-.attrs .k{font-family:var(--f-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f}
-.attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.45);transform:translateY(-3px)}
-.attrs .v{font-weight:700;color:var(--c-parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.card-foot{font-size:.8rem;font-style:italic;color:#a99a72;letter-spacing:.05em;text-align:center}
+.attrs .k{font-family:var(--f-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.45);transform:translateY(-3px);min-width:8px}
+.attrs .v{font-weight:700;color:var(--c-parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.card-foot{font-size:.8rem;font-style:italic;color:#a99a72;letter-spacing:.05em;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer-frame{transform:translateZ(44px)}
 .flourish{position:absolute;width:78px;height:78px;color:var(--orn);filter:drop-shadow(0 0 5px rgba(0,0,0,.8))}
 .f-tl{top:-7px;left:-7px}.f-tr{top:-7px;right:-7px;transform:rotate(90deg)}
@@ -443,24 +452,28 @@ input[type=file]{display:none}
 ================================================================ */
 
 /* ================================================================
-   13 · MODO DECK - CARROSSEL 3D
+   13 · MODO DECK - CARROSSEL 3D (CORRIGIDO)
 ================================================================ */
 #deckMode{position:fixed;inset:0;z-index:200;
+  background-color:#0c0a08;
   background:
     radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.10), transparent 60%),
     radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.10), transparent 62%),
     radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.06), transparent 60%),
     linear-gradient(#0c0a08,#060505 60%,#0b0706);
-  display:none;opacity:0;transition:opacity .5s var(--ez);
+  display:flex;flex-direction:column;align-items:center;
+  visibility:hidden;opacity:0;pointer-events:none;
+  transition:opacity .45s var(--ez), visibility .45s;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  -webkit-transform:translateZ(0);transform:translateZ(0);
+  will-change:opacity}
 html.deck-open,body.deck-open{overflow:hidden!important}
-body.deck-open{position:fixed;inset:0;width:100%;height:100%}
-#deckMode.active{display:flex;flex-direction:column;align-items:center;
-  animation:deckIn .6s var(--ez) forwards}
-@keyframes deckIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+#deckMode.active{visibility:visible;opacity:1;pointer-events:auto;
+  animation:deckIn .5s var(--ez) forwards}
+@keyframes deckIn{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
 #deckMode.closing{animation:deckOut .4s var(--ez) forwards}
-@keyframes deckOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.04)}}
+@keyframes deckOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.02)}}
 
 .deck-header{text-align:center;margin-top:calc(env(safe-area-inset-top) + 4.3rem);margin-bottom:1.5rem;z-index:10;padding:0 1rem}
 .deck-title{font-size:clamp(1.5rem,5vw,2.8rem);letter-spacing:.08em;
@@ -470,13 +483,20 @@ body.deck-open{position:fixed;inset:0;width:100%;height:100%}
 .deck-subtitle{color:var(--c-mute);font-size:clamp(.9rem,2.5vw,1.1rem);font-style:italic;max-width:600px;margin:0 auto}
 
 .deck-carousel{position:relative;width:100%;max-width:1400px;height:580px;perspective:2000px;
-  display:flex;align-items:center;justify-content:center;overflow:visible;margin:1rem 0}
+  display:flex;align-items:center;justify-content:center;overflow:visible;margin:1rem 0;
+  -webkit-transform:translateZ(0);transform:translateZ(0)}
 
 .deck-track{position:relative;width:100%;height:100%;transform-style:preserve-3d;
-  transition:transform .6s var(--ez)}
+  transition:transform .6s var(--ez);
+  will-change:transform;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden}
 
 .deck-card-wrapper{position:absolute;left:50%;top:50%;width:min(432px,85vw);aspect-ratio:1080/1512;
-  transform-style:preserve-3d;transition:all .6s var(--ez);cursor:pointer}
+  transform-style:flat;
+  transition:all .6s var(--ez);cursor:pointer;
+  will-change:transform, opacity, filter;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden;
+  -webkit-transform:translateZ(0);transform:translateZ(0)}
 
 .deck-card-wrapper .card{width:100%;height:100%;pointer-events:none}
 .deck-card-wrapper .card-tilt{pointer-events:auto}
@@ -493,7 +513,6 @@ body.deck-open{position:fixed;inset:0;width:100%;height:100%}
 .deck-card-wrapper.far-right{transform:translate(80%,-50%) translateX(160px) translateZ(-200px) rotateY(-35deg) scale(.6);
   opacity:.2;filter:blur(6px) brightness(.4);z-index:3}
 
-/* Glow aura ao redor da carta ativa */
 .deck-card-wrapper.active::before{content:"";position:absolute;inset:-20px;border-radius:20px;
   background:radial-gradient(ellipse at center, var(--aura), transparent 70%);
   opacity:.4;filter:blur(30px);z-index:-1;animation:auraGlow 3s ease-in-out infinite}
@@ -540,13 +559,13 @@ body.deck-open{position:fixed;inset:0;width:100%;height:100%}
 .deck-rank-desc{color:var(--c-parch);font-size:clamp(.95rem,2.5vw,1.1rem);line-height:1.7;
   position:relative;max-width:600px;margin:0 auto}
 
-/* Próximo rank (lógica aprimorada) */
 .deck-next-rank{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(201,162,39,.2);
   display:flex;align-items:center;justify-content:center;gap:.75rem;font-size:.85rem;
-  color:var(--c-mute);position:relative}
+  color:var(--c-mute);position:relative;
+  text-align:center;padding-left:1rem;padding-right:1rem;flex-wrap:wrap}
 .deck-next-rank .next-label{font-family:var(--f-ui);font-size:.65rem;letter-spacing:.2em;
-  text-transform:uppercase;color:#8a6d1f}
-.deck-next-rank .next-name{font-family:var(--f-disp);color:var(--c-gold-hi);font-size:1rem}
+  text-transform:uppercase;color:#8a6d1f;white-space:normal}
+.deck-next-rank .next-name{font-family:var(--f-disp);color:var(--c-gold-hi);font-size:1rem;white-space:normal}
 .deck-next-rank .next-arrow{color:var(--c-gold);font-size:1.2rem;animation:arrowPulse 1.5s ease-in-out infinite}
 @keyframes arrowPulse{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(4px);opacity:1}}
 
@@ -558,13 +577,13 @@ body.deck-open{position:fixed;inset:0;width:100%;height:100%}
   box-shadow:0 0 16px var(--c-gold-hi);transform:scale(1.3)}
 
 /* ================================================================
-   14 · RESPONSIVO
+   14 · RESPONSIVO (CORRIGIDO)
 ================================================================ */
 footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:italic;font-size:.92rem}
 @media (max-width:900px){
   .stage-wrap{flex-direction:column;align-items:center}
   .deck-carousel{height:520px}
-  .deck-card-wrapper{width:min(400px,82vw)}
+  .deck-card-wrapper{width:clamp(340px, 82vw, 432px)}
   .deck-nav.prev{left:1rem}
   .deck-nav.next{right:1rem}
 }
@@ -578,8 +597,8 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   .hud-grid{gap:.5rem}
   .coat-of-arms{width:96px;height:96px}
   
-    .deck-carousel{height:460px;margin-top:.9rem}
-  .deck-card-wrapper{width:min(315px,74vw)}
+  .deck-carousel{height:480px;margin-top:.9rem}
+  .deck-card-wrapper{width:clamp(310px, 76vw, 400px)}
   .deck-card-wrapper.left{transform:translate(-115%,-50%) translateX(-50px) translateZ(-80px) rotateY(20deg) scale(.7)}
   .deck-card-wrapper.right{transform:translate(15%,-50%) translateX(50px) translateZ(-80px) rotateY(-20deg) scale(.7)}
   .deck-card-wrapper.far-left,.deck-card-wrapper.far-right{display:none}
@@ -587,16 +606,18 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   .deck-nav.prev{left:.75rem}
   .deck-nav.next{right:.75rem}
   
-    .deck-header{margin-top:calc(env(safe-area-inset-top) + 3.5rem);margin-bottom:.75rem}
+  .deck-header{margin-top:calc(env(safe-area-inset-top) + 3.5rem);margin-bottom:.75rem}
   .deck-subtitle{margin-bottom:.35rem}
   .deck-info{padding:1.25rem 1.5rem;margin:1rem auto 1.5rem}
   .deck-rank-name{margin-bottom:.5rem}
   .deck-rank-desc{line-height:1.6}
-  .deck-next-rank{flex-direction:column;gap:.4rem;padding-top:1rem;margin-top:1rem}
+  .deck-next-rank{flex-direction:column;gap:.4rem;padding-top:1rem;margin-top:1rem;
+    text-align:center;padding-left:1rem;padding-right:1rem}
   .deck-next-rank .next-arrow{display:none}
+  .deck-next-rank .next-label,.deck-next-rank .next-name{white-space:normal;word-break:break-word}
 }
 @media (max-width:420px){
-  .deck-card-wrapper{width:min(280px,75vw)}
+  .deck-card-wrapper{width:clamp(280px, 78vw, 360px)}
   .deck-card-wrapper.left{transform:translate(-110%,-50%) translateX(-40px) translateZ(-60px) rotateY(18deg) scale(.65)}
   .deck-card-wrapper.right{transform:translate(10%,-50%) translateX(40px) translateZ(-60px) rotateY(-18deg) scale(.65)}
   .deck-info{padding:1rem 1.25rem}
@@ -618,7 +639,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
     <linearGradient id="gBlade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8eef4"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#4a525c"/></linearGradient>
     <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
     <symbol id="i-sword" viewBox="0 0 24 24"><path d="M12 2 L13.8 5.5 V15 H10.2 V5.5 Z" fill="url(#gBlade)"/><path d="M7 15 h10 v2.2 h-10 Z" fill="url(#gGold)"/><path d="M10.8 17.2 h2.4 v3.6 h-2.4 Z" fill="#5a3a1f"/><circle cx="12" cy="22" r="1.6" fill="url(#gGold)"/></symbol>
-    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4.5 3.5 L18 17 M19.5 3.5 L6 17" stroke="url(#gBlade)" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 19.5 l4 -4 M20.5 19.5 l-4 -4 M3.5 15.5 l4 4 M3.5 19.5 l4 -4" stroke="url(#gGold)" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4.5 3.5 L18 17 M19.5 3.5 L6 17" stroke="url(#gBlade)" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 19.5 l4 -4 M20.5 19.5 l4 -4 M3.5 15.5 l4 4 M3.5 19.5 l4 -4" stroke="url(#gGold)" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 L20 5 V11 Q20 18 12 22 Q4 18 4 11 V5 Z" fill="none" stroke="url(#gGold)" stroke-width="2"/><path d="M12 6 v11 M8 9.5 h8" stroke="url(#gGold)" stroke-width="1.4"/></symbol>
     <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 17 L4 9 L8.5 12.5 L12 6 L15.5 12.5 L20 9 L20 17 Z" fill="url(#gGold)"/><circle cx="12" cy="14" r="1.7" fill="#a4161a"/></symbol>
     <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="url(#gGold)" stroke-width="2"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="url(#gGold)" stroke-width="1.4"/><path d="M9 5.5 L7.5 4" stroke="url(#gGold)" stroke-width="1.4" stroke-linecap="round"/></symbol>
@@ -1071,7 +1092,6 @@ async function pintarCarta(st,useArt){
     let g=c.createRadialGradient(CW/2,470,80,CW/2,470,800);
     g.addColorStop(0,hexA(rk.aura,.32));g.addColorStop(1,'rgba(0,0,0,0)');
     c.fillStyle=g;c.fillRect(0,0,CW,CH);
-    // Desenhar letra grande como fallback
     c.save();
     c.font='900 400px "Cinzel Decorative"';
     c.textAlign='center';c.textBaseline='middle';
@@ -1219,7 +1239,7 @@ btnReforge.addEventListener('click',()=>{
   },700);
 });
 
-// MODO DECK
+// MODO DECK (CORRIGIDO)
 let deckIndex=0;
 let savedScrollY=0;
 const rankKeys=['D','C','B','A','S','SS','SSS'];
@@ -1292,7 +1312,6 @@ function updateDeckPositions(){
   deckRankDesc.textContent=currentRank.desc;
   deckRankName.style.setProperty('--aura',currentRank.aura);
   
-  // Próximo rank (lógica aprimorada)
   if(deckIndex<rankKeys.length-1){
     const nextRank=RANKS[rankKeys[deckIndex+1]];
     deckNextRank.innerHTML=`
@@ -1342,10 +1361,9 @@ function openDeck(){
     });
   }
   
-    savedScrollY=window.scrollY;
+  savedScrollY=window.scrollY;
   document.documentElement.classList.add('deck-open');
   document.body.classList.add('deck-open');
-  document.body.style.top=(-savedScrollY)+'px';
   deckMode.classList.add('active');
   deckMode.setAttribute('aria-hidden','false');
   updateDeckPositions();
@@ -1358,9 +1376,8 @@ function closeDeck(){
     deckMode.setAttribute('aria-hidden','true');
     document.documentElement.classList.remove('deck-open');
     document.body.classList.remove('deck-open');
-    document.body.style.top='';
     window.scrollTo(0,savedScrollY);
-  },400);
+  },450);
 }
 
 btnDeck.addEventListener('click',openDeck);
