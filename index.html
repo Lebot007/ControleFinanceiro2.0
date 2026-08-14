@@ -1757,6 +1757,10 @@ ${byCat.length? byCat.map(x=>`
 <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px;flex-wrap:wrap;gap:4px">
 <b>${esc(x.c.name)}</b><span class="num" style="color:${x.lim&&x.sp>x.lim?"var(--down)":"var(--ink2)"}">${fmtMoney(x.sp)}${x.lim?" / "+fmtMoney(x.lim):""}</span></div>
 ${x.lim?bar(x.sp,x.lim,x.c.color):`<div style="font-size:11.5px;color:var(--ink2)">sem limite definido</div>`}
+${x.lim?`<div style="display:flex;gap:22px;margin-top:8px;font-size:12px;flex-wrap:wrap">
+<span style="color:var(--ink2)">Disponível<br><b class="num" style="color:${x.lim-x.sp>=0?"var(--up)":"var(--down)"};font-size:15px">${fmtMoney(x.lim-x.sp)}</b></span>
+<span style="color:var(--ink2)">Usado<br><b class="num" style="font-size:15px;${Math.round(100*x.sp/x.lim)>100?"color:var(--down)":""}">${Math.round(100*x.sp/x.lim)}%</b></span>
+</div>`:""}
 </div>
 <button class="btn btn-ghost btn-sm no-print" data-action="catlimit" data-id="${x.c.id}">${x.lim?icon("pencil",13):icon("plus",13)+" Limite"}</button>
 </div>`).join("")
