@@ -446,17 +446,23 @@ input[type=file]{display:none}
    13 · MODO DECK - CARROSSEL 3D
 ================================================================ */
 #deckMode{position:fixed;inset:0;z-index:200;
-  background:radial-gradient(ellipse at center, rgba(12,10,8,.98) 0%, rgba(5,4,3,.99) 100%);
+  background:
+    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.10), transparent 60%),
+    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.10), transparent 62%),
+    radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.06), transparent 60%),
+    linear-gradient(#0c0a08,#060505 60%,#0b0706);
   display:none;opacity:0;transition:opacity .5s var(--ez);
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow-y:auto}
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+html.deck-open,body.deck-open{overflow:hidden!important}
+body.deck-open{position:fixed;inset:0;width:100%;height:100%}
 #deckMode.active{display:flex;flex-direction:column;align-items:center;
   animation:deckIn .6s var(--ez) forwards}
-@keyframes deckIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes deckIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
 #deckMode.closing{animation:deckOut .4s var(--ez) forwards}
-@keyframes deckOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}
+@keyframes deckOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.04)}}
 
-.deck-header{text-align:center;margin-top:2.5rem;margin-bottom:1.5rem;z-index:10;padding:0 1rem}
+.deck-header{text-align:center;margin-top:calc(env(safe-area-inset-top) + 4.3rem);margin-bottom:1.5rem;z-index:10;padding:0 1rem}
 .deck-title{font-size:clamp(1.5rem,5vw,2.8rem);letter-spacing:.08em;
   background:linear-gradient(#f6e3a5,#c9a227 55%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#e8c96a;margin-bottom:.5rem;
@@ -505,15 +511,16 @@ input[type=file]{display:none}
 .deck-nav.next{right:2rem}
 .deck-nav:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
 
-.deck-close{position:fixed;top:calc(env(safe-area-inset-top) + 1rem);right:calc(env(safe-area-inset-right) + 1rem);
-  z-index:250;width:46px;height:46px;border-radius:50%;
+.deck-close{position:fixed;top:calc(env(safe-area-inset-top) + .9rem);right:calc(env(safe-area-inset-right) + .9rem);
+  z-index:250;width:40px;height:40px;border-radius:50%;padding:0;
   background:linear-gradient(135deg,rgba(26,20,9,.95),rgba(12,9,6,.95));
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   border:2px solid var(--c-bronze);
-  color:var(--c-gold-hi);font-size:1.6rem;cursor:pointer;display:grid;place-items:center;
+  color:var(--c-gold-hi);cursor:pointer;display:grid;place-items:center;
   box-shadow:0 6px 20px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(201,162,39,.2);
   transition:all .3s var(--ez)}
-.deck-close:hover{border-color:var(--c-blood-hi);color:var(--c-blood-hi);transform:rotate(90deg) scale(1.1);
+.deck-close svg{width:15px;height:15px;display:block}
+.deck-close:hover{border-color:var(--c-blood-hi);color:var(--c-blood-hi);transform:rotate(90deg) scale(1.08);
   box-shadow:0 8px 24px -8px rgba(0,0,0,.95), 0 0 20px -4px rgba(215,38,61,.4)}
 
 .deck-info{text-align:center;margin:1.5rem auto 2rem;z-index:10;
@@ -580,7 +587,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   .deck-nav.prev{left:.75rem}
   .deck-nav.next{right:.75rem}
   
-  .deck-header{margin-top:2rem;margin-bottom:1rem}
+  .deck-header{margin-bottom:1rem}
   .deck-info{padding:1.25rem 1.5rem;margin:1rem auto 1.5rem}
   .deck-rank-name{margin-bottom:.5rem}
   .deck-rank-desc{line-height:1.6}
@@ -795,7 +802,9 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
     <div class="deck-indicators" id="deckIndicators"></div>
   </div>
   
-  <button class="deck-close" id="deckClose" aria-label="Fechar galeria">×</button>
+  <button class="deck-close" id="deckClose" aria-label="Fechar galeria">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+</button>
 </div>
 
 <script>
@@ -1211,6 +1220,7 @@ btnReforge.addEventListener('click',()=>{
 
 // MODO DECK
 let deckIndex=0;
+let savedScrollY=0;
 const rankKeys=['D','C','B','A','S','SS','SSS'];
 const deckCards=[];
 
@@ -1331,9 +1341,12 @@ function openDeck(){
     });
   }
   
+    savedScrollY=window.scrollY;
+  document.documentElement.classList.add('deck-open');
+  document.body.classList.add('deck-open');
+  document.body.style.top=(-savedScrollY)+'px';
   deckMode.classList.add('active');
   deckMode.setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
   updateDeckPositions();
 }
 
@@ -1342,7 +1355,10 @@ function closeDeck(){
   setTimeout(()=>{
     deckMode.classList.remove('active','closing');
     deckMode.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
+    document.documentElement.classList.remove('deck-open');
+    document.body.classList.remove('deck-open');
+    document.body.style.top='';
+    window.scrollTo(0,savedScrollY);
   },400);
 }
 
