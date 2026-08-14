@@ -485,11 +485,15 @@ input[type=file]{display:none}
 .deck-nav.next{right:2rem}
 .deck-nav:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
 
-.deck-close{position:absolute;top:2rem;right:2rem;z-index:30;width:50px;height:50px;border-radius:50%;
-  background:linear-gradient(135deg,#1a1409,#0c0906);border:2px solid var(--c-bronze);
-  color:var(--c-gold-hi);font-size:1.8rem;cursor:pointer;display:grid;place-items:center;
-  box-shadow:0 6px 20px -8px rgba(0,0,0,.9);transition:all .3s var(--ez)}
-.deck-close:hover{border-color:var(--c-blood-hi);color:var(--c-blood-hi);transform:rotate(90deg) scale(1.1)}
+.deck-close{position:fixed;top:1rem;right:1rem;z-index:250;width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(26,20,9,.95),rgba(12,9,6,.95));
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:2px solid var(--c-bronze);
+  color:var(--c-gold-hi);font-size:1.6rem;cursor:pointer;display:grid;place-items:center;
+  box-shadow:0 6px 20px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(201,162,39,.2);
+  transition:all .3s var(--ez)}
+.deck-close:hover{border-color:var(--c-blood-hi);color:var(--c-blood-hi);transform:rotate(90deg) scale(1.1);
+  box-shadow:0 8px 24px -8px rgba(0,0,0,.95), 0 0 20px -4px rgba(215,38,61,.4)}
 
 .deck-info{text-align:center;margin-top:2rem;z-index:10;max-width:600px}
 .deck-rank-name{font-family:var(--f-disp);font-size:1.8rem;color:var(--c-gold-hi);margin-bottom:.5rem;
@@ -526,7 +530,6 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   .deck-nav{width:50px;height:50px;font-size:1.2rem}
   .deck-nav.prev{left:1rem}
   .deck-nav.next{right:1rem}
-  .deck-close{top:1rem;right:1rem;width:44px;height:44px;font-size:1.5rem}
 }
 @media (hover:none){.layer-holo{display:none}}
 
@@ -1406,6 +1409,7 @@ function createDeckCard(rankKey){
 function updateDeckPositions(){
   deckCards.forEach((card,i)=>{
     card.className='deck-card-wrapper';
+    card.style.display=''; // SEMPRE limpa o display inline antes
     const diff=i-deckIndex;
     if(diff===0)card.classList.add('active');
     else if(diff===-1)card.classList.add('left');
@@ -1434,8 +1438,13 @@ function openDeck(){
       deckCards.push(card);
       
       const img=card.querySelector('.art');
-      img.onerror=()=>{img.style.display='none';};
-      img.src=RANK_IMAGES[key];
+const cardEl=card.querySelector('.card');
+img.onload=()=>{cardEl.classList.add('has-art');};
+img.onerror=()=>{
+  cardEl.classList.remove('has-art');
+  card.querySelector('.art-fallback').innerHTML=PORTRAITS[key]();
+};
+img.src=RANK_IMAGES[key];
       
       const tilt=card.querySelector('.card-tilt');
       attachTilt(tilt,6);
