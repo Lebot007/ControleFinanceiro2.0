@@ -1562,8 +1562,8 @@ viewEl().innerHTML=`
 <select data-ifilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="receita").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
 <select data-ifilter="acc"><option value="">Conta: todas</option>
 ${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}</select>
-<label class="sel-all"><input type="checkbox" data-ckall="receitas"> Selecionar todas (${_viewIds.receitas.length})</label>
 <button class="btn btn-ghost btn-sm" data-action="i-clear">${icon("x",13)} Limpar</button>
+<label class="sel-all" style="flex-basis:100%"><input type="checkbox" data-ckall="receitas"> Selecionar todas (${_viewIds.receitas.length})</label>
 </div>
 ${recs.length?`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Receitas recorrentes</h3></div>
 ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
