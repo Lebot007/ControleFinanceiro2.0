@@ -1449,6 +1449,7 @@ const paid=showPaid?(f.view==="paid"?paidAll:paidAll.slice(0,15)):[];
 const shownOpen=showOpen?open:[];
 _viewIds.contas=[...shownOpen.map(t=>t.id), ...paid.map(t=>t.id)];
 const totalOpen=open.reduce((s,t)=>s+t.value,0);
+const selCount=ui.sel.contas.size;  
 const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
 <input type="checkbox" data-ck="contas" data-id="${t.id}" ${ui.sel.contas.has(t.id)?"checked":""} aria-label="Selecionar conta">
@@ -1476,7 +1477,10 @@ body += `<div class="bill-group"><h4>Pagas recentemente <span class="count">${pa
 if(!body) body=`<div class="card">${emptyBlock("filter","Nada encontrado","Nenhuma conta corresponde aos filtros escolhidos.","")}</div>`;
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Contas a pagar</h1><p>Aluguel, energia, assinaturas e tudo o que ainda precisa ser pago.</p></div>
-<button class="btn btn-primary no-print" data-action="new-bill">${icon("plus",16)} Nova conta</button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
+<button class="btn btn-ghost" data-action="pay-sel" ${selCount?"":"disabled"}>${icon("check",15)} Pagar selecionadas${selCount?` (${selCount})`:""}</button>
+<button class="btn btn-ghost" data-action="reopen-sel" ${selCount?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${selCount?` (${selCount})`:""}</button>
+<button class="btn btn-primary" data-action="new-bill">${icon("plus",16)} Nova conta</button></div></div>
 <div class="card filters no-print">
 <select data-bfilter="view">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("open","Só próximas/pendentes",f.view==="open")}${opt("paid","Só pagas",f.view==="paid")}</select>
 <select data-bfilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="despesa").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
@@ -1547,7 +1551,6 @@ viewEl().innerHTML=`
 <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
 <button class="btn btn-ghost" data-action="receive-sel" ${selCount?"":"disabled"}>${icon("check",15)} Receber selecionadas${selCount?` (${selCount})`:""}</button>
 <button class="btn btn-ghost" data-action="pend-sel" ${selCount?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${selCount?` (${selCount})`:""}</button>
-<button class="btn btn-ghost" data-action="new-rec-income">${icon("repeat",15)} Receita recorrente</button>
 <button class="btn btn-primary" data-action="new-income">${icon("plus",16)} Nova receita</button></div></div>
 <div class="grid kpis no-print" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
 <div class="card kpi" style="--kc:#0e9f6e22;--ki:var(--up)"><div class="k-top"><span class="k-ic">${icon("check",14)}</span>Recebido no mês</div><div class="k-val num pos">${fmtMoney(received)}</div></div>
@@ -2267,6 +2270,33 @@ const total = paid.reduce((s,t)=>s+t.value,0);
 confirmModal({title:"Marcar como pendentes", okLabel:`Marcar ${paid.length}`,
 msg:`Voltar <b>${paid.length}</b> receita(s) selecionada(s) para <b>pendente</b>, totalizando <b>${fmtMoney(total)}</b>?<br><span style="color:var(--ink2)">O valor sai do saldo da conta até ser recebida novamente.${paid.length<ids.size?` (${ids.size-paid.length} já pendente(s) serão ignoradas.)`:""}</span>`,
 onOk:()=>{ paid.forEach(t=>{ t.status="pendente"; delete t.paidDate; }); save(); render(); toast(`${paid.length} receita(s) marcada(s) como pendente(s).`); }});
+break; }
+    case "pay-sel": {
+const ids = new Set([...ui.sel.contas].filter(id=>state.transactions.some(t=>t.id===id)));
+if(!ids.size){ toast("Marque ao menos uma conta na lista.","warn"); break; }
+const openSel = state.transactions.filter(t=>ids.has(t.id) && t.type==="despesa" && t.status!=="pago");
+if(!openSel.length){ toast("Nenhuma conta pendente entre as selecionadas.","warn"); break; }
+const total = openSel.reduce((s,t)=>s+t.value,0);
+const needAcc = openSel.some(t=>t.cardId && !t.accountId);
+confirmModal({title:"Pagar contas selecionadas", okLabel:`Pagar ${openSel.length}`,
+msg:`Marcar <b>${openSel.length}</b> conta(s) selecionada(s) como paga(s), totalizando <b>${fmtMoney(total)}</b>?${openSel.length<ids.size?`<br><span style="color:var(--ink2)">(${ids.size-openSel.length} já paga(s) serão ignoradas.)</span>`:""}`,
+onOk:()=>{
+if(needAcc){
+accountPickModal(accId=>{ openSel.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); if(!t.accountId) t.accountId=accId; }); save(); render(); toast(`${openSel.length} conta(s) paga(s).`); }, "Pagar com qual conta?");
+} else {
+openSel.forEach(t=>{ t.status="pago"; t.paidDate=todayISO(); }); save(); render(); toast(`${openSel.length} conta(s) paga(s).`);
+}
+}});
+break; }
+case "reopen-sel": {
+const ids = new Set([...ui.sel.contas].filter(id=>state.transactions.some(t=>t.id===id)));
+if(!ids.size){ toast("Marque ao menos uma conta na lista.","warn"); break; }
+const paidSel = state.transactions.filter(t=>ids.has(t.id) && t.type==="despesa" && t.status==="pago");
+if(!paidSel.length){ toast("Nenhuma conta paga entre as selecionadas.","warn"); break; }
+const total = paidSel.reduce((s,t)=>s+t.value,0);
+confirmModal({title:"Reabrir contas selecionadas", okLabel:`Reabrir ${paidSel.length}`,
+msg:`Voltar <b>${paidSel.length}</b> conta(s) selecionada(s) para <b>pendente</b>, totalizando <b>${fmtMoney(total)}</b>?<br><span style="color:var(--ink2)">O valor sai do saldo da conta até ser paga novamente.${paidSel.length<ids.size?` (${ids.size-paidSel.length} já pendente(s) serão ignoradas.)`:""}</span>`,
+onOk:()=>{ paidSel.forEach(t=>{ t.status="pendente"; delete t.paidDate; }); save(); render(); toast(`${paidSel.length} conta(s) reaberta(s).`); }});
 break; }
 case "rec-edit": { const r=state.recurrences.find(x=>x.id===id); if(r) openRecurrenceModal(r); break; }
 case "rec-toggle": { const r=state.recurrences.find(x=>x.id===id); if(r){ r.active=!r.active; if(r.active){ if(!r.nextDate) r.nextDate=todayISO(); materializeRecurrence(r); } save(); render(); toast(r.active?"Recorrência retomada.":"Recorrência pausada.","warn"); } break; }
