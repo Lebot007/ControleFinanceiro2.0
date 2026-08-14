@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fluxo — Grimório das Fortunas</title>
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="%230b0908"/><path d="M50 18 L62 34 V60 L50 72 L38 60 V34 Z" fill="%23c9a227"/><path d="M50 28 L56 38 V56 L50 62 L44 56 V38 Z" fill="%230b0908"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +27,7 @@
   --gl-gold:0 0 18px -6px rgba(232,201,106,.55);
   --ez:cubic-bezier(.16,1,.3,1); --ez2:cubic-bezier(.2,.7,.3,1);
   --t-fast:.18s ease; --t-med:.35s var(--ez2); --t-slow:.8s var(--ez);
-  --aura:#8d8577;
+  --aura:#8d8577; /* tema do rank ativo (JS) */
 }
 /* ================================================================
    2 · RESET
@@ -107,6 +107,7 @@ h1{font-size:clamp(1.5rem,4.6vw,2.6rem);letter-spacing:.06em;line-height:1.15;
   25%{transform:translateX(-53%) scale(.93,1.08) rotate(2.6deg)}
   50%{transform:translateX(-47%) scale(1.05,.95) rotate(-1.8deg)}
   75%{transform:translateX(-50%) scale(.96,1.07) rotate(1.4deg)}}
+/* divisor com espada */
 .sword-divider{display:flex;align-items:center;gap:.8rem;justify-content:center;margin:.4rem auto 1.2rem;max-width:420px}
 .sword-divider .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,162,39,.55))}
 .sword-divider .line:last-child{background:linear-gradient(90deg,rgba(201,162,39,.55),transparent)}
@@ -168,25 +169,6 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
   display:flex;justify-content:center;align-items:center;gap:.5em}
 .ornament-line .dot{width:3px;height:3px;border-radius:50%;background:var(--c-gold);opacity:.5}
 .altar-note{margin-top:1rem;font-style:italic;color:var(--c-dim);font-size:.95rem}
-
-/* BOTÃO EXPLORAR DECK */
-.deck-btn{display:inline-flex;align-items:center;gap:.6rem;margin-top:1.5rem;font-family:var(--f-ui);
-  font-weight:700;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:#e8c96a;
-  cursor:pointer;background:linear-gradient(135deg,#1a1409 0%,#2a1f12 100%);
-  border:2px solid var(--c-bronze);border-radius:8px;padding:1rem 2rem;
-  position:relative;overflow:hidden;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px -8px rgba(0,0,0,.9),
-    0 0 0 1px rgba(201,162,39,.3);
-  transition:all .3s var(--ez)}
-.deck-btn:hover{border-color:var(--c-gold-hi);transform:translateY(-2px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 12px 28px -8px rgba(0,0,0,.95),
-    0 0 24px -4px rgba(232,201,106,.5)}
-.deck-btn:active{transform:translateY(0)}
-.deck-btn::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,
-  rgba(232,201,106,.15),transparent 70%);opacity:0;transition:opacity .3s}
-.deck-btn:hover::before{opacity:1}
-.deck-btn .ic{width:18px;height:18px}
-
 /* ================================================================
    7 · DASHBOARD — PAINEL DO REINO (HUD)
 ================================================================ */
@@ -228,6 +210,7 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 @keyframes barIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .hud-total{font-family:var(--f-ui);font-size:.78rem;letter-spacing:.12em;color:#c8a95f;text-align:center}
 .hud-total b{color:#f6e3a5;font-size:.95rem}
+/* tooltips */
 [data-tip]{position:relative}
 [data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);
   width:max-content;max-width:220px;white-space:normal;text-align:center;z-index:40;
@@ -235,7 +218,6 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
   font:600 .68rem/1.35 var(--f-ui);letter-spacing:.03em;padding:.4rem .6rem;
   opacity:0;pointer-events:none;transition:opacity .25s, transform .25s}
 [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
-
 /* ================================================================
    8 · CARTA HERO — CAMADAS 3D + HOLOGRAFIA
 ================================================================ */
@@ -244,18 +226,15 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 @keyframes invoke{0%{transform:rotateY(88deg) scale(.7);opacity:0;filter:brightness(2.6) blur(2px)}
   55%{transform:rotateY(-9deg) scale(1.035);opacity:1}100%{transform:none;filter:none}}
 .card-tilt{will-change:transform;transform-style:preserve-3d;
-  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
-  -webkit-backface-visibility:hidden;backface-visibility:hidden}
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
 .card{position:relative;width:min(432px,92vw);aspect-ratio:1080/1512;border-radius:14px;
-  transform-style:preserve-3d;
-  -webkit-transform:translateZ(0);transform:translateZ(0);
+  transform-style:preserve-3d;transform:translateZ(0);
   --frame:#6e675c;--frame2:#3a352c;--frameSoft:rgba(110,103,92,.5);--orn:var(--frame);
   --medal1:#7a7264;--medal2:#3a352c;
   background:#0c0a09;border:6px solid var(--frame);
   box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 36px -6px var(--aura),
     inset 0 0 70px rgba(0,0,0,.78), var(--sh-2);
-  transition:transform .35s var(--ez2), box-shadow .45s var(--ez2);
-  -webkit-backface-visibility:hidden;backface-visibility:hidden}
+  transition:transform .35s var(--ez2), box-shadow .45s var(--ez2)}
 .card-tilt:hover .card{transform:translateY(-4px);
   box-shadow:0 0 0 2px #000,0 0 0 4px var(--frame2),0 0 52px -4px var(--aura),
     inset 0 0 70px rgba(0,0,0,.78), 0 34px 60px -22px rgba(0,0,0,.95)}
@@ -276,20 +255,9 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
   opacity:0;transition:opacity .9s ease}
 .card.has-art .art{opacity:1;animation:kenburns 18s ease-in-out infinite alternate}
 @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.07)}}
-.art-fallback{position:absolute;inset:0;display:grid;place-items:center;
-  background:radial-gradient(ellipse at 50% 40%, color-mix(in srgb,var(--aura) 15%,transparent), transparent 70%),
-             linear-gradient(180deg,#0c0a08,#1a1409 50%,#0c0a08)}
-.art-fallback::before{content:"";position:absolute;inset:0;
-  background:radial-gradient(circle at 50% 50%, var(--aura), transparent 70%);
-  opacity:.3;animation:auraPulse 4s ease-in-out infinite}
-@keyframes auraPulse{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.1)}}
-.art-fallback::after{content:attr(data-rank-letter);font-family:var(--f-disp);font-size:clamp(8rem,30vw,14rem);
-  font-weight:900;color:var(--aura);opacity:.4;
-  text-shadow:0 0 60px var(--aura), 0 0 120px var(--aura);
-  filter:drop-shadow(0 0 30px var(--aura));
-  animation:letterFloat 6s ease-in-out infinite}
-@keyframes letterFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.02)}}
+.art-fallback{position:absolute;left:7%;right:7%;top:15%;bottom:40%;display:grid;place-items:center}
 .card.has-art .art-fallback{display:none}
+.art-fallback svg{height:100%;width:auto;max-width:100%}
 .layer-atmo{transform:translateZ(12px)}
 .art-tint{position:absolute;inset:0;border-radius:8px;mix-blend-mode:screen;
   background:radial-gradient(90% 70% at 50% 40%, color-mix(in srgb,var(--aura) 13%,transparent), transparent 75%)}
@@ -299,8 +267,7 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 .art-bottom{position:absolute;inset:auto 0 0 0;height:54%;border-radius:0 0 8px 8px;
   background:linear-gradient(transparent,rgba(6,5,4,.85) 42%,rgba(6,5,4,.98))}
 .layer-top{transform:translateZ(34px);top:0;left:0;right:0;bottom:auto;
-  display:flex;align-items:center;gap:.7rem;padding:12px 14px 30px;
-  overflow:hidden}
+  display:flex;align-items:center;gap:.7rem;padding:12px 14px 30px}
 .medal{flex:none;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 32% 28%,var(--medal1),var(--medal2));
   border:3px solid #0b0a08;font-family:var(--f-disp);font-size:1.25rem;color:#f6ead0;
@@ -320,21 +287,16 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
   text-shadow:0 0 16px var(--aura),0 2px 6px rgba(0,0,0,.9)}
 .top-score small{display:block;font-family:var(--f-ui);font-size:.48rem;letter-spacing:.3em;color:#c8a95f}
 .layer-bottom{transform:translateZ(30px);top:auto;left:0;right:0;bottom:0;
-  padding:8px 16px 12px;display:flex;flex-direction:column;gap:.5rem;
-  overflow:hidden}
-.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.9);
-  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  padding:8px 16px 12px;display:flex;flex-direction:column;gap:.5rem}
+.phrase{font-style:italic;color:#e3d6b4;font-size:.98rem;line-height:1.28;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 .attrs{list-style:none;display:flex;flex-direction:column;gap:.34rem;padding:0 .1rem}
-.attrs li{display:flex;align-items:baseline;gap:.5rem;min-width:0}
+.attrs li{display:flex;align-items:baseline;gap:.5rem}
 .attrs .ico{flex:none;width:15px;height:15px;color:#c8a95f;transform:translateY(2px);filter:drop-shadow(0 0 4px rgba(201,162,39,.5))}
 .attrs .ico .ic{width:15px;height:15px}
-.attrs .k{font-family:var(--f-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.45);transform:translateY(-3px);min-width:8px}
-.attrs .v{font-weight:700;color:var(--c-parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.card-foot{font-size:.8rem;font-style:italic;color:#a99a72;letter-spacing:.05em;text-align:center;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attrs .k{font-family:var(--f-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#c8a95f}
+.attrs .dots{flex:1;border-bottom:1px dotted rgba(200,169,95,.45);transform:translateY(-3px)}
+.attrs .v{font-weight:700;color:var(--c-parch);font-size:1.02rem;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.card-foot{font-size:.8rem;font-style:italic;color:#a99a72;letter-spacing:.05em;text-align:center}
 .layer-frame{transform:translateZ(44px)}
 .flourish{position:absolute;width:78px;height:78px;color:var(--orn);filter:drop-shadow(0 0 5px rgba(0,0,0,.8))}
 .f-tl{top:-7px;left:-7px}.f-tr{top:-7px;right:-7px;transform:rotate(90deg)}
@@ -371,9 +333,8 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 @keyframes reforgeShake{0%{transform:translateY(0);filter:brightness(1)}20%{transform:translate(-3px,1px) rotate(-.6deg);filter:brightness(1.7)}
   40%{transform:translate(3px,-1px) rotate(.6deg)}60%{transform:translate(-2px,0) rotate(-.4deg);filter:brightness(1.9)}
   80%{transform:translate(2px,0)}100%{transform:none;filter:brightness(1)}}
-
 /* ================================================================
-   9 · TEMAS DE RANK
+   9 · TEMAS DE RANK (personalidade por classe)
 ================================================================ */
 .card[data-rank="D"]{--aura:#8d8577;--medal1:#7a7264;--medal2:#3a352c}
 .card[data-rank="C"]{--aura:#8fa3b8;--medal1:#9aa9b8;--medal2:#46525e}
@@ -382,7 +343,6 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 .card[data-rank="S"]{--aura:#9d4edd;--medal1:#b06ef0;--medal2:#37135c}
 .card[data-rank="SS"]{--aura:#f2cf6b;--medal1:#ffd97a;--medal2:#7a5a12}
 .card[data-rank="SSS"]{--aura:#2ee6a8;--medal1:#5cffc0;--medal2:#0b4a37}
-
 /* ================================================================
    10 · BOTÕES
 ================================================================ */
@@ -405,7 +365,6 @@ main{max-width:1040px;margin:0 auto;padding:1.4rem 1rem 3rem}
 .btn.forging{animation:forgePulse .65s var(--ez2)}
 @keyframes forgePulse{0%{box-shadow:0 0 0 0 rgba(255,154,61,.7)}100%{box-shadow:0 0 0 22px rgba(255,154,61,0)}}
 input[type=file]{display:none}
-
 /* ================================================================
    11 · ANIMAÇÕES DE ESTADO / INTRO / SUMMON / ERRO
 ================================================================ */
@@ -446,149 +405,16 @@ input[type=file]{display:none}
   background:linear-gradient(#241d13,#141009);border:1px solid var(--c-bronze);
   box-shadow:0 10px 30px -10px rgba(0,0,0,.9),0 0 18px -6px rgba(232,201,106,.4);transition:opacity .4s,transform .4s}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-
 /* ================================================================
-   12 · PARTÍCULAS
+   12 · PARTÍCULAS (ver #embers, .spark, .trail-p, .card-ember)
 ================================================================ */
-
 /* ================================================================
-   13 · MODO DECK - CARROSSEL 3D (CORRIGIDO)
-================================================================ */
-#deckMode{position:fixed;inset:0;z-index:200;
-  background-color:#0c0a08;
-  background:
-    radial-gradient(1100px 560px at 50% -10%, rgba(122,44,180,.10), transparent 60%),
-    radial-gradient(900px 520px at 88% 108%, rgba(164,22,26,.10), transparent 62%),
-    radial-gradient(760px 420px at 8% 92%, rgba(46,230,168,.06), transparent 60%),
-    linear-gradient(#0c0a08,#060505 60%,#0b0706);
-  display:flex;flex-direction:column;align-items:center;
-  visibility:hidden;opacity:0;pointer-events:none;
-  transition:opacity .45s var(--ez), visibility .45s;
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  -webkit-transform:translateZ(0);transform:translateZ(0);
-  will-change:opacity}
-html.deck-open,body.deck-open{overflow:hidden!important}
-#deckMode.active{visibility:visible;opacity:1;pointer-events:auto;
-  animation:deckIn .5s var(--ez) forwards}
-@keyframes deckIn{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
-#deckMode.closing{animation:deckOut .4s var(--ez) forwards}
-@keyframes deckOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.02)}}
-
-.deck-header{text-align:center;margin-top:calc(env(safe-area-inset-top) + 4.3rem);margin-bottom:1.5rem;z-index:10;padding:0 1rem}
-.deck-title{font-size:clamp(1.5rem,5vw,2.8rem);letter-spacing:.08em;
-  background:linear-gradient(#f6e3a5,#c9a227 55%,#8a6d1f);-webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:#e8c96a;margin-bottom:.5rem;
-  filter:drop-shadow(0 4px 16px rgba(201,162,39,.4))}
-.deck-subtitle{color:var(--c-mute);font-size:clamp(.9rem,2.5vw,1.1rem);font-style:italic;max-width:600px;margin:0 auto}
-
-.deck-carousel{position:relative;width:100%;max-width:1400px;height:580px;perspective:2000px;
-  display:flex;align-items:center;justify-content:center;overflow:visible;margin:1rem 0;
-  -webkit-transform:translateZ(0);transform:translateZ(0)}
-
-.deck-track{position:relative;width:100%;height:100%;transform-style:preserve-3d;
-  transition:transform .6s var(--ez);
-  will-change:transform;
-  -webkit-backface-visibility:hidden;backface-visibility:hidden}
-
-.deck-card-wrapper{position:absolute;left:50%;top:50%;width:min(432px,85vw);aspect-ratio:1080/1512;
-  transform-style:flat;
-  transition:all .6s var(--ez);cursor:pointer;
-  will-change:transform, opacity, filter;
-  -webkit-backface-visibility:hidden;backface-visibility:hidden;
-  -webkit-transform:translateZ(0);transform:translateZ(0)}
-
-.deck-card-wrapper .card{width:100%;height:100%;pointer-events:none}
-.deck-card-wrapper .card-tilt{pointer-events:auto}
-
-.deck-card-wrapper.active{transform:translate(-50%,-50%) translateZ(100px) scale(1);
-  opacity:1;filter:none;z-index:10;
-  filter:drop-shadow(0 0 40px var(--aura)) drop-shadow(0 0 80px var(--aura))}
-.deck-card-wrapper.left{transform:translate(-120%,-50%) translateX(-80px) translateZ(-100px) rotateY(25deg) scale(.75);
-  opacity:.4;filter:blur(4px) brightness(.6);z-index:5}
-.deck-card-wrapper.right{transform:translate(20%,-50%) translateX(80px) translateZ(-100px) rotateY(-25deg) scale(.75);
-  opacity:.4;filter:blur(4px) brightness(.6);z-index:5}
-.deck-card-wrapper.far-left{transform:translate(-180%,-50%) translateX(-160px) translateZ(-200px) rotateY(35deg) scale(.6);
-  opacity:.2;filter:blur(6px) brightness(.4);z-index:3}
-.deck-card-wrapper.far-right{transform:translate(80%,-50%) translateX(160px) translateZ(-200px) rotateY(-35deg) scale(.6);
-  opacity:.2;filter:blur(6px) brightness(.4);z-index:3}
-
-.deck-card-wrapper.active::before{content:"";position:absolute;inset:-20px;border-radius:20px;
-  background:radial-gradient(ellipse at center, var(--aura), transparent 70%);
-  opacity:.4;filter:blur(30px);z-index:-1;animation:auraGlow 3s ease-in-out infinite}
-@keyframes auraGlow{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.6;transform:scale(1.05)}}
-
-.deck-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:20;width:60px;height:60px;
-  border-radius:50%;background:linear-gradient(135deg,#2a1f12,#141009);border:2px solid var(--c-bronze);
-  color:var(--c-gold-hi);font-size:1.5rem;cursor:pointer;display:grid;place-items:center;
-  box-shadow:0 8px 24px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08);
-  transition:all .3s var(--ez)}
-.deck-nav:hover{border-color:var(--c-gold-hi);transform:translateY(-50%) scale(1.1);
-  box-shadow:0 12px 32px -8px rgba(0,0,0,.95), 0 0 20px -4px rgba(232,201,106,.5)}
-.deck-nav:active{transform:translateY(-50%) scale(.95)}
-.deck-nav.prev{left:2rem}
-.deck-nav.next{right:2rem}
-.deck-nav:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
-
-.deck-close{position:fixed;top:calc(env(safe-area-inset-top) + .9rem);right:calc(env(safe-area-inset-right) + .9rem);
-  z-index:250;width:40px;height:40px;border-radius:50%;padding:0;
-  background:linear-gradient(135deg,rgba(26,20,9,.95),rgba(12,9,6,.95));
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:2px solid var(--c-bronze);
-  color:var(--c-gold-hi);cursor:pointer;display:grid;place-items:center;
-  box-shadow:0 6px 20px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(201,162,39,.2);
-  transition:all .3s var(--ez)}
-.deck-close svg{width:15px;height:15px;display:block}
-.deck-close:hover{border-color:var(--c-blood-hi);color:var(--c-blood-hi);transform:rotate(90deg) scale(1.08);
-  box-shadow:0 8px 24px -8px rgba(0,0,0,.95), 0 0 20px -4px rgba(215,38,61,.4)}
-
-.deck-info{text-align:center;margin:1.5rem auto 2rem;z-index:10;
-  max-width:700px;width:calc(100% - 2rem);padding:1.5rem 2rem;
-  background:linear-gradient(135deg,rgba(26,20,9,.85) 0%,rgba(20,16,9,.9) 100%);
-  border:1px solid rgba(201,162,39,.3);border-radius:16px;
-  box-shadow:0 12px 40px -12px rgba(0,0,0,.8), inset 0 1px 0 rgba(232,201,106,.1);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  position:relative;overflow:hidden}
-.deck-info::before{content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at top, rgba(201,162,39,.1), transparent 70%);
-  pointer-events:none}
-.deck-info::after{content:"";position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(232,201,106,.5),transparent)}
-.deck-rank-name{font-family:var(--f-disp);font-size:clamp(1.3rem,4vw,1.8rem);color:var(--c-gold-hi);margin-bottom:.75rem;
-  text-shadow:0 2px 12px var(--aura);position:relative}
-.deck-rank-desc{color:var(--c-parch);font-size:clamp(.95rem,2.5vw,1.1rem);line-height:1.7;
-  position:relative;max-width:600px;margin:0 auto}
-
-.deck-next-rank{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(201,162,39,.2);
-  display:flex;align-items:center;justify-content:center;gap:.75rem;font-size:.85rem;
-  color:var(--c-mute);position:relative;
-  text-align:center;padding-left:1rem;padding-right:1rem;flex-wrap:wrap}
-.deck-next-rank .next-label{font-family:var(--f-ui);font-size:.65rem;letter-spacing:.2em;
-  text-transform:uppercase;color:#8a6d1f;white-space:normal}
-.deck-next-rank .next-name{font-family:var(--f-disp);color:var(--c-gold-hi);font-size:1rem;white-space:normal}
-.deck-next-rank .next-arrow{color:var(--c-gold);font-size:1.2rem;animation:arrowPulse 1.5s ease-in-out infinite}
-@keyframes arrowPulse{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(4px);opacity:1}}
-
-.deck-indicators{display:flex;gap:.8rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
-.deck-dot{width:12px;height:12px;border-radius:50%;background:rgba(201,162,39,.3);cursor:pointer;
-  transition:all .3s var(--ez);border:2px solid transparent}
-.deck-dot:hover{background:rgba(201,162,39,.5)}
-.deck-dot.active{background:var(--c-gold-hi);border-color:var(--c-gold);
-  box-shadow:0 0 16px var(--c-gold-hi);transform:scale(1.3)}
-
-/* ================================================================
-   14 · RESPONSIVO (CORRIGIDO)
+   13 · RESPONSIVO
 ================================================================ */
 footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:italic;font-size:.92rem}
-@media (max-width:900px){
-  .stage-wrap{flex-direction:column;align-items:center}
-  .deck-carousel{height:520px}
-  .deck-card-wrapper{width:clamp(340px, 82vw, 432px)}
-  .deck-nav.prev{left:1rem}
-  .deck-nav.next{right:1rem}
-}
+@media (max-width:900px){.stage-wrap{flex-direction:column;align-items:center}}
 @media (max-width:640px){
-  header.top{gap:.8rem;padding-top:1.5rem}
+  header.top{gap:.8rem}
   .torch{height:96px;transform:scale(.85)}
   .torch .stick{height:64px}.torch .band{bottom:48px}.torch .wrap{bottom:58px}.torch .flame{bottom:74px}
   .portal{min-height:340px;padding:2rem 1.2rem}
@@ -596,59 +422,32 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   .top-score b{font-size:1.4rem}
   .hud-grid{gap:.5rem}
   .coat-of-arms{width:96px;height:96px}
-  
-  .deck-carousel{height:480px;margin-top:.9rem}
-  .deck-card-wrapper{width:clamp(310px, 76vw, 400px)}
-  .deck-card-wrapper.left{transform:translate(-115%,-50%) translateX(-50px) translateZ(-80px) rotateY(20deg) scale(.7)}
-  .deck-card-wrapper.right{transform:translate(15%,-50%) translateX(50px) translateZ(-80px) rotateY(-20deg) scale(.7)}
-  .deck-card-wrapper.far-left,.deck-card-wrapper.far-right{display:none}
-  .deck-nav{width:48px;height:48px;font-size:1.1rem}
-  .deck-nav.prev{left:.75rem}
-  .deck-nav.next{right:.75rem}
-  
-  .deck-header{margin-top:calc(env(safe-area-inset-top) + 3.5rem);margin-bottom:.75rem}
-  .deck-subtitle{margin-bottom:.35rem}
-  .deck-info{padding:1.25rem 1.5rem;margin:1rem auto 1.5rem}
-  .deck-rank-name{margin-bottom:.5rem}
-  .deck-rank-desc{line-height:1.6}
-  .deck-next-rank{flex-direction:column;gap:.4rem;padding-top:1rem;margin-top:1rem;
-    text-align:center;padding-left:1rem;padding-right:1rem}
-  .deck-next-rank .next-arrow{display:none}
-  .deck-next-rank .next-label,.deck-next-rank .next-name{white-space:normal;word-break:break-word}
-}
-@media (max-width:420px){
-  .deck-card-wrapper{width:clamp(280px, 78vw, 360px)}
-  .deck-card-wrapper.left{transform:translate(-110%,-50%) translateX(-40px) translateZ(-60px) rotateY(18deg) scale(.65)}
-  .deck-card-wrapper.right{transform:translate(10%,-50%) translateX(40px) translateZ(-60px) rotateY(-18deg) scale(.65)}
-  .deck-info{padding:1rem 1.25rem}
 }
 @media (hover:none){.layer-holo{display:none}}
-
 /* ================================================================
-   15 · ACESSIBILIDADE / MOVIMENTO REDUZIDO
+   14 · ACESSIBILIDADE / MOVIMENTO REDUZIDO
 ================================================================ */
-.btn:focus-visible,.portal:focus-visible,.hub:focus-visible,.deck-btn:focus-visible,
-.deck-nav:focus-visible,.deck-close:focus-visible,.deck-dot:focus-visible{
-  outline:2px solid var(--c-gold-hi);outline-offset:3px}
+.btn:focus-visible,.portal:focus-visible,.hub:focus-visible{outline:2px solid var(--c-gold-hi);outline-offset:3px}
 </style>
 </head>
 <body>
 
+<!-- Biblioteca de símbolos SVG (espadas, escudo, coroa, moeda, gema, martelo) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="gBlade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8eef4"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#4a525c"/></linearGradient>
     <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
     <symbol id="i-sword" viewBox="0 0 24 24"><path d="M12 2 L13.8 5.5 V15 H10.2 V5.5 Z" fill="url(#gBlade)"/><path d="M7 15 h10 v2.2 h-10 Z" fill="url(#gGold)"/><path d="M10.8 17.2 h2.4 v3.6 h-2.4 Z" fill="#5a3a1f"/><circle cx="12" cy="22" r="1.6" fill="url(#gGold)"/></symbol>
-    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4.5 3.5 L18 17 M19.5 3.5 L6 17" stroke="url(#gBlade)" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 19.5 l4 -4 M20.5 19.5 l4 -4 M3.5 15.5 l4 4 M3.5 19.5 l4 -4" stroke="url(#gGold)" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4.5 3.5 L18 17 M19.5 3.5 L6 17" stroke="url(#gBlade)" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 19.5 l4 -4 M20.5 19.5 l-4 -4 M3.5 15.5 l4 4 M3.5 19.5 l4 -4" stroke="url(#gGold)" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 L20 5 V11 Q20 18 12 22 Q4 18 4 11 V5 Z" fill="none" stroke="url(#gGold)" stroke-width="2"/><path d="M12 6 v11 M8 9.5 h8" stroke="url(#gGold)" stroke-width="1.4"/></symbol>
     <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 17 L4 9 L8.5 12.5 L12 6 L15.5 12.5 L20 9 L20 17 Z" fill="url(#gGold)"/><circle cx="12" cy="14" r="1.7" fill="#a4161a"/></symbol>
     <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="url(#gGold)" stroke-width="2"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="url(#gGold)" stroke-width="1.4"/><path d="M9 5.5 L7.5 4" stroke="url(#gGold)" stroke-width="1.4" stroke-linecap="round"/></symbol>
     <symbol id="i-gem" viewBox="0 0 24 24"><path d="M12 3 L20 10 L12 21 L4 10 Z" fill="none" stroke="url(#gGold)" stroke-width="2"/><path d="M4 10 h16 M12 3 l-3 7 3 11 3 -11 -3 -7" stroke="url(#gGold)" stroke-width="1.1"/></symbol>
     <symbol id="i-hammer" viewBox="0 0 24 24"><path d="M6.5 4 h11 v6 h-11 Z" fill="url(#gBlade)"/><path d="M10.8 10 h2.4 v11 h-2.4 Z" fill="#5a3a1f"/><path d="M6.5 4 h11" stroke="#e8eef4" stroke-width="1"/></symbol>
-    <symbol id="i-scrollx" viewBox="0 0 24 24"><path d="M14 10 h30 a6 6 0 0 1 6 6 v34 a4 4 0 0 0 4 4 H22 a6 6 0 0 1 -6 -6 Z" fill="#e7d7ac" stroke="#6b5a33" stroke-width="2.5"/></symbol>
   </defs>
 </svg>
 
+<!-- INTRO CINEMATOGRÁFICA -->
 <div id="intro" aria-hidden="true">
   <div class="intro-light"></div>
   <svg class="intro-arms" viewBox="0 0 140 140">
@@ -727,10 +526,6 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
         <div class="ornament-line" aria-hidden="true">⚜<span class="dot"></span>⚔<span class="dot"></span>⚜</div>
       </div>
     </div>
-    <button class="deck-btn" id="btnDeck" type="button">
-      <svg class="ic"><use href="#i-crown"/></svg>
-      Explorar o Baralho Arcano
-    </button>
     <p class="altar-note">O grimório apenas lê o backup em vosso navegador — nada é enviado, guardado ou alterado no Fluxo.</p>
   </section>
 
@@ -751,7 +546,7 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
             <article class="card" id="card" data-rank="D" data-frame="iron" aria-label="Carta de rank do Fluxo">
               <div class="layer layer-art"><div class="art-par">
                 <img class="art" id="artImg" alt="">
-                <div class="art-fallback" id="artFallback" data-rank-letter="D" aria-hidden="true"></div>
+                <div class="art-fallback" id="artFallback" aria-hidden="true"></div>
               </div></div>
               <div class="layer layer-atmo"><div class="art-tint"></div><div class="art-vignette"></div><div class="art-top"></div><div class="art-bottom"></div></div>
               <header class="layer layer-top">
@@ -804,38 +599,28 @@ footer.page{text-align:center;padding:2rem 1rem 2.6rem;color:#6f6448;font-style:
   </div>
 </div>
 
-<!-- MODO DECK -->
-<div id="deckMode" aria-hidden="true">
-  <div class="deck-header">
-    <h2 class="deck-title">Galeria dos Ranks Arcanos</h2>
-    <p class="deck-subtitle">Explore todos os títulos que vosso destino pode alcançar</p>
-  </div>
-  
-  <div class="deck-carousel">
-    <button class="deck-nav prev" id="deckPrev" aria-label="Carta anterior">‹</button>
-    <div class="deck-track" id="deckTrack"></div>
-    <button class="deck-nav next" id="deckNext" aria-label="Próxima carta">›</button>
-  </div>
-  
-  <div class="deck-info">
-    <h3 class="deck-rank-name" id="deckRankName"></h3>
-    <p class="deck-rank-desc" id="deckRankDesc"></p>
-    <div class="deck-next-rank" id="deckNextRank"></div>
-    <div class="deck-indicators" id="deckIndicators"></div>
-  </div>
-  
-  <button class="deck-close" id="deckClose" aria-label="Fechar galeria">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-</button>
-</div>
-
 <script>
 (function(){
 'use strict';
+/* =====================================================================
+   ⚔ RETRATOS — imagens rankD.jpg … rankSSS.jpg na mesma pasta deste HTML.
+   Sem arquivo → retrato vetorial (SVG) de reserva.
+   PROMPTS (IA de imagem) — BASE + rank:
+   BASE: "Epic dark fantasy medieval painterly illustration, dramatic chiaroscuro,
+   rich muted palette, vertical trading-card FULL ART, character centered,
+   atmospheric depth, highly detailed, NO text, NO border, NO watermark."
+   D: poor indebted peasant, torn hooded cloak, empty alms bowl, rainy dusk.
+   C: young squire, leather gambeson, cracked wooden shield, broken sword.
+   B: sinister knight, blackened plate, glowing crimson eyes, abyssal fog.
+   A: veteran warrior, scar + grey beard, red cape, crossed greatswords.
+   S: shadow lord, purple cloak gold trim, violet eyes, arcane medallion.
+   SS: crowned king, ruby/sapphire crown, ermine mantle, golden scepter.
+   SSS: arcane emperor, black armor, glowing emerald runes, flame crown.
+===================================================================== */
 const RANK_IMAGES={D:'rankD.jpg',C:'rankC.jpg',B:'rankB.jpg',A:'rankA.jpg',S:'rankS.jpg',SS:'rankSS.jpg',SSS:'rankSSS.jpg'};
 
 const $=s=>document.querySelector(s);
-const reducedMotion=false;
+const reducedMotion=false; /* animações independentes da configuração do sistema */
 const finePointer=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 const fmtBRL=c=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100);
 const fmtPct=t=>(t*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
@@ -845,20 +630,224 @@ const RUNES='⚜♛♝♞';
 function serieRunica(){let s='';for(let i=0;i<2;i++)s+=RUNES[Math.floor(Math.random()*RUNES.length)];return s+'-'+(100+Math.floor(Math.random()*900));}
 
 const RANKS={
-  D:{key:'D',name:'Plebeu Endividado',phrase:'"As moedas fogem de quem jamais as governou."',aura:'#8d8577',frame:'iron',medal:['#7a7264','#3a352c'],desc:'Vossa jornada começa nas sombras da escassez. Cada moeda é uma batalha, cada gasto um sacrifício. Mas até o mais humilde plebeu pode ascender ao trono.',minScore:0,maxScore:19},
-  C:{key:'C',name:'Escudeiro Errante',phrase:'"Um escudo partido ainda sonha com glória."',aura:'#8fa3b8',frame:'iron',medal:['#9aa9b8','#46525e'],desc:'Aprendestes a defender vossas finanças, mesmo com armaduras imperfeitas. O caminho é longo, mas vosso escudo já protege contra as dívidas mais cruéis.',minScore:20,maxScore:39},
-  B:{key:'B',name:'Cavalheiro do Abismo',phrase:'"Foi no abismo que aprendi o peso de cada moeda."',aura:'#d7263d',frame:'steel',medal:['#c22f42','#4a0d16'],desc:'Vosso passado nas trevas financeiras vos forjou. Conhecereis o valor do ouro porque já o perdestes. Agora, cada decisão é calculada com sabedoria sombria.',minScore:40,maxScore:54},
-  A:{key:'A',name:'Guerreiro de Ferro',phrase:'"Ferro não mente: meu ouro foi forjado em batalha."',aura:'#ff7a33',frame:'steel',medal:['#ff8c42','#5a2b12'],desc:'Vossas cicatrizes contam histórias de vitórias. Disciplina e honra guiam vossos gastos. O patrimônio cresce como aço temperado em fogo.',minScore:55,maxScore:69},
-  S:{key:'S',name:'Lorde das Sombras',phrase:'"As sombras contam meu tesouro em silêncio."',aura:'#9d4edd',frame:'gold',medal:['#b06ef0','#37135c'],desc:'Mestre das finanças ocultas. Vossos investimentos trabalham enquanto dormis. O tesouro multiplica-se nas trevas, longe dos olhares curiosos.',minScore:70,maxScore:84},
-  SS:{key:'SS',name:'Rei Coroado',phrase:'"A coroa pesa, mas o cofre canta."',aura:'#f2cf6b',frame:'gold',medal:['#ffd97a','#7a5a12'],desc:'Vosso reino financeiro é vasto e próspero. A coroa representa responsabilidade, mas também poder. Cada decisão afeta todo o domínio.',minScore:85,maxScore:94},
-  SSS:{key:'SSS',name:'Imperador Arcano',phrase:'"O arcano flui: meu império é de ouro eterno."',aura:'#2ee6a8',frame:'obsidian',medal:['#5cffc0','#0b4a37'],desc:'Alcançastes o ápice. Vosso império transcende o material. As runas arcanas protegem vosso legado, e cada moeda pulsa com energia ancestral.',minScore:95,maxScore:100}
+  D:{key:'D',name:'Plebeu Endividado',phrase:'“As moedas fogem de quem jamais as governou.”',aura:'#8d8577',frame:'iron',medal:['#7a7264','#3a352c']},
+  C:{key:'C',name:'Escudeiro Errante',phrase:'“Um escudo partido ainda sonha com glória.”',aura:'#8fa3b8',frame:'iron',medal:['#9aa9b8','#46525e']},
+  B:{key:'B',name:'Cavalheiro do Abismo',phrase:'“Foi no abismo que aprendi o peso de cada moeda.”',aura:'#d7263d',frame:'steel',medal:['#c22f42','#4a0d16']},
+  A:{key:'A',name:'Guerreiro de Ferro',phrase:'“Ferro não mente: meu ouro foi forjado em batalha.”',aura:'#ff7a33',frame:'steel',medal:['#ff8c42','#5a2b12']},
+  S:{key:'S',name:'Lorde das Sombras',phrase:'“As sombras contam meu tesouro em silêncio.”',aura:'#9d4edd',frame:'gold',medal:['#b06ef0','#37135c']},
+  SS:{key:'SS',name:'Rei Coroado',phrase:'“A coroa pesa, mas o cofre canta.”',aura:'#f2cf6b',frame:'gold',medal:['#ffd97a','#7a5a12']},
+  SSS:{key:'SSS',name:'Imperador Arcano',phrase:'“O arcano flui: meu império é de ouro eterno.”',aura:'#2ee6a8',frame:'obsidian',medal:['#5cffc0','#0b4a37']}
 };
-
 function rankFor(score){
   if(score>=95)return RANKS.SSS;if(score>=85)return RANKS.SS;if(score>=70)return RANKS.S;
   if(score>=55)return RANKS.A;if(score>=40)return RANKS.B;if(score>=20)return RANKS.C;return RANKS.D;
 }
 
+/* ---------- retratos SVG de reserva ---------- */
+function molduraRetrato(key,defs,corpo){
+  const aura=RANKS[key].aura, nome=RANKS[key].name;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Retrato: ${nome}">
+  <defs>${defs}
+    <radialGradient id="${key}au" cx="50%" cy="42%" r="66%"><stop offset="0" stop-color="${aura}" stop-opacity=".48"/><stop offset="1" stop-color="${aura}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${key}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1510"/><stop offset="1" stop-color="#0a0806"/></linearGradient>
+    <clipPath id="${key}clip"><path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z"/></clipPath>
+    <filter id="${key}glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="${key}soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.8"/></filter>
+  </defs>
+  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="url(#${key}bg)" stroke="${aura}" stroke-opacity=".55" stroke-width="3"/>
+  <g clip-path="url(#${key}clip)"><rect x="46" y="20" width="228" height="286" fill="url(#${key}au)"/>${corpo}</g>
+  <path d="M48 304 L48 150 Q48 46 160 22 Q272 46 272 150 L272 304 Z" fill="none" stroke="rgba(232,201,106,.3)" stroke-width="1.4"/>
+  </svg>`;
+}
+const PORTRAITS={
+D(){return molduraRetrato('D',
+`<linearGradient id="dCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b5a3f"/><stop offset=".6" stop-color="#3a2f1f"/><stop offset="1" stop-color="#1a1408"/></linearGradient>
+<linearGradient id="dSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a882"/><stop offset="1" stop-color="#7a5d3e"/></linearGradient>
+<linearGradient id="dWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a3e"/><stop offset="1" stop-color="#3a2812"/></linearGradient>`,
+`<circle cx="238" cy="68" r="22" fill="#c9c0a8" opacity=".32"/><circle cx="244" cy="62" r="19" fill="#1a1510" opacity=".95"/>
+<ellipse cx="160" cy="300" rx="120" ry="14" fill="#0a0806" opacity=".7"/>
+<path d="M68 304 C68 238 96 200 140 186 C130 172 124 150 134 130 C148 106 182 106 194 126 C208 144 204 170 188 184 C240 200 258 248 260 304 Z" fill="url(#dCloak)" stroke="#0a0806" stroke-width="3"/>
+<path d="M92 258 q6 10 4 22 M236 266 q-4 12 -6 22" stroke="#0a0806" stroke-width="1.8" fill="none" opacity=".8"/>
+<path d="M128 126 C142 108 178 108 192 126 L188 148 Q160 138 132 148 Z" fill="#2a1f12" stroke="#0a0806" stroke-width="2.5"/>
+<ellipse cx="160" cy="158" rx="26" ry="30" fill="url(#dSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<path d="M140 168 Q160 192 180 168 Q178 186 160 192 Q142 186 140 168 Z" fill="#4a3a28" stroke="#1a1208" stroke-width="1.2"/>
+<ellipse cx="150" cy="156" rx="4" ry="2.5" fill="#1a1208"/><ellipse cx="170" cy="156" rx="4" ry="2.5" fill="#1a1208"/>
+<circle cx="151" cy="156" r="1.2" fill="#d8c9a3" opacity=".8"/><circle cx="171" cy="156" r="1.2" fill="#d8c9a3" opacity=".8"/>
+<path d="M144 150 q6 -3 12 0 M164 150 q6 -3 12 0" stroke="#3a2812" stroke-width="1.5" fill="none"/>
+<path d="M152 180 q8 -3 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<path d="M210 240 a32 10 0 0 0 64 0 l-6 20 a26 8 0 0 1 -52 0 Z" fill="url(#dWood)" stroke="#1a1208" stroke-width="2"/>
+<ellipse cx="242" cy="240" rx="32" ry="10" fill="#5a4028" stroke="#1a1208" stroke-width="2"/>
+<circle cx="232" cy="238" r="3" fill="#8a6d1f" stroke="#3a2812" stroke-width=".6"/><circle cx="244" cy="237" r="2.5" fill="#6b5528" stroke="#3a2812" stroke-width=".6"/>
+<path d="M208 232 q-10 2 -12 14 q6 -4 14 -2 Z" fill="url(#dSkin)" stroke="#3a2812" stroke-width="1.5"/>`);},
+C(){return molduraRetrato('C',
+`<linearGradient id="cSteel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d3dae0"/><stop offset=".5" stop-color="#8a94a0"/><stop offset="1" stop-color="#3a424b"/></linearGradient>
+<linearGradient id="cLeather" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a42"/><stop offset="1" stop-color="#3a2812"/></linearGradient>
+<linearGradient id="cWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b4a28"/><stop offset="1" stop-color="#2a1a0a"/></linearGradient>
+<linearGradient id="cSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c098"/><stop offset="1" stop-color="#9a6a42"/></linearGradient>
+<linearGradient id="cHair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a4828"/><stop offset="1" stop-color="#2a1808"/></linearGradient>`,
+`<ellipse cx="160" cy="300" rx="130" ry="16" fill="#0a0806" opacity=".7"/>
+<path d="M92 304 C92 232 114 196 160 188 C206 196 228 232 228 304 Z" fill="url(#cLeather)" stroke="#1a1208" stroke-width="3"/>
+<path d="M160 192 V304" stroke="#1a1208" stroke-width="1.2" opacity=".7" stroke-dasharray="3 4"/>
+<path d="M110 220 q50 -14 100 0 M106 248 q54 -12 108 0" stroke="#3a2812" stroke-width="1.2" opacity=".6" fill="none"/>
+<rect x="100" y="246" width="120" height="10" fill="#2a1a0a" stroke="#1a1208" stroke-width="1.2"/>
+<rect x="152" y="244" width="16" height="14" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.2"/>
+<rect x="148" y="170" width="24" height="20" fill="url(#cSkin)" stroke="#3a2812" stroke-width="1.2"/>
+<ellipse cx="160" cy="144" rx="28" ry="32" fill="url(#cSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<path d="M134 132 Q130 108 160 104 Q190 108 186 132 Q186 118 174 114 Q160 108 146 114 Q134 118 134 132 Z" fill="url(#cHair)" stroke="#1a1208" stroke-width="1.5"/>
+<ellipse cx="150" cy="148" rx="3.5" ry="4" fill="#fff" stroke="#3a2812" stroke-width=".8"/><ellipse cx="170" cy="148" rx="3.5" ry="4" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<circle cx="150" cy="149" r="2" fill="#4a6a8a"/><circle cx="170" cy="149" r="2" fill="#4a6a8a"/>
+<circle cx="150" cy="149" r=".9" fill="#0a0806"/><circle cx="170" cy="149" r=".9" fill="#0a0806"/>
+<path d="M144 142 q6 -2 12 0 M164 142 q6 -2 12 0" stroke="#3a2812" stroke-width="1.5" fill="none"/>
+<path d="M160 150 v10 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
+<path d="M152 170 q8 3 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<g transform="translate(90, 196)"><path d="M0 20 Q-6 52 0 88 Q40 108 80 88 Q86 52 80 20 Q40 6 0 20 Z" fill="url(#cWood)" stroke="#1a1208" stroke-width="3"/>
+<path d="M20 14 V94 M40 10 V96 M60 14 V94" stroke="#1a1208" stroke-width="1" opacity=".6"/>
+<circle cx="20" cy="34" r="3" fill="url(#cSteel)"/><circle cx="40" cy="30" r="3" fill="url(#cSteel)"/><circle cx="60" cy="34" r="3" fill="url(#cSteel)"/>
+<path d="M40 30 l-6 24 l4 14 l-2 20" stroke="#1a1208" stroke-width="2" fill="none"/>
+<path d="M40 48 l8 -12 8 12 -8 12 Z" fill="#8a1a1a" stroke="#1a1208" stroke-width="1"/></g>
+<g transform="translate(230, 180)"><rect x="-6" y="80" width="12" height="32" rx="3" fill="#3a2812" stroke="#1a1208" stroke-width="1.5"/>
+<rect x="-18" y="70" width="36" height="10" rx="2" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="116" r="7" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<path d="M-4 70 L-5 40 L0 20 L5 40 L4 70 Z" fill="url(#cSteel)" stroke="#1a1208" stroke-width="1.5"/>
+<path d="M-3 42 l3 -4 4 3" stroke="#1a1208" stroke-width="1.5" fill="none"/></g>
+<circle cx="90" cy="242" r="12" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="230" cy="240" r="11" fill="url(#cLeather)" stroke="#1a1208" stroke-width="1.5"/>`);},
+B(){return molduraRetrato('B',
+`<linearGradient id="bArmor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a525c"/><stop offset=".5" stop-color="#222830"/><stop offset="1" stop-color="#0a0c10"/></linearGradient>
+<linearGradient id="bArmorLight" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6a7480" stop-opacity=".8"/><stop offset="1" stop-color="#222830" stop-opacity="0"/></linearGradient>
+<linearGradient id="bPlume" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a1a1a"/><stop offset="1" stop-color="#2a0808"/></linearGradient>
+<radialGradient id="bEyeGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ff2a2a"/><stop offset=".6" stop-color="#a4161a"/><stop offset="1" stop-color="#2a0808"/></radialGradient>`,
+`<ellipse cx="160" cy="302" rx="140" ry="20" fill="#1a0a0a" opacity=".8"/>
+<path d="M76 304 C76 232 104 198 160 190 C216 198 244 232 244 304 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="3"/>
+<path d="M120 214 Q160 204 200 214 L196 264 Q160 272 124 264 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<g transform="translate(160,236)" opacity=".7"><path d="M-14 0 a14 10 0 0 1 28 0 l-2 10 a12 6 0 0 1 -24 0 Z" fill="#6a1a1a" stroke="#0a0c10" stroke-width=".8"/><circle cx="-5" cy="-2" r="2" fill="#0a0c10"/><circle cx="5" cy="-2" r="2" fill="#0a0c10"/></g>
+<path d="M76 210 l-8 -16 l12 -4 l-4 -14 l10 -2 l-2 -14 l14 2 l-2 16 l10 4 l-8 16 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M244 210 l8 -16 l-12 -4 l4 -14 l-10 -2 l2 -14 l-14 2 l2 16 l-10 4 l8 16 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M124 184 Q160 176 196 184 L196 200 Q160 208 124 200 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M118 186 V120 Q118 72 160 68 Q202 72 202 120 V186 Q160 200 118 186 Z" fill="url(#bArmor)" stroke="#0a0c10" stroke-width="3"/>
+<path d="M160 72 V186" stroke="#3a424c" stroke-width="1.2" opacity=".5"/>
+<path d="M160 68 q-14 -22 -6 -34 q12 -6 20 4 q8 10 -2 28 Z" fill="url(#bPlume)" stroke="#1a0808" stroke-width="1.5"/>
+<rect x="126" y="130" width="68" height="16" rx="2" fill="#05070a" stroke="#0a0c10" stroke-width="1.5"/>
+<circle cx="146" cy="138" r="5" fill="url(#bEyeGlow)" filter="url(#bglow)"/><circle cx="174" cy="138" r="5" fill="url(#bEyeGlow)" filter="url(#bglow)"/>
+<circle cx="146" cy="138" r="2" fill="#fff" opacity=".95"/><circle cx="174" cy="138" r="2" fill="#fff" opacity=".95"/>
+<g transform="translate(140,154)"><rect x="0" y="0" width="40" height="22" rx="3" fill="#1a1d22" stroke="#0a0c10" stroke-width="1.5"/><path d="M4 4 v14 M10 4 v14 M16 4 v14 M22 4 v14 M28 4 v14 M34 4 v14" stroke="#3a424c" stroke-width=".8"/></g>
+<g fill="#6a7480" opacity=".85"><circle cx="124" cy="120" r="2"/><circle cx="124" cy="180" r="2"/><circle cx="196" cy="120" r="2"/><circle cx="196" cy="180" r="2"/></g>
+<path d="M92 220 q6 -18 20 -28" stroke="url(#bArmorLight)" stroke-width="2" fill="none" opacity=".7"/>`);},
+A(){return molduraRetrato('A',
+`<linearGradient id="aArmor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c2cc"/><stop offset=".5" stop-color="#6a7480"/><stop offset="1" stop-color="#2a323c"/></linearGradient>
+<linearGradient id="aArmorLight" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e0e8f0" stop-opacity=".7"/><stop offset="1" stop-color="#6a7480" stop-opacity="0"/></linearGradient>
+<linearGradient id="aCape" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a4161a"/><stop offset="1" stop-color="#3a0808"/></linearGradient>
+<linearGradient id="aBlade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f4f8"/><stop offset=".5" stop-color="#9aa5b2"/><stop offset="1" stop-color="#3a4048"/></linearGradient>
+<linearGradient id="aSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8a878"/><stop offset="1" stop-color="#7a4a28"/></linearGradient>`,
+`<ellipse cx="160" cy="300" rx="130" ry="16" fill="#0a0806" opacity=".7"/>
+<path d="M84 304 C70 260 86 220 100 204 L220 204 C234 220 250 260 236 304 Z" fill="url(#aCape)" stroke="#1a0808" stroke-width="2.5" opacity=".85"/>
+<path d="M90 304 C90 236 116 200 160 192 C204 200 230 236 230 304 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="3"/>
+<path d="M116 214 Q160 206 204 214 L200 262 Q160 270 120 262 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<g transform="translate(160,236)" opacity=".85"><path d="M-10 -8 q-8 2 -10 10 q2 10 12 12 q14 0 16 -12 q-2 -8 -10 -10 Z" fill="#c9a227" stroke="#0a0c10" stroke-width="1"/><circle cx="-3" cy="-2" r="1.5" fill="#0a0c10"/><circle cx="5" cy="-2" r="1.5" fill="#0a0c10"/></g>
+<path d="M82 212 q-8 -18 2 -32 l20 4 q-4 12 -2 26 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<path d="M238 212 q8 -18 -2 -32 l-20 4 q4 12 2 26 Z" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="2"/>
+<ellipse cx="160" cy="138" rx="30" ry="34" fill="url(#aSkin)" stroke="#3a2812" stroke-width="1.5"/>
+<path d="M132 122 Q128 98 160 94 Q192 98 188 122 Q188 110 174 106 Q160 102 146 106 Q132 110 132 122 Z" fill="#8a7a68" stroke="#2a1808" stroke-width="1.2"/>
+<path d="M170 130 q4 10 2 18" stroke="#5a2a18" stroke-width="1.5" fill="none"/>
+<ellipse cx="150" cy="138" rx="4" ry="3" fill="#fff" stroke="#3a2812" stroke-width=".8"/><ellipse cx="172" cy="138" rx="4" ry="3" fill="#fff" stroke="#3a2812" stroke-width=".8"/>
+<circle cx="150" cy="138" r="2" fill="#2a4a28"/><circle cx="172" cy="138" r="2" fill="#2a4a28"/>
+<path d="M144 132 q6 -2 12 0 M168 132 q6 -2 12 0" stroke="#3a2812" stroke-width="2" fill="none"/>
+<path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.5" fill="none"/>
+<path d="M140 158 Q160 174 180 158 Q178 170 160 174 Q142 170 140 158 Z" fill="#6a5a48" stroke="#2a1808" stroke-width="1"/>
+<path d="M152 162 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<g transform="translate(160,158) rotate(-45)"><path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+<rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+<rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/></g>
+<g transform="translate(160,158) rotate(45)"><path d="M-4 -90 L-5 -110 L0 -130 L5 -110 L4 -90 Z" fill="url(#aBlade)" stroke="#1a1d22" stroke-width="1.5"/>
+<rect x="-18" y="-90" width="36" height="8" rx="2" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/>
+<rect x="-6" y="-82" width="12" height="28" rx="2" fill="#5a3a1f" stroke="#1a1208" stroke-width="1.5"/>
+<circle cx="0" cy="-50" r="7" fill="url(#aArmor)" stroke="#0a0c10" stroke-width="1.5"/></g>
+<path d="M96 228 q10 -22 24 -36" stroke="url(#aArmorLight)" stroke-width="2.5" fill="none" opacity=".8"/>`);},
+S(){return molduraRetrato('S',
+`<linearGradient id="sCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a2d8a"/><stop offset=".5" stop-color="#2f1848"/><stop offset="1" stop-color="#120a1d"/></linearGradient>
+<linearGradient id="sGold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9a227"/><stop offset="1" stop-color="#7a5a12"/></linearGradient>
+<linearGradient id="sSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8d8c4"/><stop offset="1" stop-color="#a89480"/></linearGradient>
+<radialGradient id="sEyeGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d4a6ff"/><stop offset=".5" stop-color="#b06ef0"/><stop offset="1" stop-color="#37135c"/></radialGradient>`,
+`<path d="M64 304 C66 224 94 188 130 174 L160 188 L190 174 C226 188 254 224 256 304 Z" fill="url(#sCloak)" stroke="#0a0612" stroke-width="3"/>
+<path d="M130 176 L100 304 M190 176 L220 304 M160 188 V304" stroke="#1a0a28" stroke-width="1.5" opacity=".7" fill="none"/>
+<path d="M64 304 L130 174" stroke="url(#sGold)" stroke-width="4" opacity=".85"/>
+<path d="M256 304 L190 174" stroke="url(#sGold)" stroke-width="4" opacity=".85"/>
+<circle cx="112" cy="200" r="8" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.5" filter="url(#sglow)"/><circle cx="112" cy="200" r="3" fill="#9d4edd"/>
+<circle cx="208" cy="200" r="8" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.5" filter="url(#sglow)"/><circle cx="208" cy="200" r="3" fill="#9d4edd"/>
+<path d="M120 176 C112 108 208 108 200 176 Q160 190 120 176 Z" fill="#1a0a28" stroke="#0a0612" stroke-width="2.5"/>
+<path d="M124 174 Q160 186 196 174" stroke="url(#sGold)" stroke-width="2" fill="none"/>
+<ellipse cx="160" cy="172" rx="22" ry="26" fill="url(#sSkin)" stroke="#3a2a38" stroke-width="1.5"/>
+<ellipse cx="151" cy="168" rx="4.5" ry="3.5" fill="#0a0614"/><ellipse cx="169" cy="168" rx="4.5" ry="3.5" fill="#0a0614"/>
+<circle cx="151" cy="168" r="3.5" fill="url(#sEyeGlow)" filter="url(#sglow)"/><circle cx="169" cy="168" r="3.5" fill="url(#sEyeGlow)" filter="url(#sglow)"/>
+<circle cx="151" cy="168" r="1.2" fill="#fff" opacity=".95"/><circle cx="169" cy="168" r="1.2" fill="#fff" opacity=".95"/>
+<path d="M145 162 q6 -1 10 1 M167 162 q6 -1 10 1" stroke="#3a2a38" stroke-width="1.2" fill="none"/>
+<path d="M160 170 v10 l-2 2" stroke="#7a6a68" stroke-width="1" fill="none"/>
+<path d="M154 184 q6 -1 12 0" stroke="#3a1a2a" stroke-width="1.2" fill="none"/>
+<circle cx="160" cy="228" r="7" fill="url(#sGold)" stroke="#0a0612" stroke-width="1.2" filter="url(#sglow)"/><circle cx="160" cy="228" r="3" fill="#9d4edd"/>
+<g opacity=".7" filter="url(#sglow)" fill="#b06ef0" font-family="serif" text-anchor="middle">
+<text x="90" y="140" font-size="18">ᚠ</text><text x="230" y="140" font-size="18">ᛟ</text>
+<text x="80" y="250" font-size="14">ᚱ</text><text x="240" y="250" font-size="14">ᛗ</text></g>`);},
+SS(){return molduraRetrato('SS',
+`<linearGradient id="ssGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#c9962e"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
+<linearGradient id="ssRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a4161a"/><stop offset=".5" stop-color="#6a0a0e"/><stop offset="1" stop-color="#2a0406"/></linearGradient>
+<linearGradient id="ssFur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0e8d8"/><stop offset="1" stop-color="#a89470"/></linearGradient>
+<linearGradient id="ssSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c098"/><stop offset="1" stop-color="#8a5a32"/></linearGradient>
+<radialGradient id="ssGemRed" cx="30%" cy="30%" r="70%"><stop offset="0" stop-color="#ff6a7a"/><stop offset=".5" stop-color="#d7263d"/><stop offset="1" stop-color="#5a0a10"/></radialGradient>
+<radialGradient id="ssGemBlue" cx="30%" cy="30%" r="70%"><stop offset="0" stop-color="#6ab8ff"/><stop offset=".5" stop-color="#2e6fd0"/><stop offset="1" stop-color="#0a2a5a"/></radialGradient>`,
+`<g opacity=".25" stroke="#f2cf6b" stroke-width="2.5" stroke-linecap="round"><path d="M160 44 v-22 M202 56 l15 -17 M118 56 l-15 -17 M230 88 l22 -8 M90 88 l-22 -8"/></g>
+<path d="M76 304 C80 232 108 196 160 188 C212 196 240 232 244 304 Z" fill="url(#ssRobe)" stroke="#1a0408" stroke-width="3"/>
+<path d="M100 220 C130 202 190 202 220 220 L212 260 C186 242 134 242 108 260 Z" fill="url(#ssFur)" stroke="#3a2a18" stroke-width="1.5"/>
+<path d="M120 230 l4 4 M140 228 l4 4 M160 226 l4 4 M180 228 l4 4 M200 230 l4 4" stroke="#1a1208" stroke-width="1.2" opacity=".8"/>
+<rect x="148" y="168" width="24" height="22" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.2"/>
+<path d="M144 172 q16 4 32 0 l-2 6 q-14 3 -28 0 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.2"/>
+<ellipse cx="160" cy="140" rx="30" ry="34" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.5"/>
+<path d="M132 124 Q128 100 160 96 Q192 100 188 124 Q188 112 174 108 Q160 104 146 108 Q132 112 132 124 Z" fill="#c9c0b0" stroke="#6a5a48" stroke-width="1.2"/>
+<path d="M138 152 Q160 176 182 152 Q180 172 160 178 Q140 172 138 152 Z" fill="#c9c0b0" stroke="#6a5a48" stroke-width="1"/>
+<ellipse cx="150" cy="138" rx="4" ry="3.5" fill="#fff" stroke="#3a2410" stroke-width=".8"/><ellipse cx="170" cy="138" rx="4" ry="3.5" fill="#fff" stroke="#3a2410" stroke-width=".8"/>
+<circle cx="150" cy="138" r="2.2" fill="#2a4a28"/><circle cx="170" cy="138" r="2.2" fill="#2a4a28"/>
+<path d="M144 132 q6 -2 12 0 M164 132 q6 -2 12 0" stroke="#6a5a48" stroke-width="2" fill="none"/>
+<path d="M160 140 v12 l-3 3" stroke="#6a4a2a" stroke-width="1.2" fill="none"/>
+<path d="M152 166 q8 2 16 0" stroke="#3a1a0a" stroke-width="1.5" fill="none"/>
+<g filter="url(#ssglow)"><path d="M124 108 L124 78 L142 96 L160 62 L178 96 L196 78 L196 108 Q160 118 124 108 Z" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2.5"/>
+<circle cx="136" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="160" cy="96" r="6" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="184" cy="98" r="5" fill="url(#ssGemRed)" stroke="#3a2410" stroke-width="1.2"/>
+<circle cx="124" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="160" cy="62" r="5" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/><circle cx="196" cy="78" r="4" fill="#f0e8d8" stroke="#3a2410" stroke-width="1"/></g>
+<g transform="translate(232, 186)"><rect x="-4" y="0" width="8" height="120" rx="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width="1.5"/>
+<circle cx="0" cy="-6" r="14" fill="url(#ssGold)" stroke="#3a2410" stroke-width="2" filter="url(#ssglow)"/>
+<circle cx="0" cy="-6" r="8" fill="url(#ssGemBlue)" stroke="#3a2410" stroke-width="1"/></g>
+<circle cx="228" cy="228" r="14" fill="url(#ssSkin)" stroke="#3a2410" stroke-width="1.5"/>
+<circle cx="234" cy="228" r="3" fill="url(#ssGold)" stroke="#3a2410" stroke-width=".8"/><circle cx="234" cy="228" r="1.5" fill="#d7263d"/>`);},
+SSS(){return molduraRetrato('SSS',
+`<linearGradient id="sssArmor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a34"/><stop offset=".5" stop-color="#0f1a16"/><stop offset="1" stop-color="#050706"/></linearGradient>
+<linearGradient id="sssFlame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0b8f6a" stop-opacity=".95"/><stop offset=".5" stop-color="#2ee6a8" stop-opacity=".9"/><stop offset="1" stop-color="#a4ffe0"/></linearGradient>
+<radialGradient id="sssCore" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#eafff5"/><stop offset=".4" stop-color="#2ee6a8"/><stop offset="1" stop-color="#0b4a37"/></radialGradient>`,
+`<circle cx="160" cy="160" r="130" fill="none" stroke="#2ee6a8" stroke-opacity=".25" stroke-width="2" stroke-dasharray="4 10"/>
+<g fill="#5cffc0" opacity=".85" font-size="22" text-anchor="middle" font-family="serif" filter="url(#sssglow)">
+<text x="160" y="60">ᚠ</text><text x="250" y="110">ᛟ</text><text x="250" y="220">ᚱ</text>
+<text x="160" y="268">ᛗ</text><text x="70" y="220">ᛉ</text><text x="70" y="110">ᛏ</text></g>
+<path d="M96 300 C86 260 108 244 100 214 C122 236 118 264 112 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
+<path d="M224 300 C234 260 212 244 220 214 C198 236 202 264 208 300 Z" fill="url(#sssFlame)" opacity=".9" filter="url(#ssssoft)"/>
+<path d="M84 304 C88 240 112 208 160 200 C208 208 232 240 236 304 Z" fill="url(#sssArmor)" stroke="#2ee6a8" stroke-opacity=".55" stroke-width="2.5"/>
+<path d="M118 220 Q160 210 202 220 L198 270 Q160 280 122 270 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2"/>
+<g filter="url(#sssglow)" fill="#2ee6a8" text-anchor="middle" font-family="serif">
+<text x="160" y="252" font-size="24">ᚠ</text><text x="140" y="266" font-size="14">ᛟ</text><text x="180" y="266" font-size="14">ᚱ</text></g>
+<path d="M78 220 q-12 -22 4 -40 l26 6 q-6 16 -4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
+<path d="M242 220 q12 -22 -4 -40 l-26 6 q6 16 4 32 Z" fill="url(#sssArmor)" stroke="#0a1410" stroke-width="2.5"/>
+<ellipse cx="160" cy="156" rx="28" ry="32" fill="#0d1210" stroke="#2ee6a8" stroke-opacity=".6" stroke-width="2"/>
+<circle cx="150" cy="158" r="4.5" fill="url(#sssCore)" filter="url(#sssglow)"/><circle cx="170" cy="158" r="4.5" fill="url(#sssCore)" filter="url(#sssglow)"/>
+<circle cx="150" cy="158" r="1.5" fill="#fff" opacity=".95"/><circle cx="170" cy="158" r="1.5" fill="#fff" opacity=".95"/>
+<path d="M100 200 C94 180 104 168 98 152 C112 166 108 184 104 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
+<path d="M220 200 C226 180 216 168 222 152 C208 166 212 184 216 200 Z" fill="url(#sssFlame)" opacity=".85" filter="url(#ssssoft)"/>
+<g filter="url(#sssglow)"><path d="M124 94 Q124 70 132 76 L140 64 L148 78 L160 50 L172 78 L180 64 L188 76 Q196 70 196 94 Q160 104 124 94 Z" fill="none" stroke="#2ee6a8" stroke-width="3"/>
+<circle cx="160" cy="46" r="6" fill="url(#sssCore)"/><circle cx="140" cy="62" r="4" fill="url(#sssCore)"/><circle cx="180" cy="62" r="4" fill="url(#sssCore)"/></g>
+<circle cx="160" cy="248" r="18" fill="url(#sssCore)" filter="url(#sssglow)" opacity=".95"/>
+<circle cx="160" cy="248" r="8" fill="#eafff5" opacity=".95"/>
+<g fill="#a4ffe0" opacity=".8" filter="url(#sssglow)"><circle cx="100" cy="140" r="2"/><circle cx="220" cy="140" r="2"/><circle cx="130" cy="110" r="1.5"/><circle cx="190" cy="110" r="1.5"/></g>`);}
+};
+
+/* ---------- análise do backup (intocada) ---------- */
 function validar(obj){
   if(!obj||typeof obj!=='object'||Array.isArray(obj))return 'O arquivo não contém um objeto JSON.';
   if(!obj.meta||obj.meta.app!=='fluxo')return 'Este JSON não parece um backup do Fluxo (meta.app ≠ "fluxo").';
@@ -867,7 +856,6 @@ function validar(obj){
   if(!Array.isArray(d.accounts)||!Array.isArray(d.transactions))return 'Estrutura inválida: "accounts" e "transactions" devem ser listas.';
   return null;
 }
-
 function analisar(d){
   const contas=d.accounts||[], txs=d.transactions||[];
   const saldo={};
@@ -894,6 +882,7 @@ function analisar(d){
   return {patrimonio,investido,vencidas,taxa,rec,desp,ptsP,ptsS,ptsT,ptsD,score};
 }
 
+/* ---------- refs ---------- */
 let state=null;
 const altar=$('#altar'),errBox=$('#errBox'),errMsg=$('#errMsg'),stage=$('#stage');
 const card=$('#card'),cardTilt=$('#cardTilt'),cardScene=$('#cardScene'),medalBox=$('#medalBox'),
@@ -901,17 +890,14 @@ const card=$('#card'),cardTilt=$('#cardTilt'),cardScene=$('#cardScene'),medalBox
   artImg=$('#artImg'),artFallback=$('#artFallback'),rankName=$('#rankName'),phrase=$('#phrase'),
   vOuro=$('#vOuro'),vTesouro=$('#vTesouro'),vHonra=$('#vHonra'),vDisc=$('#vDisc'),
   cardFoot=$('#cardFoot'),cardEmbers=$('#cardEmbers'),ledger=$('#ledger'),
-  btnPng=$('#btnPng'),btnReforge=$('#btnReforge'),summon=$('#summon'),
-  btnDeck=$('#btnDeck'),deckMode=$('#deckMode'),deckTrack=$('#deckTrack'),
-  deckPrev=$('#deckPrev'),deckNext=$('#deckNext'),deckClose=$('#deckClose'),
-  deckRankName=$('#deckRankName'),deckRankDesc=$('#deckRankDesc'),
-  deckIndicators=$('#deckIndicators'),deckNextRank=$('#deckNextRank');
+  btnPng=$('#btnPng'),btnReforge=$('#btnReforge'),summon=$('#summon');
 
 function showError(msg){stage.hidden=true;errMsg.textContent=msg;errBox.hidden=false;errBox.scrollIntoView({block:'center'});}
 function toast(msg){let t=$('.toast');
   if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
   t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),7000);}
 
+/* ---------- partículas ---------- */
 function sparkBurst(host,n,color){
   if(reducedMotion)return;
   for(let i=0;i<n;i++){
@@ -923,7 +909,6 @@ function sparkBurst(host,n,color){
     host.appendChild(s);s.addEventListener('animationend',()=>s.remove());
   }
 }
-
 function embersDaCarta(rk){
   cardEmbers.innerHTML='';
   if(reducedMotion)return;
@@ -940,6 +925,7 @@ function embersDaCarta(rk){
   }
 }
 
+/* ---------- tilt 3D + holografia (rAF, lerp suave) ---------- */
 function attachTilt(el,max){
   if(reducedMotion||!finePointer)return;
   let tx=0,ty=0,cx=0,cy=0,mx=.5,my=.5,raf=0,active=false;
@@ -962,7 +948,7 @@ function attachTilt(el,max){
   el.addEventListener('pointerleave',()=>{active=false;tx=0;ty=0;mx=.5;my=.5;kick();});
 }
 attachTilt(cardTilt,8);
-
+/* rastro arcano do SSS seguindo o mouse */
 let lastTrail=0;
 cardTilt.addEventListener('pointermove',e=>{
   if(!state||state.rank.key!=='SSS'||reducedMotion||!finePointer)return;
@@ -974,6 +960,7 @@ cardTilt.addEventListener('pointermove',e=>{
   cardEmbers.appendChild(p);p.addEventListener('animationend',()=>p.remove());
 });
 
+/* ---------- HUD / Painel do Reino ---------- */
 function statCard(icon,label,value,tip,pct,barBg){
   return `<div class="hub" data-tilt-hub tabindex="0" data-tip="${tip}" role="group" aria-label="${label}: ${value}">
     <svg class="ic"><use href="#${icon}"/></svg>
@@ -981,7 +968,6 @@ function statCard(icon,label,value,tip,pct,barBg){
     <span class="hub-bar"><i style="width:${Math.max(4,Math.min(100,pct))}%;background:${barBg};color:${barBg}"></i></span>
   </div>`;
 }
-
 function renderLedger(st){
   const bar=(a,b)=>`linear-gradient(90deg, ${a}, ${b})`;
   ledger.innerHTML=`
@@ -1005,6 +991,7 @@ function renderLedger(st){
   ledger.querySelectorAll('[data-tilt-hub]').forEach(h=>attachTilt(h,5));
 }
 
+/* ---------- revelação da carta ---------- */
 function mostrarCarta(st){
   state=st;
   const reveal=()=>{
@@ -1024,9 +1011,9 @@ function mostrarCarta(st){
     vDisc.textContent=Math.max(0,10-st.vencidas)+' / 10';
     cardFoot.textContent=`Forjado em ${hojeFmt()} · Série ${st.serie}`;
     st.hasArt=false;st.artEl=artImg;
-    card.classList.remove('has-art');artFallback.innerHTML='';artFallback.dataset.rankLetter=st.rank.key;artImg.removeAttribute('src');
+    card.classList.remove('has-art');artFallback.innerHTML='';artImg.removeAttribute('src');
     artImg.onload=()=>{st.hasArt=true;card.classList.add('has-art');};
-    artImg.onerror=()=>{st.hasArt=false;card.classList.remove('has-art');};
+    artImg.onerror=()=>{st.hasArt=false;card.classList.remove('has-art');artFallback.innerHTML=PORTRAITS[st.rank.key]();};
     artImg.src=RANK_IMAGES[st.rank.key];
     renderLedger(st);embersDaCarta(st.rank.key);
     cardScene.classList.remove('anim');void cardScene.offsetWidth;cardScene.classList.add('anim');
@@ -1039,6 +1026,7 @@ function mostrarCarta(st){
   setTimeout(()=>{summon.classList.remove('on');summon.hidden=true;reveal();},780);
 }
 
+/* ---------- PNG 1080×1512 (render próprio, isolado dos efeitos DOM) ---------- */
 const CW=1080,CH=1512;
 const FRAME_COLORS={iron:{hi:'#6e675c',lo:'#3a352c'},steel:{hi:'#b6c2cd',lo:'#5d6b78'},gold:{hi:'#e8c96a',lo:'#8a6d1f'},obsidian:{hi:'#e8c96a',lo:'#2ee6a8'}};
 function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
@@ -1076,6 +1064,16 @@ function drawIcon(c,type,x,y,col){
     c.beginPath();c.moveTo(x-10,y-3);c.lineTo(x-3,y-10);c.moveTo(x+10,y-3);c.lineTo(x+3,y-10);c.stroke();}
   c.restore();
 }
+function svgParaImagem(svgStr,tam){
+  return new Promise((res,rej)=>{
+    const s=svgStr.replace('<svg ','<svg width="'+tam+'" height="'+tam+'" ');
+    const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});
+    const url=URL.createObjectURL(blob);const im=new Image();
+    im.onload=()=>{URL.revokeObjectURL(url);res(im);};
+    im.onerror=e=>{URL.revokeObjectURL(url);rej(e);};
+    im.src=url;
+  });
+}
 async function pintarCarta(st,useArt){
   try{await Promise.all([
     document.fonts.load('900 84px "Cinzel Decorative"'),
@@ -1092,13 +1090,7 @@ async function pintarCarta(st,useArt){
     let g=c.createRadialGradient(CW/2,470,80,CW/2,470,800);
     g.addColorStop(0,hexA(rk.aura,.32));g.addColorStop(1,'rgba(0,0,0,0)');
     c.fillStyle=g;c.fillRect(0,0,CW,CH);
-    c.save();
-    c.font='900 400px "Cinzel Decorative"';
-    c.textAlign='center';c.textBaseline='middle';
-    c.shadowColor=rk.aura;c.shadowBlur=80;
-    c.fillStyle=hexA(rk.aura,.3);
-    c.fillText(rk.key,CW/2,CH/2-40);
-    c.restore();
+    try{const im=await svgParaImagem(PORTRAITS[rk.key](),760);c.drawImage(im,(CW-760)/2,240,760,760);}catch(e){}
   }
   let g=c.createLinearGradient(0,0,0,470);
   g.addColorStop(0,'rgba(6,5,4,.96)');g.addColorStop(.6,'rgba(6,5,4,.5)');g.addColorStop(1,'rgba(6,5,4,0)');
@@ -1184,7 +1176,7 @@ async function baixarPNG(){
     try{blob=await blobDoCanvas(cv);}
     catch(e){
       if(state.hasArt){
-        toast('⚔ O navegador bloqueou embutir a foto local no PNG (arquivo aberto direto do disco). A carta foi forjada sem a arte — para exportar com a arte, abra a pasta por um servidor local (ex.: Live Server / npx serve).');
+        toast('⚔ O navegador bloqueou embutir a foto local no PNG (arquivo aberto direto do disco). A carta foi forjada com o retrato vetorial — para exportar com a arte, abra a pasta por um servidor local (ex.: Live Server / npx serve).');
         cv=await pintarCarta(state,false);blob=await blobDoCanvas(cv);
       }else throw e;
     }
@@ -1196,6 +1188,7 @@ async function baixarPNG(){
   finally{btnPng.disabled=false;btnPng.textContent='⬇ Baixar carta (PNG)';}
 }
 
+/* ---------- upload / drag&drop ---------- */
 function handleFile(file){
   if(!file)return;
   const nomeOk=/\.json$/i.test(file.name),tipoOk=!file.type||file.type==='application/json';
@@ -1213,7 +1206,6 @@ function handleFile(file){
   };
   rd.readAsText(file,'utf-8');
 }
-
 const dz=$('#dropzone'),fileInput=$('#fileInput');
 dz.addEventListener('click',e=>{if(e.target===dz||e.target.closest('.dz-in')&&!e.target.closest('label'))fileInput.click();});
 dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}});
@@ -1225,6 +1217,7 @@ fileInput.addEventListener('change',()=>{handleFile(fileInput.files&&fileInput.f
 ['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>e.preventDefault()));
 btnPng.addEventListener('click',baixarPNG);
 
+/* ---------- Reforjar: sequência de forja ---------- */
 btnReforge.addEventListener('click',()=>{
   const go=()=>{stage.hidden=true;errBox.hidden=true;altar.hidden=false;state=null;
     window.scrollTo({top:0,behavior:reducedMotion?'auto':'smooth'});};
@@ -1239,175 +1232,7 @@ btnReforge.addEventListener('click',()=>{
   },700);
 });
 
-// MODO DECK (CORRIGIDO)
-let deckIndex=0;
-let savedScrollY=0;
-const rankKeys=['D','C','B','A','S','SS','SSS'];
-const deckCards=[];
-
-function createDeckCard(rankKey){
-  const rank=RANKS[rankKey];
-  const wrapper=document.createElement('div');
-  wrapper.className='deck-card-wrapper';
-  wrapper.dataset.rank=rankKey;
-  
-  wrapper.innerHTML=`
-    <div class="card-tilt">
-      <article class="card" data-rank="${rankKey}" data-frame="${rank.frame}" style="--aura:${rank.aura};--medal1:${rank.medal[0]};--medal2:${rank.medal[1]}">
-        <div class="layer layer-art"><div class="art-par">
-          <img class="art" alt="">
-          <div class="art-fallback" data-rank-letter="${rankKey}" aria-hidden="true"></div>
-        </div></div>
-        <div class="layer layer-atmo"><div class="art-tint"></div><div class="art-vignette"></div><div class="art-top"></div><div class="art-bottom"></div></div>
-        <header class="layer layer-top">
-          <div class="medal"><span>${rankKey}</span></div>
-          <div class="top-name">
-            <span class="cls">Classe · Rank ${rankKey}</span>
-            <strong>${rank.name}</strong>
-          </div>
-          <div class="top-score"><b>100</b><small>PONTUAÇÃO</small></div>
-        </header>
-        <footer class="layer layer-bottom">
-          <p class="phrase">${rank.phrase}</p>
-          <ul class="attrs">
-            <li><span class="ico"><svg class="ic"><use href="#i-coin"/></svg></span><span class="k">Ouro</span><i class="dots"></i><span class="v">R$ 0,00</span></li>
-            <li><span class="ico"><svg class="ic"><use href="#i-gem"/></svg></span><span class="k">Tesouro</span><i class="dots"></i><span class="v">R$ 0,00</span></li>
-            <li><span class="ico"><svg class="ic"><use href="#i-shield"/></svg></span><span class="k">Honra</span><i class="dots"></i><span class="v">0,0%</span></li>
-            <li><span class="ico"><svg class="ic"><use href="#i-swords"/></svg></span><span class="k">Disciplina</span><i class="dots"></i><span class="v">10 / 10</span></li>
-          </ul>
-          <div class="card-foot">Forjado em ${hojeFmt()} · Série ⚜♛-999</div>
-        </footer>
-        <div class="layer layer-frame">
-          <svg class="flourish f-tl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-          <svg class="flourish f-tr" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-          <svg class="flourish f-br" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-          <svg class="flourish f-bl" viewBox="0 0 120 120" aria-hidden="true"><path d="M6 114 C6 58 30 20 88 10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M12 114 C16 74 36 44 78 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".7"/><path d="M26 94 c-8 -8 -8 -20 2 -26 c8 -5 17 1 14 9 c-2 7 -11 7 -13 1" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="88" cy="10" r="4" fill="currentColor"/></svg>
-          <span class="gem g1"></span><span class="gem g2"></span><span class="gem g3"></span><span class="gem g4"></span>
-        </div>
-        <span class="layer card-shine" aria-hidden="true"></span>
-        <div class="layer layer-holo" aria-hidden="true"></div>
-        <div class="layer layer-embers" aria-hidden="true"></div>
-      </article>
-    </div>
-  `;
-  
-  return wrapper;
-}
-
-function updateDeckPositions(){
-  deckCards.forEach((card,i)=>{
-    card.className='deck-card-wrapper';
-    card.style.display='';
-    const diff=i-deckIndex;
-    if(diff===0)card.classList.add('active');
-    else if(diff===-1)card.classList.add('left');
-    else if(diff===1)card.classList.add('right');
-    else if(diff===-2)card.classList.add('far-left');
-    else if(diff===2)card.classList.add('far-right');
-    else card.style.display='none';
-  });
-  
-  const currentRank=RANKS[rankKeys[deckIndex]];
-  deckRankName.textContent=currentRank.name;
-  deckRankDesc.textContent=currentRank.desc;
-  deckRankName.style.setProperty('--aura',currentRank.aura);
-  
-  if(deckIndex<rankKeys.length-1){
-    const nextRank=RANKS[rankKeys[deckIndex+1]];
-    deckNextRank.innerHTML=`
-      <span class="next-label">Próximo rank</span>
-      <span class="next-arrow">→</span>
-      <span class="next-name" style="color:${nextRank.aura}">${nextRank.name}</span>
-      <span class="next-label">(${nextRank.minScore}+ pts)</span>
-    `;
-    deckNextRank.style.display='flex';
-  }else{
-    deckNextRank.innerHTML=`
-      <span class="next-label">⚜ Rank máximo alcançado ⚜</span>
-    `;
-    deckNextRank.style.display='flex';
-  }
-  
-  document.querySelectorAll('.deck-dot').forEach((dot,i)=>{
-    dot.classList.toggle('active',i===deckIndex);
-  });
-  
-  deckPrev.disabled=deckIndex===0;
-  deckNext.disabled=deckIndex===rankKeys.length-1;
-}
-
-function openDeck(){
-  if(deckCards.length===0){
-    rankKeys.forEach(key=>{
-      const card=createDeckCard(key);
-      deckTrack.appendChild(card);
-      deckCards.push(card);
-      
-      const img=card.querySelector('.art');
-      const cardEl=card.querySelector('.card');
-      img.onload=()=>{cardEl.classList.add('has-art');};
-      img.onerror=()=>{cardEl.classList.remove('has-art');};
-      img.src=RANK_IMAGES[key];
-      
-      const tilt=card.querySelector('.card-tilt');
-      attachTilt(tilt,6);
-    });
-    
-    rankKeys.forEach((key,i)=>{
-      const dot=document.createElement('div');
-      dot.className='deck-dot';
-      dot.addEventListener('click',()=>{deckIndex=i;updateDeckPositions();});
-      deckIndicators.appendChild(dot);
-    });
-  }
-  
-  savedScrollY=window.scrollY;
-  document.documentElement.classList.add('deck-open');
-  document.body.classList.add('deck-open');
-  deckMode.classList.add('active');
-  deckMode.setAttribute('aria-hidden','false');
-  updateDeckPositions();
-}
-
-function closeDeck(){
-  deckMode.classList.add('closing');
-  setTimeout(()=>{
-    deckMode.classList.remove('active','closing');
-    deckMode.setAttribute('aria-hidden','true');
-    document.documentElement.classList.remove('deck-open');
-    document.body.classList.remove('deck-open');
-    window.scrollTo(0,savedScrollY);
-  },450);
-}
-
-btnDeck.addEventListener('click',openDeck);
-deckClose.addEventListener('click',closeDeck);
-deckPrev.addEventListener('click',()=>{if(deckIndex>0){deckIndex--;updateDeckPositions();}});
-deckNext.addEventListener('click',()=>{if(deckIndex<rankKeys.length-1){deckIndex++;updateDeckPositions();}});
-
-deckMode.addEventListener('click',e=>{if(e.target===deckMode)closeDeck();});
-
-document.addEventListener('keydown',e=>{
-  if(!deckMode.classList.contains('active'))return;
-  if(e.key==='Escape')closeDeck();
-  if(e.key==='ArrowLeft'&&deckIndex>0){deckIndex--;updateDeckPositions();}
-  if(e.key==='ArrowRight'&&deckIndex<rankKeys.length-1){deckIndex++;updateDeckPositions();}
-});
-
-let deckDragStart=null;
-deckTrack.addEventListener('pointerdown',e=>{deckDragStart=e.clientX;});
-deckTrack.addEventListener('pointermove',e=>{
-  if(deckDragStart===null)return;
-  const diff=e.clientX-deckDragStart;
-  if(Math.abs(diff)>50){
-    if(diff>0&&deckIndex>0){deckIndex--;updateDeckPositions();}
-    else if(diff<0&&deckIndex<rankKeys.length-1){deckIndex++;updateDeckPositions();}
-    deckDragStart=null;
-  }
-});
-deckTrack.addEventListener('pointerup',()=>{deckDragStart=null;});
-deckTrack.addEventListener('pointercancel',()=>{deckDragStart=null;});
-
+/* ---------- ambiente ---------- */
 (function spawnEmbers(){
   if(reducedMotion)return;
   const layer=$('#embers');
@@ -1422,7 +1247,6 @@ deckTrack.addEventListener('pointercancel',()=>{deckDragStart=null;});
     layer.appendChild(e);
   }
 })();
-
 setTimeout(()=>{const i=$('#intro');if(i)i.remove();},2400);
 })();
 </script>
