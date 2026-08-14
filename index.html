@@ -108,7 +108,8 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 .btn-danger:hover{background:var(--down);color:#fff}
 .btn-sm{padding:6px 11px;font-size:12.5px;border-radius:9px}
 .icon-btn{width:34px;height:34px;border-radius:10px;display:inline-grid;place-items:center;color:var(--ink2);border:1px solid transparent;transition:all .15s}
-.icon-btn:hover{background:var(--surface2);color:var(--ink);border-color:var(--line);transform:translateY(-1px)}
+.note-ic{width:20px;height:20px;border-radius:6px;display:inline-grid;place-items:center;color:var(--info);background:var(--info-soft);vertical-align:middle;flex-shrink:0;margin-left:2px;transition:all .15s}
+.note-ic:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
 .card.lift{transition:transform .2s,box-shadow .2s}.card.lift:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -1352,6 +1353,7 @@ const S={ "date-desc":(a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.
 "desc":(a,b)=>a.desc.localeCompare(b.desc,"pt-BR") };
 return list.sort(S[f.sort]||S["date-desc"]);
 }
+const noteBtn = t => (t&&t.note) ? `<button class="note-ic" data-action="show-note" data-id="${t.id}" title="${esc(t.note)}" aria-label="Ver observação">${icon("info",12)}</button>` : "";
 function txRow(t){
 const c=catById(t.categoryId), st=txStatus(t);
 const acc=t.cardId?cardById(t.cardId):accById(t.accountId);
@@ -1360,8 +1362,7 @@ t.recurrenceId?icon("repeat",12):"" ].join("");
 return `<tr>
 <td data-label="Selecionar" class="td-first ck-cell"><input type="checkbox" data-ck="lanc" data-id="${t.id}" ${ui.sel.lanc.has(t.id)?"checked":""} aria-label="Selecionar lançamento"></td>
 <td data-label="Data" class="num" style="white-space:nowrap">${fmtDate(t.date)}</td>
-<td data-label="Descrição"><div class="td-main">${esc(t.desc)}</div>
-<div class="td-sub">${badges} ${t.note?`<span title="${esc(t.note)}">${icon("info",12)}</span>`:""}</div></td>
+<td data-label="Descrição"><div class="td-main">${esc(t.desc)} ${noteBtn(t)}</div>${badges?`<div class="td-sub">${badges}</div>`:""}</td>
 <td data-label="Categoria"><span class="chip" style="background:${c?c.color+"1d":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${c?icon(c.icon,12)+esc(c.name):"—"}</span></td>
 <td data-label="Valor" class="num ${t.type==="receita"?"val-up":"val-down"}">${t.type==="receita"?"+":"−"} ${fmtMoney(t.value)}</td>
 <td data-label="Conta/Cartão">${acc?esc(acc.name):"—"}</td>
@@ -1445,7 +1446,7 @@ const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
 <input type="checkbox" data-ck="contas" data-id="${t.id}" ${ui.sel.contas.has(t.id)?"checked":""} aria-label="Selecionar conta">
 <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon(c?c.icon:"dots",18)}</span>
-<span class="b-mid"><span class="b-name">${esc(t.desc)} ${t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:""}</span>
+<span class="b-mid"><span class="b-name">${esc(t.desc)} ${noteBtn(t)} ${t.installment?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${t.installment}/${t.installments}</span>`:""}</span>
 <span class="b-sub">vence ${fmtDate(t.date)} · ${esc(t.payMethod||"")} ${t.cardId?"· "+esc(cardById(t.cardId)?.name||""):""}</span></span>
 ${extra?`<span class="badge ${st}">${st==="pago"?"Paga":st==="vencido"?"Vencida":"Pendente"}</span>`:""}
 <span class="b-val num">${fmtMoney(t.value)}</span>
@@ -1514,7 +1515,7 @@ ${list.length?`<table class="responsive"><thead><tr>
 return `<tr>
 <td data-label="Selecionar" class="td-first ck-cell"><input type="checkbox" data-ck="receitas" data-id="${t.id}" ${ui.sel.receitas.has(t.id)?"checked":""} aria-label="Selecionar receita"></td>
 <td data-label="Data" class="num">${fmtDate(t.date)}</td>
-<td data-label="Descrição"><div class="td-main">${esc(t.desc)}</div>${t.recurrenceId?`<div class="td-sub">${icon("repeat",11)} recorrente #${t.recIndex||""}</div>`:""}</td>
+<td data-label="Descrição"><div class="td-main">${esc(t.desc)} ${noteBtn(t)}</div>${t.recurrenceId?`<div class="td-sub">${icon("repeat",11)} recorrente #${t.recIndex||""}</div>`:""}</td>
 <td data-label="Categoria"><span class="chip" style="background:${c?c.color+"1d":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${c?esc(c.name):"—"}</span></td>
 <td data-label="Valor" class="num val-up">+ ${fmtMoney(t.value)}</td>
 <td data-label="Conta">${a?esc(a.name):"—"}</td>
@@ -2175,7 +2176,10 @@ case "catlimit": openCatLimitModal(id); break;
 case "goal-edit": openGoalModal(el.dataset.g); break;
 case "tx-pay": if(tx) payTransaction(tx); break;
 case "tx-edit": if(tx) openTxModal({tx}); break;
-case "tx-dup": if(tx){ state.transactions.push({...tx,id:uid(),status:"pendente",paidDate:undefined}); save(); render(); toast("Lançamento duplicado."); } break;
+case "show-note": { if(tx && tx.note){ const ov=openModal({title:"Observação — "+esc(tx.desc),
+body:`<p style="font-size:14px;line-height:1.7;color:var(--ink2);white-space:pre-wrap">${esc(tx.note)}</p>`,
+foot:`<button class="btn btn-ghost" data-x>Fechar</button>`});
+ov.querySelector("[data-x]").onclick=ov._close; } break; }
 case "tx-del": if(tx) deleteTransaction(tx); break;
 case "tx-clear": ui.txF={q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false}; render(); break;
 case "bulk-del": { const key=el.dataset.set; if(ui.sel[key]) bulkDeleteSel(key); break; }
