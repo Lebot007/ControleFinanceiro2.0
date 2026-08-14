@@ -145,6 +145,7 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 .progress i{display:block;height:100%;border-radius:99px;background:var(--pc,var(--brand));width:0;transition:width .8s cubic-bezier(.3,.9,.3,1)}
 .progress.over i{background:var(--down)}
 .table-wrap{overflow-x:auto;padding:0}
+.table-wrap>.card-h{padding:16px 20px 0}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 thead th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -495,7 +496,6 @@ const n = ui.sel[key].size;
 if(!n) return "";
 return `<div class="bulk-bar no-print">${icon("check",15)} <b>${n} selecionado(s)</b>
 <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-<button class="btn btn-ghost btn-sm" data-action="bulk-all" data-set="${key}">Selecionar todos (${_viewIds[key].length})</button>
 <button class="btn btn-danger btn-sm" data-action="bulk-del" data-set="${key}">${icon("trash",13)} Excluir selecionados</button>
 <button class="btn btn-ghost btn-sm" data-action="bulk-clear" data-set="${key}">Limpar seleção</button>
 </span></div>`;
