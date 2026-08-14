@@ -392,6 +392,7 @@ let state = loadState() || defaultState();
 const ui = {
 per:{ dashboard:{period:"mes",from:"",to:""}, reports:{period:"mes",from:"",to:""}, csv:{period:"all",from:"",to:""} },
 txF:{q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false},
+bF:{view:"",cat:"",acc:""}, iF:{view:"",cat:"",acc:""},
 sel:{lanc:new Set(), contas:new Set(), receitas:new Set()} };
 let _billGroups = {};
 let _viewIds = {lanc:[], contas:[], receitas:[]};
@@ -1429,7 +1430,10 @@ ui.txF._focus=false;
 }
 function renderBills(){
 const today=todayISO();
-const bills=state.transactions.filter(t=>t.type==="despesa");
+const f=ui.bF;
+let bills=state.transactions.filter(t=>t.type==="despesa");
+if(f.cat) bills=bills.filter(t=>t.categoryId===f.cat);
+if(f.acc) bills=bills.filter(t=>t.accountId===f.acc||t.cardId===f.acc);
 const open=bills.filter(t=>t.status!=="pago");
 _billGroups={};
 const groups=[
@@ -1439,8 +1443,11 @@ const groups=[
 ["later","Próximas", open.filter(t=>t.date>addDays(today,7)), "var(--brand)"],
 ];
 groups.forEach(([key,,items])=>{ _billGroups[key]=items; });
-const paid=bills.filter(t=>t.status==="pago").sort((a,b)=>(b.paidDate||b.date).localeCompare(a.paidDate||a.date)).slice(0,15);
-_viewIds.contas=[...open.map(t=>t.id), ...paid.map(t=>t.id)];
+const paidAll=bills.filter(t=>t.status==="pago").sort((a,b)=>(b.paidDate||b.date).localeCompare(a.paidDate||a.date));
+const showOpen=f.view!=="paid", showPaid=f.view!=="open";
+const paid=showPaid?(f.view==="paid"?paidAll:paidAll.slice(0,15)):[];
+const shownOpen=showOpen?open:[];
+_viewIds.contas=[...shownOpen.map(t=>t.id), ...paid.map(t=>t.id)];
 const totalOpen=open.reduce((s,t)=>s+t.value,0);
 const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
@@ -1455,39 +1462,91 @@ ${extra?"":`<button class="btn btn-primary btn-sm" data-action="tx-pay" data-id=
 <button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar">${icon("pencil",15)}</button>
 <button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir">${icon("trash",15)}</button>
 </div></div>`; };
+let body="";
+if(showOpen){
+body += open.length? groups.map(([key,name,items,color])=> items.length?`
+<div class="bill-group"><h4 style="color:${color}">${name} <span class="count">${items.length} · ${fmtMoney(items.reduce((s,t)=>s+t.value,0))}</span>
+<button class="btn btn-ghost btn-sm no-print" style="margin-left:auto" data-action="pay-group" data-id="${key}">${icon("check",13)} Pagar todas (${items.length})</button></h4>
+${items.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>row(t)).join("")}</div>`:"").join("")
+: `<div class="card">${emptyBlock("check","Nenhuma conta pendente","Você está em dia. Aproveite para planejar os próximos meses.","")}</div>`;
+}
+if(showPaid && paid.length){
+body += `<div class="bill-group"><h4>Pagas recentemente <span class="count">${paid.length}</span></h4>${paid.map(t=>row(t,true)).join("")}</div>`;
+}
+if(!body) body=`<div class="card">${emptyBlock("filter","Nada encontrado","Nenhuma conta corresponde aos filtros escolhidos.","")}</div>`;
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Contas a pagar</h1><p>Aluguel, energia, assinaturas e tudo o que ainda precisa ser pago.</p></div>
 <button class="btn btn-primary no-print" data-action="new-bill">${icon("plus",16)} Nova conta</button></div>
+<div class="card filters no-print">
+<select data-bfilter="view">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("open","Só próximas/pendentes",f.view==="open")}${opt("paid","Só pagas",f.view==="paid")}</select>
+<select data-bfilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="despesa").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
+<select data-bfilter="acc"><option value="">Conta/cartão: todos</option>
+${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}${state.cards.map(c=>opt(c.id,"💳 "+c.name,f.acc===c.id)).join("")}</select>
+<button class="btn btn-ghost btn-sm" data-action="b-clear">${icon("x",13)} Limpar</button>
+</div>
 <div class="card stat-strip no-print" style="margin-bottom:18px">
 <div class="ss"><b class="num">${fmtMoney(totalOpen)}</b><span>total em aberto</span></div>
 <div class="ss"><b class="num" style="color:var(--down)">${open.filter(t=>t.date<today).length}</b><span>vencidas</span></div>
 <div class="ss"><b class="num" style="color:var(--warn)">${open.filter(t=>t.date===today).length}</b><span>hoje</span></div>
 <div class="ss"><b class="num">${open.length}</b><span>pendentes no total</span></div>
-<label class="sel-all" style="margin-left:auto"><input type="checkbox" data-ckall="contas"> Selecionar todas (${open.length+paid.length})</label>
+<label class="sel-all" style="margin-left:auto"><input type="checkbox" data-ckall="contas"> Selecionar todas (${_viewIds.contas.length})</label>
 </div>
 ${selBar("contas")}
-${open.length? groups.map(([key,name,items,color])=> items.length?`
-<div class="bill-group"><h4 style="color:${color}">${name} <span class="count">${items.length} · ${fmtMoney(items.reduce((s,t)=>s+t.value,0))}</span>
-<button class="btn btn-ghost btn-sm no-print" style="margin-left:auto" data-action="pay-group" data-id="${key}">${icon("check",13)} Pagar todas (${items.length})</button></h4>
-${items.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>row(t)).join("")}</div>`:"").join("")
-: `<div class="card">${emptyBlock("check","Nenhuma conta pendente","Você está em dia. Aproveite para planejar os próximos meses.","")}</div>`}
-${paid.length?`<div class="bill-group"><h4>Pagas recentemente <span class="count">${paid.length}</span></h4>${paid.map(t=>row(t,true)).join("")}</div>`:""}`;
+${body}`;
 }
 function renderIncome(){
 const [csC,ceC]=cycleRange(new Date());
-const inc=state.transactions.filter(t=>t.type==="receita");
+const today=todayISO();
+const f=ui.iF;
+let inc=state.transactions.filter(t=>t.type==="receita");
+if(f.cat) inc=inc.filter(t=>t.categoryId===f.cat);
+if(f.acc) inc=inc.filter(t=>t.accountId===f.acc||t.cardId===f.acc);
 const month=inc.filter(t=>inRange(t.date,csC,ceC));
 const received=month.filter(t=>t.status==="pago").reduce((s,t)=>s+t.value,0);
 const toReceive=month.filter(t=>t.status!=="pago").reduce((s,t)=>s+t.value,0);
 const recs=state.recurrences.filter(r=>r.type==="receita");
-const pendCount=inc.filter(t=>t.status!=="pago").length;
-const list=[...inc].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,120);
-_viewIds.receitas=list.map(t=>t.id);
+const pend=inc.filter(t=>t.status!=="pago");
+const pGroups=[
+["late","Atrasadas", pend.filter(t=>t.date<today), "var(--down)"],
+["week","Próximos 7 dias", pend.filter(t=>t.date>=today&&t.date<=addDays(today,7)), "var(--warn)"],
+["later","Próximas", pend.filter(t=>t.date>addDays(today,7)), "var(--brand)"],
+];
+const recvAll=inc.filter(t=>t.status==="pago").sort((a,b)=>(b.paidDate||b.date).localeCompare(a.paidDate||a.date));
+const showPend=f.view!=="recv", showRecv=f.view!=="pend";
+const recv=showRecv?(f.view==="recv"?recvAll:recvAll.slice(0,15)):[];
+const shownPend=showPend?pend:[];
+_viewIds.receitas=[...shownPend.map(t=>t.id), ...recv.map(t=>t.id)];
+const selCount=ui.sel.receitas.size;
+const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t), a=accById(t.accountId);
+return `<div class="bill">
+<input type="checkbox" data-ck="receitas" data-id="${t.id}" ${ui.sel.receitas.has(t.id)?"checked":""} aria-label="Selecionar receita">
+<span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon(c?c.icon:"dots",18)}</span>
+<span class="b-mid"><span class="b-name">${esc(t.desc)} ${noteBtn(t)} ${t.recurrenceId?`<span class="chip" style="background:var(--surface2);border:1px solid var(--line)">${icon("repeat",11)} recorrente</span>`:""}</span>
+<span class="b-sub">${fmtDate(t.date)} · ${a?esc(a.name):"—"}</span></span>
+${extra?`<span class="badge ${st}">${st==="pago"?"Recebida":st==="vencido"?"Atrasada":"Pendente"}</span>`:""}
+<span class="b-val num val-up">+ ${fmtMoney(t.value)}</span>
+<div class="row-actions" style="opacity:1">
+<button class="icon-btn" data-action="tx-pay" data-id="${t.id}" title="${st==="pago"?"Marcar pendente":"Marcar recebida"}">${icon(st==="pago"?"calendar":"check",15)}</button>
+<button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar">${icon("pencil",15)}</button>
+<button class="icon-btn" data-action="tx-dup" data-id="${t.id}" title="Duplicar">${icon("copy",15)}</button>
+<button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir">${icon("trash",15)}</button>
+</div></div>`; };
+let body="";
+if(showPend){
+body += pend.length? pGroups.map(([key,name,items,color])=> items.length?`
+<div class="bill-group"><h4 style="color:${color}">${name} <span class="count">${items.length} · ${fmtMoney(items.reduce((s,t)=>s+t.value,0))}</span></h4>
+${items.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>row(t)).join("")}</div>`:"").join("")
+: `<div class="card">${emptyBlock("check","Nenhuma receita pendente","Todas as receitas do filtro já foram recebidas.","")}</div>`;
+}
+if(showRecv && recv.length){
+body += `<div class="bill-group"><h4>Recebidas recentemente <span class="count">${recv.length}</span></h4>${recv.map(t=>row(t,true)).join("")}</div>`;
+}
+if(!body) body=`<div class="card">${emptyBlock("filter","Nada encontrado","Nenhuma receita corresponde aos filtros escolhidos.","")}</div>`;
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Receitas</h1><p>Salário, freelance, vendas, rendimentos — tudo o que entra.</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
-<button class="btn btn-ghost" data-action="receive-sel" ${ui.sel.receitas.size?"":"disabled"}>${icon("check",15)} Receber selecionadas${ui.sel.receitas.size?` (${ui.sel.receitas.size})`:""}</button>
-<button class="btn btn-ghost" data-action="pend-sel" ${ui.sel.receitas.size?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${ui.sel.receitas.size?` (${ui.sel.receitas.size})`:""}</button>
+<button class="btn btn-ghost" data-action="receive-sel" ${selCount?"":"disabled"}>${icon("check",15)} Receber selecionadas${selCount?` (${selCount})`:""}</button>
+<button class="btn btn-ghost" data-action="pend-sel" ${selCount?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${selCount?` (${selCount})`:""}</button>
 <button class="btn btn-ghost" data-action="new-rec-income">${icon("repeat",15)} Receita recorrente</button>
 <button class="btn btn-primary" data-action="new-income">${icon("plus",16)} Nova receita</button></div></div>
 <div class="grid kpis no-print" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
@@ -1495,7 +1554,14 @@ viewEl().innerHTML=`
 <div class="card kpi" style="--kc:#d98e1f22;--ki:var(--warn)"><div class="k-top"><span class="k-ic">${icon("calendar",14)}</span>A receber no mês</div><div class="k-val num">${fmtMoney(toReceive)}</div></div>
 <div class="card kpi" style="--kc:#3b6ea822;--ki:var(--info)"><div class="k-top"><span class="k-ic">${icon("repeat",14)}</span>Recorrências ativas</div><div class="k-val num">${recs.filter(r=>r.active).length}</div></div>
 </div>
-${selBar("receitas")}
+<div class="card filters no-print">
+<select data-ifilter="view">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("pend","Só pendentes",f.view==="pend")}${opt("recv","Só recebidas",f.view==="recv")}</select>
+<select data-ifilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="receita").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
+<select data-ifilter="acc"><option value="">Conta: todas</option>
+${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}</select>
+<label class="sel-all"><input type="checkbox" data-ckall="receitas"> Selecionar todas (${_viewIds.receitas.length})</label>
+<button class="btn btn-ghost btn-sm" data-action="i-clear">${icon("x",13)} Limpar</button>
+</div>
 ${recs.length?`<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Receitas recorrentes</h3></div>
 ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
 <span class="b-ic" style="background:${c?c.color+"22":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${icon("repeat",17)}</span>
@@ -1506,27 +1572,8 @@ ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
 <button class="icon-btn" data-action="rec-edit" data-id="${r.id}">${icon("pencil",15)}</button>
 <button class="icon-btn" data-action="rec-del" data-id="${r.id}">${icon("trash",15)}</button>
 </div></div>`;}).join("")}</div>`:""}
-<div class="card table-wrap"><div class="card-h"><h3>Histórico de receitas</h3>
-<label class="sel-all"><input type="checkbox" data-ckall="receitas"> Selecionar todas</label></div>
-${list.length?`<table class="responsive"><thead><tr>
-<th class="ck-cell"><input type="checkbox" data-ckall="receitas" aria-label="Selecionar todas"></th>
-<th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
-<tbody>${list.map(t=>{const c=catById(t.categoryId),st=txStatus(t),a=accById(t.accountId);
-return `<tr>
-<td data-label="Selecionar" class="td-first ck-cell"><input type="checkbox" data-ck="receitas" data-id="${t.id}" ${ui.sel.receitas.has(t.id)?"checked":""} aria-label="Selecionar receita"></td>
-<td data-label="Data" class="num">${fmtDate(t.date)}</td>
-<td data-label="Descrição"><div class="td-main">${esc(t.desc)} ${noteBtn(t)}</div>${t.recurrenceId?`<div class="td-sub">${icon("repeat",11)} recorrente #${t.recIndex||""}</div>`:""}</td>
-<td data-label="Categoria"><span class="chip" style="background:${c?c.color+"1d":"var(--surface2)"};color:${c?c.color:"var(--ink2)"}">${c?esc(c.name):"—"}</span></td>
-<td data-label="Valor" class="num val-up">+ ${fmtMoney(t.value)}</td>
-<td data-label="Conta">${a?esc(a.name):"—"}</td>
-<td data-label="Status"><span class="badge ${st}">${st==="pago"?"Recebida":st==="vencido"?"Atrasada":"Pendente"}</span></td>
-<td data-label="Ações"><div class="row-actions">
-<button class="icon-btn" data-action="tx-pay" data-id="${t.id}" title="Recebida/Pendente">${icon("check",15)}</button>
-<button class="icon-btn" data-action="tx-edit" data-id="${t.id}">${icon("pencil",15)}</button>
-<button class="icon-btn" data-action="tx-dup" data-id="${t.id}">${icon("copy",15)}</button>
-<button class="icon-btn" data-action="tx-del" data-id="${t.id}">${icon("trash",15)}</button></div></td></tr>`;}).join("")}</tbody></table>
-${inc.length>120?`<div class="table-foot"><span style="color:var(--warn)">Exibindo 120 de ${inc.length} — use a pesquisa global para refinar.</span></div>`:""}`
-: emptyBlock("trendUp","Nenhuma receita ainda","Adicione seu salário ou outra fonte de renda.","")}</div>`;
+${selBar("receitas")}
+${body}`;
 }
 function renderCards(){
 const stats=state.cards.map(c=>({c,s:cardStats(c)}));
@@ -2181,7 +2228,8 @@ body:`<p style="font-size:14px;line-height:1.7;color:var(--ink2);white-space:pre
 foot:`<button class="btn btn-ghost" data-x>Fechar</button>`});
 ov.querySelector("[data-x]").onclick=ov._close; } break; }
 case "tx-del": if(tx) deleteTransaction(tx); break;
-case "tx-clear": ui.txF={q:"",type:"",cat:"",acc:"",status:"",method:"",from:"",to:"",sort:"date-desc",_focus:false}; render(); break;
+case "b-clear": ui.bF={view:"",cat:"",acc:""}; render(); break;
+case "i-clear": ui.iF={view:"",cat:"",acc:""}; render(); break;
 case "bulk-del": { const key=el.dataset.set; if(ui.sel[key]) bulkDeleteSel(key); break; }
 case "bulk-clear": { const s=ui.sel[el.dataset.set]; if(s){ s.clear(); render(); } break; }
 case "bulk-all": { const key=el.dataset.set, s=ui.sel[key]; if(s){ _viewIds[key].forEach(i=>s.add(i)); render(); } break; }
@@ -2301,6 +2349,8 @@ if(!e.target.closest("#tf-q")) ui.txF._focus=false;
 document.addEventListener("change", e=>{
 const tg=e.target;
 if(tg.matches("[data-filter]")){ ui.txF[tg.dataset.filter]=tg.value; render(); return; }
+if(tg.matches("[data-bfilter]")){ ui.bF[tg.dataset.bfilter]=tg.value; render(); return; }
+if(tg.matches("[data-ifilter]")){ ui.iF[tg.dataset.ifilter]=tg.value; render(); return; }
 if(tg.dataset && tg.dataset.ck && ui.sel[tg.dataset.ck]){
 const set=ui.sel[tg.dataset.ck];
 if(tg.checked) set.add(tg.dataset.id); else set.delete(tg.dataset.id);
