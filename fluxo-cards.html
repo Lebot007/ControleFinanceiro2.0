@@ -900,6 +900,7 @@ function mostrarCarta(st){
 state=st;
 const reveal=()=>{
 errBox.hidden=true;altar.hidden=true;stage.hidden=false;
+setDeck(false); /* fecha o explorador do baralho ao revelar a carta */
 card.dataset.rank=st.rank.key;card.dataset.frame=st.rank.frame;
 card.style.setProperty('--aura',st.rank.aura);
 card.style.setProperty('--medal1',st.rank.medal[0]);
