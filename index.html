@@ -2593,58 +2593,110 @@ icons: [
 ]
 };
 const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-const manifestURL = URL.createObjectURL(manifestBlob);
 const linkManifest = document.createElement('link');
 linkManifest.rel = 'manifest';
-linkManifest.href = manifestURL;
+linkManifest.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(linkManifest);
 
-// Botão de instalação SEMPRE visível
+/* ----- Botão de instalação inteligente ----- */
 let deferredPrompt = null;
+const WANT_KEY = 'fluxo.wantInstall';
+const isStandalone = () =>
+window.matchMedia('(display-mode: standalone)').matches ||
+window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+navigator.standalone === true;
 
-function createInstallButton() {
-    const topActions = document.querySelector('.top-actions');
-    if (!topActions) return;
-    
-    // Verifica se botão já existe
-    let btn = document.querySelector('#btn-install');
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btn-install';
-        btn.className = 'btn btn-ghost btn-sm';
-        btn.innerHTML = `${icon('download', 14)} Instalar App`;
-        btn.setAttribute('aria-label', 'Instalar aplicativo');
-        topActions.insertBefore(btn, topActions.firstChild);
-    }
-    
-    btn.onclick = async () => {
-        // Se tem prompt disponível, usa ele
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            // NÃO remove o botão - apenas limpa o prompt
-            deferredPrompt = null;
-        } else {
-            // Se não tem prompt (app já instalado), mostra mensagem
-            toast('App já está instalado! Para reinstalar, remova-o primeiro nas configurações do navegador.', 'info');
-        }
-    };
+function createInstallButton(){
+const topActions = document.querySelector('.top-actions');
+if(!topActions || document.querySelector('#btn-install')) return;
+const btn = document.createElement('button');
+btn.id = 'btn-install';
+btn.className = 'btn btn-ghost btn-sm';
+btn.innerHTML = `${icon('download',14)} Instalar App`;
+btn.setAttribute('aria-label','Instalar aplicativo');
+btn.onclick = async () => {
+// 1) Diálogo disponível → abre (reinstala/sobrepõe nativamente)
+if (deferredPrompt) {
+deferredPrompt.prompt();
+const { outcome } = await deferredPrompt.userChoice;
+deferredPrompt = null;
+if (outcome === 'accepted') toast('Aplicativo instalado com sucesso!');
+return;
 }
+// 2) Já está rodando como app instalado
+if (isStandalone()) {
+toast('Você já está usando o Fluxo instalado neste dispositivo.', 'info');
+return;
+}
+// 3) Sem diálogo → recarrega e abre o diálogo sozinho em seguida
+toast('Preparando instalação…', 'info');
+sessionStorage.setItem(WANT_KEY, '1');
+location.reload();
+};
+topActions.insertBefore(btn, topActions.firstChild);
+}
+createInstallButton();
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    createInstallButton();
+e.preventDefault();
+deferredPrompt = e;
+createInstallButton();
+// Se o usuário pediu a instalação no reload anterior, abre o diálogo sozinho
+if (sessionStorage.getItem(WANT_KEY)) {
+sessionStorage.removeItem(WANT_KEY);
+setTimeout(async () => {
+if (deferredPrompt) {
+deferredPrompt.prompt();
+const { outcome } = await deferredPrompt.userChoice;
+deferredPrompt = null;
+if (outcome === 'accepted') toast('Aplicativo instalado com sucesso!');
+}
+}, 600);
+}
 });
 
 window.addEventListener('appinstalled', () => {
-    // NÃO remove o botão - apenas limpa o prompt
-    deferredPrompt = null;
-    toast('Aplicativo instalado com sucesso!', 'ok');
+toast('Aplicativo instalado com sucesso!');
 });
 
-// Cria o botão imediatamente ao carregar
-createInstallButton();
+// Se após o reload o navegador não liberar o diálogo, orienta corretamente
+setTimeout(() => {
+if (sessionStorage.getItem(WANT_KEY)) {
+sessionStorage.removeItem(WANT_KEY);
+toast('O navegador não liberou o diálogo agora. Use o menu do navegador → "Instalar Fluxo…" ou recarregue a página novamente.', 'warn');
+}
+}, 5000);
+
+// Service Worker (cache offline)
+const swCode = `
+const CACHE_NAME = 'fluxo-v1';
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+if (e.request.method !== 'GET') return;
+e.respondWith(
+caches.match(e.request).then(cached => {
+const fetchPromise = fetch(e.request).then(response => {
+if (response && response.status === 200) {
+const clone = response.clone();
+caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+}
+return response;
+}).catch(() => cached);
+return cached || fetchPromise;
+})
+);
+});
+`;
+try {
+const swBlob = new Blob([swCode], {type: 'application/javascript'});
+const swURL = URL.createObjectURL(swBlob);
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register(swURL).catch(err => console.log('SW não registrado:', err));
+}
+} catch(e) {
+console.log('SW não suportado neste ambiente.');
+}
 
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
