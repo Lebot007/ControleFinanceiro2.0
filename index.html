@@ -2598,13 +2598,8 @@ linkManifest.rel = 'manifest';
 linkManifest.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(linkManifest);
 
-/* ----- Botão de instalação inteligente ----- */
+/* ----- Botão de instalação: fixo e com mecânica simples ----- */
 let deferredPrompt = null;
-const WANT_KEY = 'fluxo.wantInstall';
-const isStandalone = () =>
-window.matchMedia('(display-mode: standalone)').matches ||
-window.matchMedia('(display-mode: window-controls-overlay)').matches ||
-navigator.standalone === true;
 
 function createInstallButton(){
 const topActions = document.querySelector('.top-actions');
@@ -2615,7 +2610,7 @@ btn.className = 'btn btn-ghost btn-sm';
 btn.innerHTML = `${icon('download',14)} Instalar App`;
 btn.setAttribute('aria-label','Instalar aplicativo');
 btn.onclick = async () => {
-// 1) Diálogo disponível → abre (reinstala/sobrepõe nativamente)
+// Diálogo nativo disponível → abre e o navegador instala/sobrepõe
 if (deferredPrompt) {
 deferredPrompt.prompt();
 const { outcome } = await deferredPrompt.userChoice;
@@ -2623,49 +2618,25 @@ deferredPrompt = null;
 if (outcome === 'accepted') toast('Aplicativo instalado com sucesso!');
 return;
 }
-// 2) Já está rodando como app instalado
-if (isStandalone()) {
-toast('Você já está usando o Fluxo instalado neste dispositivo.', 'info');
-return;
-}
-// 3) Sem diálogo → recarrega e abre o diálogo sozinho em seguida
-toast('Preparando instalação…', 'info');
-sessionStorage.setItem(WANT_KEY, '1');
-location.reload();
+// Sem diálogo: orienta pelo menu do navegador (sem recarregar nada)
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+toast(standalone
+? 'Você já está usando o Fluxo instalado neste dispositivo.'
+: 'Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
 };
 topActions.insertBefore(btn, topActions.firstChild);
 }
-createInstallButton();
+createInstallButton(); // botão fixo desde o primeiro carregamento
 
 window.addEventListener('beforeinstallprompt', (e) => {
 e.preventDefault();
-deferredPrompt = e;
-createInstallButton();
-// Se o usuário pediu a instalação no reload anterior, abre o diálogo sozinho
-if (sessionStorage.getItem(WANT_KEY)) {
-sessionStorage.removeItem(WANT_KEY);
-setTimeout(async () => {
-if (deferredPrompt) {
-deferredPrompt.prompt();
-const { outcome } = await deferredPrompt.userChoice;
-deferredPrompt = null;
-if (outcome === 'accepted') toast('Aplicativo instalado com sucesso!');
-}
-}, 600);
-}
+deferredPrompt = e; // guarda o diálogo para o botão usar
 });
 
 window.addEventListener('appinstalled', () => {
 toast('Aplicativo instalado com sucesso!');
+// o botão NÃO é removido: permite reinstalar/sobrepor depois
 });
-
-// Se após o reload o navegador não liberar o diálogo, orienta corretamente
-setTimeout(() => {
-if (sessionStorage.getItem(WANT_KEY)) {
-sessionStorage.removeItem(WANT_KEY);
-toast('O navegador não liberou o diálogo agora. Use o menu do navegador → "Instalar Fluxo…" ou recarregue a página novamente.', 'warn');
-}
-}, 5000);
 
 // Service Worker (cache offline)
 const swCode = `
