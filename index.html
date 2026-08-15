@@ -2603,7 +2603,7 @@ linkManifest.rel = 'manifest';
 linkManifest.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(linkManifest);
 
-/* ----- Botão de instalação: 1 notificação só e nunca dentro do app ----- */
+/* ----- Botão de instalação: aviso único, fallback pelo menu, nunca dentro do app ----- */
 const isStandalone = () =>
 window.matchMedia('(display-mode: standalone)').matches ||
 window.matchMedia('(display-mode: window-controls-overlay)').matches ||
@@ -2621,11 +2621,16 @@ btn.className = 'btn btn-ghost btn-sm';
 btn.innerHTML = `${icon('download',14)} Instalar App`;
 btn.setAttribute('aria-label','Instalar aplicativo');
 btn.onclick = async () => {
-if(!deferredPrompt) return;
+// 1) Diálogo nativo disponível → abre e o navegador instala/sobrepõe
+if (deferredPrompt) {
 deferredPrompt.prompt();
 await deferredPrompt.userChoice;
 deferredPrompt = null;
-// sem aviso aqui — o evento appinstalled abaixo cuida da única notificação
+// o aviso de sucesso fica por conta do appinstalled (notificação única)
+return;
+}
+// 2) Sem diálogo (caso comum no Windows/Brave) → orienta pelo menu, como antes
+toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
 };
 topActions.insertBefore(btn, topActions.firstChild);
 }
@@ -2638,11 +2643,12 @@ createInstallButton();
 });
 
 window.addEventListener('appinstalled', () => {
-toast('Aplicativo instalado com sucesso!'); // notificação única
+toast('Aplicativo instalado com sucesso!'); // notificação única (não duplica)
 deferredPrompt = null;
 });
 
-// Service Worker (cache offline)
+// Service Worker (cache offline). Em navegadores desktop o registro via Blob é
+// bloqueado por segurança — o try/catch garante que isso NUNCA quebre o site.
 const swCode = `
 const CACHE_NAME = 'fluxo-v1';
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -2672,6 +2678,7 @@ navigator.serviceWorker.register(swURL).catch(err => console.log('SW não regist
 } catch(e) {
 console.log('SW não suportado neste ambiente.');
 }
+    
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
 $("#btn-menu").innerHTML=icon("menu",19);
