@@ -6,6 +6,10 @@
 <meta name="theme-color" content="#0b2b21">
 <title>Fluxo — Finanças Pessoais</title>
 <meta name="description" content="Organizador financeiro pessoal completo: contas, receitas, despesas, cartões, parcelas e planejamento. Seus dados ficam somente no seu navegador.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fluxo">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230e6b4f'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>F</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -199,7 +203,8 @@ tr:hover .row-actions{opacity:1}@media (hover:none){.row-actions{opacity:1}}
 @media (min-width:640px){#modal-root .overlay{align-items:center;padding:20px}.modal{border-radius:20px;transform:scale(.96) translateY(10px)}.overlay.show .modal{transform:none}}
 #toast-root{position:fixed;top:18px;right:18px;z-index:200;display:flex;flex-direction:column;gap:10px}
 .toast{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow-lg);font-size:13.5px;font-weight:600;min-width:250px;max-width:calc(100vw - 36px);animation:toastIn .3s cubic-bezier(.3,1.2,.4,1)}
-.toast.err{border-left-color:var(--down)} .toast.warn{border-left-color:var(--warn)}.toast .ic{flex-shrink:0}
+.toast.err{border-left-color:var(--down)} .toast.warn{border-left-color:var(--warn)} .toast.info{border-left-color:var(--info)}
+.toast .ic{flex-shrink:0}
 @keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
 .toast.out{animation:toastOut .25s forwards}@keyframes toastOut{to{opacity:0;transform:translateX(30px)}}
 .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -294,7 +299,7 @@ body{background:#fff}#main{margin:0}#view{padding:0;max-width:none;animation:non
 <button class="icon-btn" id="btn-menu" aria-label="Abrir menu"></button>
 <div id="page-title">Visão geral</div>
 <div id="searchbox"><span id="search-ic"></span>
-<input id="global-search" type="search" placeholder="Pesquisar lançamentos, contas, cartões…  ( / )" autocomplete="off">
+<input id="global-search" type="search" placeholder="Pesquisar lançamentos, contas, cartões…  ( / )" autocomplete="off" aria-label="Pesquisar">
 <div id="search-results"></div></div>
 <div class="top-actions">
 <button class="icon-btn" id="btn-theme" aria-label="Alternar tema"></button>
@@ -414,6 +419,80 @@ out.accounts.forEach(a=>{ if(!a.createdAt) a.createdAt = todayISO(); });
 return out;
 }
 function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(state)); }catch(e){ toast("Não foi possível salvar (armazenamento cheio?).", "err"); } }
+
+/* ---------- Data Integrity Audit ---------- */
+function runAudit() {
+    let fixes = 0;
+    let warnings = [];
+
+    // 1. paidDate consistency
+    state.transactions.forEach(t => {
+        if (t.status === 'pago' && !t.paidDate) {
+            t.paidDate = t.date || todayISO();
+            fixes++;
+        }
+    });
+
+    // 2. Orphaned categories
+    const catIds = new Set(state.categories.map(c => c.id));
+    state.transactions.forEach(t => {
+        if (t.categoryId && !catIds.has(t.categoryId)) {
+            t.categoryId = null;
+            fixes++;
+        }
+    });
+    state.recurrences.forEach(r => {
+        if (r.categoryId && !catIds.has(r.categoryId)) {
+            r.categoryId = null;
+            fixes++;
+        }
+    });
+
+    // 3. Orphaned accounts/cards
+    const accIds = new Set(state.accounts.map(a => a.id));
+    const cardIds = new Set(state.cards.map(c => c.id));
+    state.transactions.forEach(t => {
+        if (t.accountId && !accIds.has(t.accountId)) { t.accountId = null; fixes++; }
+        if (t.cardId && !cardIds.has(t.cardId)) { t.cardId = null; fixes++; }
+    });
+    state.recurrences.forEach(r => {
+        if (r.accountId && !accIds.has(r.accountId)) { r.accountId = null; fixes++; }
+        if (r.cardId && !cardIds.has(r.cardId)) { r.cardId = null; fixes++; }
+    });
+
+    // 4. Installment consistency
+    const groups = {};
+    state.transactions.forEach(t => {
+        if (t.groupId) {
+            if (!groups[t.groupId]) groups[t.groupId] = [];
+            groups[t.groupId].push(t);
+        }
+    });
+    Object.values(groups).forEach(g => {
+        const expectedN = g[0].installments;
+        g.forEach(t => {
+            if (!t.installment || !t.installments) {
+                t.installment = 1; t.installments = expectedN || 1; fixes++;
+            }
+        });
+    });
+
+    // 5. LocalStorage usage
+    try {
+        const size = new Blob([JSON.stringify(state)]).size;
+        const limit = 4 * 1024 * 1024; 
+        if (size > limit * 0.85) {
+            warnings.push("O armazenamento local está ficando cheio. Considere exportar um backup e limpar dados antigos.");
+        }
+    } catch(e) {}
+
+    if (fixes > 0) {
+        save();
+        toast(`${fixes} pequena(s) inconsistência(s) de dados corrigida(s) automaticamente.`, "warn");
+    }
+    warnings.forEach(w => toast(w, "warn"));
+}
+
 /* ---------- 3. Derivados ---------- */
 const catById  = id => state.categories.find(c=>c.id===id);
 const accById  = id => state.accounts.find(a=>a.id===id);
@@ -614,8 +693,8 @@ return `<svg class="ic ${extra}" width="${size}" height="${size}" viewBox="0 0 2
 /* ---------- 6. UI-base ---------- */
 function toast(msg, type="ok"){
 const t = document.createElement("div");
-t.className = "toast" + (type==="err" ? " err" : type==="warn" ? " warn" : "");
-t.innerHTML = `${icon(type==="err"?"alert":type==="warn"?"info":"check",17)}<span>${esc(msg)}</span>`;
+t.className = "toast" + (type==="err" ? " err" : type==="warn" ? " warn" : type==="info" ? " info" : "");
+t.innerHTML = `${icon(type==="err"?"alert":type==="warn"?"info":type==="info"?"info":"check",17)}<span>${esc(msg)}</span>`;
 $("#toast-root").appendChild(t);
 setTimeout(()=>{ t.classList.add("out"); setTimeout(()=>t.remove(), 260); }, 3200);
 }
@@ -624,13 +703,17 @@ function openModal({title, body, foot, wide, onClose}){
 const root = $("#modal-root");
 const ov = document.createElement("div");
 ov.className = "overlay";
-ov.innerHTML = `<div class="modal ${wide?"wide":""}" role="dialog" aria-modal="true">
-<div class="modal-h"><h3>${title||""}</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x",17)}</button></div>
+ov.innerHTML = `<div class="modal ${wide?"wide":""}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+<div class="modal-h"><h3 id="modal-title">${title||""}</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x",17)}</button></div>
 <div class="modal-b">${body}</div>
 ${foot?`<div class="modal-f">${foot}</div>`:""}
 </div>`;
 root.appendChild(ov);
-requestAnimationFrame(()=>ov.classList.add("show"));
+requestAnimationFrame(()=>{
+    ov.classList.add("show");
+    const firstInput = ov.querySelector('input, select, textarea, button');
+    if (firstInput) firstInput.focus();
+});
 const close = ()=>{ const i=modalStack.indexOf(ov); if(i>-1) modalStack.splice(i,1);
 ov.classList.remove("show"); setTimeout(()=>{ov.remove(); onClose&&onClose();}, 210); };
 modalStack.push(ov);
@@ -1259,6 +1342,54 @@ const viewEl = () => $("#view");
 function emptyBlock(ic, title, msg, btn){
 return `<div class="empty"><div class="e-art">${icon(ic,32)}</div><h4>${title}</h4><p>${msg}</p>${btn||""}</div>`;
 }
+
+/* ---------- Automatic Insights ---------- */
+function getInsights() {
+    const insights = [];
+    const [cs, ce] = cycleRange(new Date());
+    const inCyc = t => inRange(t.date, cs, ce);
+    
+    const txCyc = state.transactions.filter(t => inCyc(t) && t.status === 'pago');
+    const recCyc = txCyc.filter(t => t.type === 'receita').reduce((s, t) => s + t.value, 0);
+    const despCyc = txCyc.filter(t => t.type === 'despesa').reduce((s, t) => s + t.value, 0);
+    
+    if (recCyc > 0) {
+        const rate = Math.round(((recCyc - despCyc) / recCyc) * 100);
+        if (rate > 20) insights.push({icon: 'trendUp', text: `Excelente! Você economizou <b>${rate}%</b> da sua receita neste ciclo.`});
+        else if (rate < 0) insights.push({icon: 'alert', text: `Atenção: Suas despesas superaram as receitas neste ciclo.`});
+    }
+
+    const despList = txCyc.filter(t => t.type === 'despesa').sort((a, b) => b.value - a.value);
+    if (despList.length > 0) {
+        const top = despList[0];
+        insights.push({icon: 'arrowDR', text: `Maior despesa do mês: <b>${esc(top.desc)}</b> (${fmtMoney(top.value)}).`});
+    }
+
+    const catSpend = {};
+    txCyc.filter(t => t.type === 'despesa').forEach(t => {
+        catSpend[t.categoryId] = (catSpend[t.categoryId] || 0) + t.value;
+    });
+    
+    const last3Months = lastMonths(4).slice(1, 4);
+    const avgCatSpend = {};
+    last3Months.forEach(m => {
+        state.transactions.filter(t => monthKey(t.date) === m.key && t.type === 'despesa' && t.status === 'pago').forEach(t => {
+            avgCatSpend[t.categoryId] = (avgCatSpend[t.categoryId] || 0) + t.value;
+        });
+    });
+    Object.keys(avgCatSpend).forEach(k => avgCatSpend[k] /= 3);
+
+    for (const [catId, spent] of Object.entries(catSpend)) {
+        const avg = avgCatSpend[catId] || 0;
+        if (avg > 0 && spent > avg * 1.3) {
+            const c = catById(catId);
+            if (c) insights.push({icon: 'alert', text: `Gastos com <b>${esc(c.name)}</b> estão <b>${Math.round((spent/avg - 1)*100)}%</b> acima da média dos últimos 3 meses.`});
+        }
+    }
+
+    return insights.slice(0, 3);
+}
+
 function renderDashboard(){
 const [ps,pe] = periodRange("dashboard");
 const inP = t => inRange(t.date, ps, pe);
@@ -1294,6 +1425,16 @@ const periodBtns=[["mes","Este mês"],["prev","Mês passado"],["30d","Próximos 
 const kpi=(ic,label,val,sub,color)=>`<div class="card kpi lift" style="--kc:${color}22;--ki:${color}">
 <div class="k-top"><span class="k-ic">${icon(ic,15)}</span>${label}</div>
 <div class="k-val num">${val}</div>${sub?`<div class="k-sub">${sub}</div>`:""}</div>`;
+
+const insights = getInsights();
+const insightsHTML = insights.length ? `
+<div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h3>${icon("sparkles", 16)} Insights do mês</h3></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+        ${insights.map(i => `<div class="hint">${icon(i.icon, 14)} <span>${i.text}</span></div>`).join("")}
+    </div>
+</div>` : '';
+
 viewEl().innerHTML = `
 <div class="card hero-balance lift" style="margin-bottom:18px">
 <div><div class="hb-label">Patrimônio atual</div>
@@ -1304,9 +1445,10 @@ viewEl().innerHTML = `
 <div class="hb-item">Contas em aberto<b class="num">${pend.length}</b></div>
 </div>
 </div>
+${insightsHTML}
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
 <div class="seg" id="period-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.per.dashboard.period===k?'on':''}">${l}</button>`).join("")}</div>
-${ui.per.dashboard.period==="custom"?`<input type="date" id="p-from" value="${ui.per.dashboard.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.dashboard.to}">`:""}
+${ui.per.dashboard.period==="custom"?`<input type="date" id="p-from" value="${ui.per.dashboard.from}" aria-label="Data inicial"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.dashboard.to}" aria-label="Data final">`:""}
 <span style="margin-left:auto;font-size:12.5px;color:var(--ink2)">${icon("calendar",13)} ${fmtDate(ps)} — ${fmtDate(pe)}</span>
 </div>
 <div class="grid kpis" style="margin-bottom:16px">
@@ -1370,10 +1512,10 @@ return `<tr>
 <td data-label="Forma">${esc(t.payMethod||"—")}</td>
 <td data-label="Status"><span class="badge ${st}">${st==="pago"?"Pago":st==="vencido"?"Vencido":"Pendente"}</span></td>
 <td data-label="Ações"><div class="row-actions">
-<button class="icon-btn" title="${st==="pago"?"Marcar como pendente":"Marcar como pago"}" data-action="tx-pay" data-id="${t.id}">${icon(st==="pago"?"check":"calendar",15)}</button>
-<button class="icon-btn" title="Editar" data-action="tx-edit" data-id="${t.id}">${icon("pencil",15)}</button>
-<button class="icon-btn" title="Duplicar" data-action="tx-dup" data-id="${t.id}">${icon("copy",15)}</button>
-<button class="icon-btn" title="Excluir" data-action="tx-del" data-id="${t.id}">${icon("trash",15)}</button>
+<button class="icon-btn" title="${st==="pago"?"Marcar como pendente":"Marcar como pago"}" aria-label="${st==="pago"?"Marcar como pendente":"Marcar como pago"}" data-action="tx-pay" data-id="${t.id}">${icon(st==="pago"?"check":"calendar",15)}</button>
+<button class="icon-btn" title="Editar" aria-label="Editar lançamento" data-action="tx-edit" data-id="${t.id}">${icon("pencil",15)}</button>
+<button class="icon-btn" title="Duplicar" aria-label="Duplicar lançamento" data-action="tx-dup" data-id="${t.id}">${icon("copy",15)}</button>
+<button class="icon-btn" title="Excluir" aria-label="Excluir lançamento" data-action="tx-del" data-id="${t.id}">${icon("trash",15)}</button>
 </div></td></tr>`;
 }
 function renderTransactions(){
@@ -1392,23 +1534,23 @@ viewEl().innerHTML=`
 <span style="margin-left:auto;font-size:12.5px;color:var(--ink2)">${list.length} lançamento(s)</span>
 </div>
 <div class="card filters no-print">
-<input type="search" id="tf-q" placeholder="Pesquisar por descrição…" value="${esc(f.q)}">
-<select data-filter="type"><option value="">Tipo: todos</option>${opt("receita","Receitas",f.type==="receita")}${opt("despesa","Despesas",f.type==="despesa")}</select>
-<select data-filter="cat"><option value="">Categoria: todas</option>${state.categories.map(c=>opt(c.id,`${c.name} (${c.type})`,f.cat===c.id)).join("")}</select>
-<select data-filter="acc"><option value="">Conta/cartão: todos</option>
+<input type="search" id="tf-q" placeholder="Pesquisar por descrição…" value="${esc(f.q)}" aria-label="Pesquisar descrição">
+<select data-filter="type" aria-label="Filtrar por tipo"><option value="">Tipo: todos</option>${opt("receita","Receitas",f.type==="receita")}${opt("despesa","Despesas",f.type==="despesa")}</select>
+<select data-filter="cat" aria-label="Filtrar por categoria"><option value="">Categoria: todas</option>${state.categories.map(c=>opt(c.id,`${c.name} (${c.type})`,f.cat===c.id)).join("")}</select>
+<select data-filter="acc" aria-label="Filtrar por conta"><option value="">Conta/cartão: todos</option>
 ${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}${state.cards.map(c=>opt(c.id,"💳 "+c.name,f.acc===c.id)).join("")}</select>
-<select data-filter="status"><option value="">Status: todos</option>${opt("pago","Pago",f.status==="pago")}${opt("pendente","Pendente",f.status==="pendente")}${opt("vencido","Vencido",f.status==="vencido")}</select>
-<select data-filter="method"><option value="">Forma: todas</option>${PAY_METHODS.map(m=>opt(m,m,f.method===m)).join("")}</select>
-<input type="date" data-filter="from" value="${f.from}" title="De"><input type="date" data-filter="to" value="${f.to}" title="Até">
-<select data-filter="sort">${opt("date-desc","Mais recentes",f.sort==="date-desc")}${opt("date-asc","Mais antigos",f.sort==="date-asc")}${opt("val-desc","Maior valor",f.sort==="val-desc")}${opt("val-asc","Menor valor",f.sort==="val-asc")}${opt("desc","Descrição A–Z",f.sort==="desc")}</select>
+<select data-filter="status" aria-label="Filtrar por status"><option value="">Status: todos</option>${opt("pago","Pago",f.status==="pago")}${opt("pendente","Pendente",f.status==="pendente")}${opt("vencido","Vencido",f.status==="vencido")}</select>
+<select data-filter="method" aria-label="Filtrar por forma de pagamento"><option value="">Forma: todas</option>${PAY_METHODS.map(m=>opt(m,m,f.method===m)).join("")}</select>
+<input type="date" data-filter="from" value="${f.from}" title="De" aria-label="Data inicial"><input type="date" data-filter="to" value="${f.to}" title="Até" aria-label="Data final">
+<select data-filter="sort" aria-label="Ordenar por">${opt("date-desc","Mais recentes",f.sort==="date-desc")}${opt("date-asc","Mais antigos",f.sort==="date-asc")}${opt("val-desc","Maior valor",f.sort==="val-desc")}${opt("val-asc","Menor valor",f.sort==="val-asc")}${opt("desc","Descrição A–Z",f.sort==="desc")}</select>
 <label class="sel-all"><input type="checkbox" data-ckall="lanc"> Selecionar todos</label>
 <button class="btn btn-ghost btn-sm" data-action="tx-clear">${icon("x",13)} Limpar</button>
 </div>
 ${selBar("lanc")}
 <div class="card table-wrap">
 ${list.length?`<table class="responsive"><thead><tr>
-<th class="ck-cell"><input type="checkbox" data-ckall="lanc" aria-label="Selecionar todos"></th>
-<th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Conta</th><th>Forma</th><th>Status</th><th style="text-align:right">Ações</th>
+<th class="ck-cell" scope="col"><input type="checkbox" data-ckall="lanc" aria-label="Selecionar todos"></th>
+<th scope="col">Data</th><th scope="col">Descrição</th><th scope="col">Categoria</th><th scope="col">Valor</th><th scope="col">Conta</th><th scope="col">Forma</th><th scope="col">Status</th><th style="text-align:right" scope="col">Ações</th>
 </tr></thead><tbody>${shown.map(txRow).join("")}</tbody></table>
 ${list.length>400?`<div class="table-foot"><span style="color:var(--warn)">Exibindo 400 de ${list.length} — refine o filtro para ver menos.</span></div>`:""}`
 : emptyBlock("receipt","Nenhum lançamento encontrado","Ajuste os filtros ou crie seu primeiro lançamento.",
@@ -1449,7 +1591,7 @@ const paid=showPaid?(f.view==="paid"?paidAll:paidAll.slice(0,15)):[];
 const shownOpen=showOpen?open:[];
 _viewIds.contas=[...shownOpen.map(t=>t.id), ...paid.map(t=>t.id)];
 const totalOpen=open.reduce((s,t)=>s+t.value,0);
-const selCount=ui.sel.contas.size;  
+const selCount=ui.sel.contas.size;
 const row=(t,extra)=>{ const c=catById(t.categoryId), st=txStatus(t);
 return `<div class="bill">
 <input type="checkbox" data-ck="contas" data-id="${t.id}" ${ui.sel.contas.has(t.id)?"checked":""} aria-label="Selecionar conta">
@@ -1459,9 +1601,9 @@ return `<div class="bill">
 ${extra?`<span class="badge ${st}">${st==="pago"?"Paga":st==="vencido"?"Vencida":"Pendente"}</span>`:""}
 <span class="b-val num">${fmtMoney(t.value)}</span>
 <div class="row-actions" style="opacity:1">
-${extra?"":`<button class="btn btn-primary btn-sm" data-action="tx-pay" data-id="${t.id}">${icon("check",13)} Pagar</button>`}
-<button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar">${icon("pencil",15)}</button>
-<button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir">${icon("trash",15)}</button>
+${extra?"":`<button class="btn btn-primary btn-sm" data-action="tx-pay" data-id="${t.id}" aria-label="Pagar conta">${icon("check",13)} Pagar</button>`}
+<button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar" aria-label="Editar conta">${icon("pencil",15)}</button>
+<button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir" aria-label="Excluir conta">${icon("trash",15)}</button>
 </div></div>`; };
 let body="";
 if(showOpen){
@@ -1482,9 +1624,9 @@ viewEl().innerHTML=`
 <button class="btn btn-ghost" data-action="reopen-sel" ${selCount?"":"disabled"}>${icon("calendar",15)} Marcar pendentes${selCount?` (${selCount})`:""}</button>
 <button class="btn btn-primary" data-action="new-bill">${icon("plus",16)} Nova conta</button></div></div>
 <div class="card filters no-print">
-<select data-bfilter="view">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("open","Só próximas/pendentes",f.view==="open")}${opt("paid","Só pagas",f.view==="paid")}</select>
-<select data-bfilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="despesa").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
-<select data-bfilter="acc"><option value="">Conta/cartão: todos</option>
+<select data-bfilter="view" aria-label="Exibir contas">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("open","Só próximas/pendentes",f.view==="open")}${opt("paid","Só pagas",f.view==="paid")}</select>
+<select data-bfilter="cat" aria-label="Filtrar por categoria"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="despesa").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
+<select data-bfilter="acc" aria-label="Filtrar por conta"><option value="">Conta/cartão: todos</option>
 ${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}${state.cards.map(c=>opt(c.id,"💳 "+c.name,f.acc===c.id)).join("")}</select>
 <button class="btn btn-ghost btn-sm" data-action="b-clear">${icon("x",13)} Limpar</button>
 </div>
@@ -1530,10 +1672,10 @@ return `<div class="bill">
 ${extra?`<span class="badge ${st}">${st==="pago"?"Recebida":st==="vencido"?"Atrasada":"Pendente"}</span>`:""}
 <span class="b-val num val-up">+ ${fmtMoney(t.value)}</span>
 <div class="row-actions" style="opacity:1">
-<button class="icon-btn" data-action="tx-pay" data-id="${t.id}" title="${st==="pago"?"Marcar pendente":"Marcar recebida"}">${icon(st==="pago"?"calendar":"check",15)}</button>
-<button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar">${icon("pencil",15)}</button>
-<button class="icon-btn" data-action="tx-dup" data-id="${t.id}" title="Duplicar">${icon("copy",15)}</button>
-<button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir">${icon("trash",15)}</button>
+<button class="icon-btn" data-action="tx-pay" data-id="${t.id}" title="${st==="pago"?"Marcar pendente":"Marcar recebida"}" aria-label="${st==="pago"?"Marcar pendente":"Marcar recebida"}">${icon(st==="pago"?"calendar":"check",15)}</button>
+<button class="icon-btn" data-action="tx-edit" data-id="${t.id}" title="Editar" aria-label="Editar receita">${icon("pencil",15)}</button>
+<button class="icon-btn" data-action="tx-dup" data-id="${t.id}" title="Duplicar" aria-label="Duplicar receita">${icon("copy",15)}</button>
+<button class="icon-btn" data-action="tx-del" data-id="${t.id}" title="Excluir" aria-label="Excluir receita">${icon("trash",15)}</button>
 </div></div>`; };
 let body="";
 if(showPend){
@@ -1558,9 +1700,9 @@ viewEl().innerHTML=`
 <div class="card kpi" style="--kc:#3b6ea822;--ki:var(--info)"><div class="k-top"><span class="k-ic">${icon("repeat",14)}</span>Recorrências ativas</div><div class="k-val num">${recs.filter(r=>r.active).length}</div></div>
 </div>
 <div class="card filters no-print">
-<select data-ifilter="view">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("pend","Só pendentes",f.view==="pend")}${opt("recv","Só recebidas",f.view==="recv")}</select>
-<select data-ifilter="cat"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="receita").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
-<select data-ifilter="acc"><option value="">Conta: todas</option>
+<select data-ifilter="view" aria-label="Exibir receitas">${opt("","Exibir: todas (padrão)",f.view==="")}${opt("pend","Só pendentes",f.view==="pend")}${opt("recv","Só recebidas",f.view==="recv")}</select>
+<select data-ifilter="cat" aria-label="Filtrar por categoria"><option value="">Categoria: todas</option>${state.categories.filter(c=>c.type==="receita").map(c=>opt(c.id,c.name,f.cat===c.id)).join("")}</select>
+<select data-ifilter="acc" aria-label="Filtrar por conta"><option value="">Conta: todas</option>
 ${state.accounts.map(a=>opt(a.id,a.name,f.acc===a.id)).join("")}</select>
 <button class="btn btn-ghost btn-sm" data-action="i-clear">${icon("x",13)} Limpar</button>
 <label class="sel-all" style="flex-basis:100%"><input type="checkbox" data-ckall="receitas"> Selecionar todas (${_viewIds.receitas.length})</label>
@@ -1571,9 +1713,9 @@ ${recs.map(r=>{const c=catById(r.categoryId); return `<div class="bill">
 <span class="b-mid"><span class="b-name">${esc(r.desc)}</span><span class="b-sub">${FREQ_LABEL[r.freq]||r.freq} · próxima ${r.nextDate?fmtDate(r.nextDate):"—"} · ${r.generated} gerada(s)</span></span>
 <span class="b-val num" style="color:var(--up)">+ ${fmtMoney(r.value)}</span>
 <div class="row-actions" style="opacity:1">
-<button class="btn btn-ghost btn-sm" data-action="rec-toggle" data-id="${r.id}">${r.active?icon("eye",13)+" Pausar":icon("repeat",13)+" Retomar"}</button>
-<button class="icon-btn" data-action="rec-edit" data-id="${r.id}">${icon("pencil",15)}</button>
-<button class="icon-btn" data-action="rec-del" data-id="${r.id}">${icon("trash",15)}</button>
+<button class="btn btn-ghost btn-sm" data-action="rec-toggle" data-id="${r.id}" aria-label="${r.active?'Pausar recorrência':'Retomar recorrência'}">${r.active?icon("eye",13)+" Pausar":icon("repeat",13)+" Retomar"}</button>
+<button class="icon-btn" data-action="rec-edit" data-id="${r.id}" aria-label="Editar recorrência">${icon("pencil",15)}</button>
+<button class="icon-btn" data-action="rec-del" data-id="${r.id}" aria-label="Excluir recorrência">${icon("trash",15)}</button>
 </div></div>`;}).join("")}</div>`:""}
 ${selBar("receitas")}
 ${body}`;
@@ -1608,10 +1750,10 @@ return `<div class="card lift" style="padding:16px">
 <span style="color:var(--ink2)">Parcelas<br><b class="num">${s.open} em aberto</b></span>
 </div>
 <div style="display:flex;gap:8px">
-<button class="btn btn-primary btn-sm" style="flex:1" data-action="new-card-purchase" data-id="${c.id}">${icon("plus",13)} Compra</button>
-<button class="btn btn-ghost btn-sm" style="flex:1" data-action="card-detail" data-id="${c.id}">${icon("eye",13)} Faturas</button>
-<button class="icon-btn" data-action="card-edit" data-id="${c.id}">${icon("pencil",14)}</button>
-<button class="icon-btn" data-action="card-del" data-id="${c.id}">${icon("trash",14)}</button>
+<button class="btn btn-primary btn-sm" style="flex:1" data-action="new-card-purchase" data-id="${c.id}" aria-label="Nova compra no cartão">${icon("plus",13)} Compra</button>
+<button class="btn btn-ghost btn-sm" style="flex:1" data-action="card-detail" data-id="${c.id}" aria-label="Ver faturas do cartão">${icon("eye",13)} Faturas</button>
+<button class="icon-btn" data-action="card-edit" data-id="${c.id}" aria-label="Editar cartão">${icon("pencil",14)}</button>
+<button class="icon-btn" data-action="card-del" data-id="${c.id}" aria-label="Excluir cartão">${icon("trash",14)}</button>
 </div></div>`;}).join("")}</div>`
 : `<div class="card">${emptyBlock("creditCard","Nenhum cartão cadastrado","Cadastre seus cartões para controlar faturas, limite e compras parceladas.",
 `<button class="btn btn-primary" data-action="new-card">${icon("plus",15)} Cadastrar cartão</button>`)}</div>`}`;
@@ -1627,12 +1769,12 @@ if(!rows.length) return "";
 const total=rows.reduce((x,t)=>x+t.value,0), open=rows.some(t=>t.status!=="pago");
 return `<div class="invoice-block">
 <div class="ib-h"><span>${label}</span><span class="ib-total num">${fmtMoney(total)}</span>
-${open?`<button class="btn btn-primary btn-sm" data-payinv="${mk}">${icon("check",13)} Pagar fatura</button>`:`<span class="badge pago">Paga</span>`}</div>
+${open?`<button class="btn btn-primary btn-sm" data-payinv="${mk}" aria-label="Pagar fatura">${icon("check",13)} Pagar fatura</button>`:`<span class="badge pago">Paga</span>`}</div>
 ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</span>
 <span class="iv-n">${esc(t.desc)} ${t.installment?`<b style="color:var(--ink2)">· ${t.installment}/${t.installments}</b>`:""}</span>
 <span class="badge ${txStatus(t)}">${txStatus(t)==="pago"?"Paga":txStatus(t)==="vencido"?"Vencida":"Aberta"}</span>
 <b class="num">${fmtMoney(t.value)}</b>
-${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
+${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" aria-label="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
 </div>`).join("")}</div>`;
 };
 const nowMk=monthKey(todayISO());
@@ -1650,7 +1792,7 @@ block(nowMk,`Fatura atual (${MESES3[+nowMk.slice(5,7)-1]}/${nowMk.slice(2,4)})`)
 emptyBlock("creditCard","Sem compras neste cartão","Use o botão “Compra” para registrar.")}`;
 };
 const ov=openModal({wide:true, title:`${esc(card.name)} — faturas e parcelas`, body:buildBody(),
-foot:`<button class="btn btn-ghost" data-x>Fechar</button><button class="btn btn-primary" data-buy>${icon("plus",14)} Nova compra</button>`});
+foot:`<button class="btn btn-ghost" data-x>Fechar</button><button class="btn btn-primary" data-buy aria-label="Nova compra no cartão">${icon("plus",14)} Nova compra</button>`});
 ov.dataset.cardDetail=card.id;
 const bindPay=()=>ov.querySelectorAll("[data-payinv]").forEach(b=>b.onclick=()=>{
 const mk=b.dataset.payinv;
@@ -1686,8 +1828,8 @@ return `<div class="card lift">
 <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(a.name)}</div>
 <div style="font-size:12px;color:var(--ink2)">${esc(ACC_TYPES[a.type]||a.type)}${a.institution?" · "+esc(a.institution):""}</div></div>
 <div class="row-actions" style="opacity:1">
-<button class="icon-btn" data-action="acc-edit" data-id="${a.id}">${icon("pencil",14)}</button>
-<button class="icon-btn" data-action="acc-del" data-id="${a.id}">${icon("trash",14)}</button></div>
+<button class="icon-btn" data-action="acc-edit" data-id="${a.id}" aria-label="Editar conta">${icon("pencil",14)}</button>
+<button class="icon-btn" data-action="acc-del" data-id="${a.id}" aria-label="Excluir conta">${icon("trash",14)}</button></div>
 </div>
 <div class="num" style="font-family:var(--disp);font-weight:800;font-size:23px;letter-spacing:-.4px;${b<0?'color:var(--down)':''}">${fmtMoney(b)}</div>
 <div style="font-size:11.5px;color:var(--ink2);margin-top:2px">início: ${fmtMoney(a.initial||0)}${a.note?" · "+esc(a.note):""}</div>
@@ -1733,7 +1875,7 @@ ${bar(spent,budget,"var(--brand)")}
 : emptyBlock("target","Sem orçamento definido","Defina um teto de gastos para este ciclo.","")}
 </div>
 <div class="card lift">
-<div class="card-h"><h3>Meta de economia mensal</h3><button class="btn btn-ghost btn-sm no-print" data-action="goal-edit" data-g="save">${icon("pencil",13)}</button></div>
+<div class="card-h"><h3>Meta de economia mensal</h3><button class="btn btn-ghost btn-sm no-print" data-action="goal-edit" data-g="save" aria-label="Editar meta de economia">${icon("pencil",13)}</button></div>
 ${state.goals.saveMonthly?(()=>{const p=Math.min(100,Math.max(0,Math.round(100*saved/state.goals.saveMonthly)));
 return `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--ink2)">Economizado no ciclo</span><b class="num">${fmtMoney(Math.max(0,saved))} / ${fmtMoney(state.goals.saveMonthly)}</b></div>
 ${bar(Math.max(0,saved),state.goals.saveMonthly,"var(--up)")}
@@ -1741,7 +1883,7 @@ ${bar(Math.max(0,saved),state.goals.saveMonthly,"var(--up)")}
 : emptyBlock("pig","Sem meta de economia","Defina quanto quer guardar por mês.","")}
 </div>
 <div class="card lift">
-<div class="card-h"><h3>Meta de patrimônio</h3><button class="btn btn-ghost btn-sm no-print" data-action="goal-edit" data-g="nw">${icon("pencil",13)}</button></div>
+<div class="card-h"><h3>Meta de patrimônio</h3><button class="btn btn-ghost btn-sm no-print" data-action="goal-edit" data-g="nw" aria-label="Editar meta de patrimônio">${icon("pencil",13)}</button></div>
 ${state.goals.netWorth?(()=>{const p=Math.min(100,Math.max(0,Math.round(100*nw/state.goals.netWorth)));
 return `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--ink2)">Patrimônio atual</span><b class="num">${fmtMoney(nw)} / ${fmtMoney(state.goals.netWorth)}</b></div>
 ${bar(Math.max(0,nw),state.goals.netWorth,"var(--info)")}
@@ -1762,7 +1904,7 @@ ${x.lim?`<div style="display:flex;gap:22px;margin-top:8px;font-size:12px;flex-wr
 <span style="color:var(--ink2)">Usado<br><b class="num" style="font-size:15px;${Math.round(100*x.sp/x.lim)>100?"color:var(--down)":""}">${Math.round(100*x.sp/x.lim)}%</b></span>
 </div>`:""}
 </div>
-<button class="btn btn-ghost btn-sm no-print" data-action="catlimit" data-id="${x.c.id}">${x.lim?icon("pencil",13):icon("plus",13)+" Limite"}</button>
+<button class="btn btn-ghost btn-sm no-print" data-action="catlimit" data-id="${x.c.id}" aria-label="Editar limite da categoria">${x.lim?icon("pencil",13):icon("plus",13)+" Limite"}</button>
 </div>`).join("")
 : emptyBlock("target","Sem gastos no ciclo","Quando houver despesas, os limites aparecem aqui.","")}</div>`;
 }
@@ -1846,10 +1988,11 @@ viewEl().innerHTML=`
 <div class="divider"></div>
 </div>
 <div class="page-head"><div><h1>Relatórios</h1><p>Análise completa do período <b>${fmtDate(ps)} — ${fmtDate(pe)}</b>.</p></div>
-<button class="btn btn-ghost no-print" data-action="print">${icon("printer",15)} Imprimir / PDF</button></div>
+<button class="btn btn-ghost no-print" data-action="print" aria-label="Imprimir ou exportar PDF">${icon("printer",15)} Imprimir / PDF</button></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center" class="no-print">
 <div class="seg" id="rep-seg">${periodBtns.map(([k,l])=>`<button data-period="${k}" class="${ui.per.reports.period===k?'on':''}">${l}</button>`).join("")}</div>
-${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.per.reports.from}"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.reports.to}">`:""}
+<button class="note-ic" data-action="rep-help" title="Limitação de período" aria-label="Informação sobre relatórios personalizados">${icon("info",12)}</button>
+${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.per.reports.from}" aria-label="Data inicial"> <span style="color:var(--ink2)">até</span> <input type="date" id="p-to" value="${ui.per.reports.to}" aria-label="Data final">`:""}
 </div>
 <div class="grid kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
 <div class="card kpi" style="--kc:#0e9f6e22"><div class="k-top">Receitas no período</div><div class="k-val num pos">${fmtMoney(rec)}</div></div>
@@ -1858,7 +2001,7 @@ ${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.p
 </div>
 <div class="grid charts-2" style="margin-bottom:16px">
 <div class="card"><div class="card-h"><h3>Comparação mensal</h3><span class="sub">meses do período selecionado</span></div>
-${monthsP.length?`<div class="table-wrap"><table><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Resultado</th></tr></thead><tbody>
+${monthsP.length?`<div class="table-wrap"><table><thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th><th scope="col">Resultado</th></tr></thead><tbody>
 ${monthsP.map(m=>`<tr><td>${esc(m.label)}</td><td class="num val-up">${fmtMoney(m.r)}</td><td class="num val-down">${fmtMoney(m.d)}</td>
 <td class="num ${m.r-m.d>=0?"val-up":"val-down"}">${fmtMoney(m.r-m.d)}</td></tr>`).join("")}</tbody></table></div>`
 :"<p style='color:var(--ink2)'>Sem meses no período.</p>"}
@@ -1878,7 +2021,7 @@ ${byAcc.length?byAcc.map(x=>listItem(x.a?esc(x.a.name):"—",x.v)).join(""):"<p 
 ${byCard.length?byCard.map(x=>listItem(x.k?("💳 "+esc(x.k.name)):"—",x.v)).join(""):"<p style='color:var(--ink2);font-size:13px'>Nenhum gasto em cartão.</p>"}</div>
 </div>
 <div class="card table-wrap"><div class="card-h"><h3>${top.length===1?"Maior":"Maiores"} despesa${top.length===1?"":"s"} do período</h3></div>
-${top.length?`<table class="responsive"><thead><tr><th>#</th><th>Descrição</th><th>Data</th><th>Categoria</th><th>Conta/Cartão</th><th>Valor</th></tr></thead><tbody>
+${top.length?`<table class="responsive"><thead><tr><th scope="col">#</th><th scope="col">Descrição</th><th scope="col">Data</th><th scope="col">Categoria</th><th scope="col">Conta/Cartão</th><th scope="col">Valor</th></tr></thead><tbody>
 ${top.map((t,i)=>{const c=catById(t.categoryId),a=t.cardId?cardById(t.cardId):accById(t.accountId);
 return `<tr><td data-label="#" class="td-first">${i+1}</td><td data-label="Descrição">${esc(t.desc)}</td>
 <td data-label="Data" class="num">${fmtDate(t.date)}</td><td data-label="Categoria">${c?esc(c.name):"—"}</td>
@@ -1894,28 +2037,28 @@ viewEl().innerHTML=`
 <div class="grid settings-grid">
 <div class="card"><div class="card-h"><h3>${icon("gear",16)} Preferências</h3></div>
 <div class="set-row"><div><div class="sr-t">Moeda</div><div class="sr-d">Símbolo usado nos valores</div></div>
-<select id="set-cur">${opt("BRL","Real (R$)",s.currency==="BRL")}${opt("USD","Dólar (US$)",s.currency==="USD")}${opt("EUR","Euro (€)",s.currency==="EUR")}</select></div>
+<select id="set-cur" aria-label="Selecionar moeda">${opt("BRL","Real (R$)",s.currency==="BRL")}${opt("USD","Dólar (US$)",s.currency==="USD")}${opt("EUR","Euro (€)",s.currency==="EUR")}</select></div>
 <div class="set-row"><div><div class="sr-t">Formato de data</div><div class="sr-d">Usado na tela, no PDF e no CSV</div></div>
-<select id="set-date">${opt("dd/mm/aaaa","31/12/2026",s.dateFormat==="dd/mm/aaaa")}${opt("aaaa-mm-dd","2026-12-31",s.dateFormat==="aaaa-mm-dd")}${opt("mm/dd/aaaa","12/31/2026",s.dateFormat==="mm/dd/aaaa")}</select></div>
+<select id="set-date" aria-label="Selecionar formato de data">${opt("dd/mm/aaaa","31/12/2026",s.dateFormat==="dd/mm/aaaa")}${opt("aaaa-mm-dd","2026-12-31",s.dateFormat==="aaaa-mm-dd")}${opt("mm/dd/aaaa","12/31/2026",s.dateFormat==="mm/dd/aaaa")}</select></div>
 <div class="set-row"><div><div class="sr-t">Primeiro dia do mês</div><div class="sr-d">Usado nos ciclos de orçamento e “Este mês”</div></div>
-<select id="set-ms">${Array.from({length:28},(_,i)=>opt(i+1,"Dia "+(i+1),s.monthStart===(i+1))).join("")}</select></div>
+<select id="set-ms" aria-label="Selecionar primeiro dia do mês">${Array.from({length:28},(_,i)=>opt(i+1,"Dia "+(i+1),s.monthStart===(i+1))).join("")}</select></div>
 <div class="set-row"><div><div class="sr-t">Tema</div><div class="sr-d">Claro ou escuro</div></div>
-<div class="seg" id="set-theme"><button data-th="light" class="${s.theme==="light"?"on":""}">${icon("sun",14)} Claro</button>
-<button data-th="dark" class="${s.theme==="dark"?"on":""}">${icon("moon",14)} Escuro</button></div></div>
+<div class="seg" id="set-theme"><button data-th="light" class="${s.theme==="light"?"on":""}" aria-label="Tema claro">${icon("sun",14)} Claro</button>
+<button data-th="dark" class="${s.theme==="dark"?"on":""}" aria-label="Tema escuro">${icon("moon",14)} Escuro</button></div></div>
 </div>
 <div class="card"><div class="card-h"><h3>${icon("tag",16)} Categorias</h3>
-<button class="btn btn-primary btn-sm" data-action="new-category">${icon("plus",13)} Nova</button></div>
+<button class="btn btn-primary btn-sm" data-action="new-category" aria-label="Nova categoria">${icon("plus",13)} Nova</button></div>
 ${["despesa","receita"].map(tp=>`<h4 style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:10px 0 8px">${tp==="despesa"?"Despesas":"Receitas"}</h4>
 <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px">${state.categories.filter(c=>c.type===tp).map(c=>
-`<span class="chip" style="background:${c.color}1d;color:${c.color};cursor:pointer;padding:6px 11px" data-action="cat-edit" data-id="${c.id}" title="Editar">
+`<span class="chip" style="background:${c.color}1d;color:${c.color};cursor:pointer;padding:6px 11px" data-action="cat-edit" data-id="${c.id}" title="Editar" tabindex="0" role="button" aria-label="Editar categoria ${esc(c.name)}">
 ${icon(c.icon,13)} ${esc(c.name)}</span>`).join("")}</div>`).join("")}
 </div>
 <div class="card"><div class="card-h"><h3>${icon("download",16)} Backup dos dados</h3></div>
 <div class="hint" style="margin-bottom:12px">${icon("info",14)} Seus dados ficam somente neste navegador. Faça backups regulares para não correr riscos.</div>
 <div style="display:flex;flex-direction:column;gap:9px">
-<button class="btn btn-primary" data-action="export-json">${icon("download",15)} Exportar backup (.json)</button>
-<button class="btn btn-ghost" data-action="import-json">${icon("upload",15)} Importar backup (.json)</button>
-<button class="btn btn-ghost" data-action="export-csv">${icon("receipt",15)} Exportar lançamentos (.csv)</button>
+<button class="btn btn-primary" data-action="export-json" aria-label="Exportar backup JSON">${icon("download",15)} Exportar backup (.json)</button>
+<button class="btn btn-ghost" data-action="import-json" aria-label="Importar backup JSON">${icon("upload",15)} Importar backup (.json)</button>
+<button class="btn btn-ghost" data-action="export-csv" aria-label="Exportar lançamentos CSV">${icon("receipt",15)} Exportar lançamentos (.csv)</button>
 </div></div>
 <div class="card"><div class="card-h"><h3>${icon("shield",16)} Privacidade</h3></div>
 <p style="font-size:13.5px;color:var(--ink2);line-height:1.7">
@@ -1926,12 +2069,12 @@ ${icon(c.icon,13)} ${esc(c.name)}</span>`).join("")}</div>`).join("")}
 <div class="card"><div class="card-h"><h3>${icon("sparkles",16)} Dados de exemplo</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Quer conhecer o sistema preenchido? ${state.demo?"Os dados atuais incluem o exemplo.":"Você pode carregar um cenário de demonstração (removível a qualquer momento)."}</p>
 ${state.demo
-? `<button class="btn btn-danger" data-action="demo-remove">${icon("trash",15)} Remover dados de exemplo</button>`
-: `<button class="btn btn-ghost" data-action="demo-load">${icon("sparkles",15)} Carregar dados de exemplo</button>`}
+? `<button class="btn btn-danger" data-action="demo-remove" aria-label="Remover dados de exemplo">${icon("trash",15)} Remover dados de exemplo</button>`
+: `<button class="btn btn-ghost" data-action="demo-load" aria-label="Carregar dados de exemplo">${icon("sparkles",15)} Carregar dados de exemplo</button>`}
 </div>
 <div class="card" style="border-color:var(--down)"><div class="card-h"><h3 style="color:var(--down)">${icon("alert",16)} Zona de risco</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Apaga <b>todos</b> os lançamentos, contas, cartões, categorias personalizadas e configurações. Exige confirmação dupla. Faça um backup antes.</p>
-<button class="btn btn-danger" data-action="wipe">${icon("trash",15)} Apagar todos os dados</button>
+<button class="btn btn-danger" data-action="wipe" aria-label="Apagar todos os dados">${icon("trash",15)} Apagar todos os dados</button>
 </div>
 </div>`;
 $("#set-cur").onchange=e=>{state.settings.currency=e.target.value;_fmtCache={};save();render();toast("Moeda atualizada.");};
@@ -1977,7 +2120,7 @@ body:`<p style="font-size:14px;color:var(--ink2);line-height:1.6">Backup de <b>$
 <span>Baixar um backup da versão atual antes de substituir (recomendado)</span>
 </label>
 <p style="font-size:12px;color:var(--ink2);margin-top:8px">Uma cópia interna também fica salva neste navegador, mesmo se você desmarcar a opção.</p>`,
-foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok>${icon("upload",15)} Restaurar</button>`});
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok aria-label="Restaurar backup">${icon("upload",15)} Restaurar</button>`});
 ov.querySelector("[data-x]").onclick=ov._close;
 ov.querySelector("[data-ok]").onclick=()=>{
 const wantFile=ov.querySelector("#ck-backup").checked;
@@ -2007,14 +2150,14 @@ toast(`CSV exportado (${list.length} lançamento(s)).`);
 function openCsvModal(){
 const ov=openModal({title:"Exportar lançamentos (.csv)", body:`
 <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">Escolha o período dos lançamentos a exportar. A data sai no formato <b>${esc(state.settings.dateFormat)}</b>.</p>
-<div class="field"><label>Período</label><select id="csv-period">
+<div class="field"><label>Período</label><select id="csv-period" aria-label="Selecionar período">
 ${opt("all","Todos os lançamentos",true)}${opt("mes","Este mês")}${opt("prev","Mês passado")}${opt("30d","Próximos 30 dias")}${opt("ano","Este ano")}${opt("custom","Personalizado")}</select></div>
 <div class="grid2" id="csv-custom" style="display:none">
-<div class="field"><label>De</label><input type="date" id="csv-from"></div>
-<div class="field"><label>Até</label><input type="date" id="csv-to"></div>
+<div class="field"><label>De</label><input type="date" id="csv-from" aria-label="Data inicial"></div>
+<div class="field"><label>Até</label><input type="date" id="csv-to" aria-label="Data final"></div>
 </div>
 <p id="csv-count" style="font-size:12.5px;color:var(--ink2)"></p>`,
-foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok>${icon("download",15)} Exportar</button>`});
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-ok aria-label="Exportar CSV">${icon("download",15)} Exportar</button>`});
 const q=s=>ov.querySelector(s);
 const cp=ui.per.csv;
 if(!validDate(cp.from)||!validDate(cp.to)){ const [csvPs,csvPe]=rangeForPeriod("mes"); cp.from=csvPs; cp.to=csvPe; }
@@ -2045,8 +2188,8 @@ msg:"Esta ação é <b>irreversível</b> e apagará tudo o que você registrou. 
 onOk:()=>{
 const ov=openModal({title:"Confirmação final", body:`
 <p style="font-size:14px;color:var(--ink2);margin-bottom:12px">Digite <b style="color:var(--down)">APAGAR</b> para confirmar a exclusão total.</p>
-<div class="field"><input id="wipe-input" autocomplete="off" placeholder="APAGAR"></div>`,
-foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-danger" data-ok>${icon("trash",15)} Apagar tudo</button>`});
+<div class="field"><input id="wipe-input" autocomplete="off" placeholder="APAGAR" aria-label="Digite APAGAR para confirmar"></div>`,
+foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-danger" data-ok aria-label="Apagar tudo">${icon("trash",15)} Apagar tudo</button>`});
 ov.querySelector("[data-x]").onclick=ov._close;
 ov.querySelector("[data-ok]").onclick=()=>{
 if(ov.querySelector("#wipe-input").value.trim()!=="APAGAR") return toast("Digite APAGAR para confirmar.","err");
@@ -2129,13 +2272,13 @@ box.classList.add("open"); return;
 }
 const grp=(t)=>`<div class="sr-group">${t}</div>`;
 let html="";
-if(tx.length) html+=grp("Lançamentos")+tx.map(t=>`<button class="sr-item" data-go="tx" data-id="${t.id}">
+if(tx.length) html+=grp("Lançamentos")+tx.map(t=>`<button class="sr-item" data-go="tx" data-id="${t.id}" aria-label="Ver lançamento ${esc(t.desc)}">
 ${icon(t.type==="receita"?"arrowUR":"arrowDR",14)} <span>${esc(t.desc)}</span><small>${fmtDate(t.date)} · ${fmtMoney(t.value)}</small></button>`).join("");
-if(cats.length) html+=grp("Categorias")+cats.map(c=>`<button class="sr-item" data-go="cat" data-id="${c.id}">
+if(cats.length) html+=grp("Categorias")+cats.map(c=>`<button class="sr-item" data-go="cat" data-id="${c.id}" aria-label="Ver categoria ${esc(c.name)}">
 ${icon(c.icon,14)} <span>${esc(c.name)}</span><small>${c.type}</small></button>`).join("");
-if(accs.length) html+=grp("Contas")+accs.map(a=>`<button class="sr-item" data-go="acc" data-id="${a.id}">
+if(accs.length) html+=grp("Contas")+accs.map(a=>`<button class="sr-item" data-go="acc" data-id="${a.id}" aria-label="Ver conta ${esc(a.name)}">
 ${icon("bank",14)} <span>${esc(a.name)}</span><small>${fmtMoney(accountBalance(a))}</small></button>`).join("");
-if(cds.length) html+=grp("Cartões")+cds.map(c=>`<button class="sr-item" data-go="card" data-id="${c.id}">
+if(cds.length) html+=grp("Cartões")+cds.map(c=>`<button class="sr-item" data-go="card" data-id="${c.id}" aria-label="Ver cartão ${esc(c.name)}">
 ${icon("creditCard",14)} <span>${esc(c.name)}</span><small>${esc(c.bank||"")}</small></button>`).join("");
 box.innerHTML=html; box.classList.add("open");
 }
@@ -2169,7 +2312,12 @@ pruneSel();
 let route=(location.hash.replace("#/","")||"dashboard").split("?")[0];
 if(!ROUTES[route]) route="dashboard";
 const key=ROUTES[route]==="/dashboard"?"dashboard":route;
-$$("#nav .nav-link").forEach(a=>a.classList.toggle("active",a.dataset.nav===key));
+$$("#nav .nav-link").forEach(a=>{
+    const isActive = a.dataset.nav===key;
+    a.classList.toggle("active", isActive);
+    if(isActive) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+});
 $("#page-title").textContent=TITLES[key]||"Fluxo";
 closeDrawer();
 ({dashboard:renderDashboard, lancamentos:renderTransactions, contas:renderBills, receitas:renderIncome,
@@ -2191,8 +2339,8 @@ ob.innerHTML=`<div class="ob-card">
 <h1>Seu dinheiro, com <em>clareza</em> de verdade.</h1>
 <p>O Fluxo organiza contas, receitas, despesas, cartões, parcelas e metas — tudo funcionando direto no seu navegador, sem cadastro e sem enviar dados para ninguém.</p>
 <div class="ob-actions">
-<button class="btn btn-primary" id="ob-start" style="background:#fff;color:#0b2b21">${icon("plus",16)} Começar do zero</button>
-<button class="btn btn-ghost" id="ob-demo" style="border-color:rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.07)">${icon("sparkles",16)} Ver com dados de exemplo</button>
+<button class="btn btn-primary" id="ob-start" style="background:#fff;color:#0b2b21" aria-label="Começar do zero">${icon("plus",16)} Começar do zero</button>
+<button class="btn btn-ghost" id="ob-demo" style="border-color:rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.07)" aria-label="Ver com dados de exemplo">${icon("sparkles",16)} Ver com dados de exemplo</button>
 </div>
 <div class="ob-note">${icon("shield",13)} Dados 100% locais · exporte backups quando quiser</div>
 </div>`;
@@ -2275,7 +2423,7 @@ confirmModal({title:"Marcar como pendentes", okLabel:`Marcar ${paid.length}`,
 msg:`Voltar <b>${paid.length}</b> receita(s) selecionada(s) para <b>pendente</b>, totalizando <b>${fmtMoney(total)}</b>?<br><span style="color:var(--ink2)">O valor sai do saldo da conta até ser recebida novamente.${paid.length<ids.size?` (${ids.size-paid.length} já pendente(s) serão ignoradas.)`:""}</span>`,
 onOk:()=>{ paid.forEach(t=>{ t.status="pendente"; delete t.paidDate; }); save(); render(); toast(`${paid.length} receita(s) marcada(s) como pendente(s).`); }});
 break; }
-    case "pay-sel": {
+case "pay-sel": {
 const ids = new Set([...ui.sel.contas].filter(id=>state.transactions.some(t=>t.id===id)));
 if(!ids.size){ toast("Marque ao menos uma conta na lista.","warn"); break; }
 const openSel = state.transactions.filter(t=>ids.has(t.id) && t.type==="despesa" && t.status!=="pago");
@@ -2348,11 +2496,11 @@ ${linkedRecs.length?`<li><b style="color:var(--ink)">${linkedRecs.length}</b> re
 <li>o saldo e o histórico da própria conta.</li>
 </ul>
 <label class="toggle-row" style="border-color:var(--down)">
-<input type="checkbox" id="ck-acc-del" style="width:auto">
+<input type="checkbox" id="ck-acc-del" style="width:auto" aria-label="Confirmar exclusão de conta e dados vinculados">
 <span>Sim, estou ciente e desejo excluir a conta <b>${esc(a.name)}</b> junto com todos os dados vinculados a ela.</span>
 </label>`,
 foot:`<button class="btn btn-ghost" data-x>Cancelar</button>
-<button class="btn btn-danger" data-ok disabled>${icon("trash",14)} Excluir conta${linked.length?` e ${linked.length} lançamento(s)`:''}</button>`
+<button class="btn btn-danger" data-ok disabled aria-label="Confirmar exclusão">${icon("trash",14)} Excluir conta${linked.length?` e ${linked.length} lançamento(s)`:''}</button>`
 });
 const okBtn=ov.querySelector("[data-ok]"), ckAcc=ov.querySelector("#ck-acc-del");
 ckAcc.onchange=()=>{ okBtn.disabled=!ckAcc.checked; };
@@ -2375,6 +2523,7 @@ case "demo-load": confirmModal({title:"Carregar dados de exemplo", okLabel:"Carr
 msg:"Será criado um cenário fictício (salário, aluguel, cartões, parcelas). Você pode removê-lo depois em Configurações.",
 onOk:()=>{ seedDemo(); save(); render(); toast("Dados de exemplo carregados."); }}); break;
 case "demo-remove": removeDemo(); break;
+case "rep-help": toast("Relatórios personalizados processam detalhamentos mensais para um limite máximo de 24 meses. Períodos maiores terão os gráficos e tabelas comparativas limitados a 24 meses a partir da data inicial.", "info"); break;
 }
 });
 document.addEventListener("click", e=>{
@@ -2426,9 +2575,86 @@ $("#fab").innerHTML=icon("plus",24);
 buildNav();
 applyTheme();
 materializeAll(); save();
+runAudit(); // Run data integrity audit
 if(!state.initialized) onboarding();
 if(!location.hash) location.hash="#/dashboard";
 render();
+
+/* ---------- PWA Implementation ---------- */
+const manifest = {
+    name: "Fluxo — Finanças Pessoais",
+    short_name: "Fluxo",
+    description: "Organizador financeiro pessoal completo.",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#f1f3ee",
+    theme_color: "#0b2b21",
+    icons: [{
+        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230e6b4f'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>F</text></svg>",
+        sizes: "192x192 512x512",
+        type: "image/svg+xml",
+        purpose: "any maskable"
+    }]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(manifestBlob);
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = manifestURL;
+document.head.appendChild(link);
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const topActions = $('.top-actions');
+    if (topActions && !$('#btn-install')) {
+        const btn = document.createElement('button');
+        btn.id = 'btn-install';
+        btn.className = 'btn btn-ghost btn-sm';
+        btn.innerHTML = `${icon('download', 14)} Instalar App`;
+        btn.setAttribute('aria-label', 'Instalar aplicativo');
+        btn.onclick = async () => {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') btn.remove();
+            deferredPrompt = null;
+        };
+        topActions.prepend(btn);
+    }
+});
+
+// Register minimal Service Worker via Blob URL for offline caching
+const swCode = `
+const CACHE_NAME = 'fluxo-v1';
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+    if (e.request.method !== 'GET') return;
+    e.respondWith(
+        caches.match(e.request).then(cached => {
+            const fetchPromise = fetch(e.request).then(response => {
+                if (response && response.status === 200) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+                }
+                return response;
+            }).catch(() => cached);
+            return cached || fetchPromise;
+        })
+    );
+});
+`;
+try {
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swURL = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(swURL).catch(err => console.log('SW registration failed (expected in some sandbox environments):', err));
+    }
+} catch(e) {
+    console.log('SW Blob registration not supported in this environment.');
+}
+
 })();
 </script>
 </body>
