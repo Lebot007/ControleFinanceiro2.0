@@ -2568,95 +2568,44 @@ $("#fab").addEventListener("click", openQuickModal);
 window.addEventListener("hashchange", render);
 
 /* ---------- PWA Implementation ---------- */
-const pwaIconSvg = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100">' +
-  '<rect width="100" height="100" rx="22" fill="#0e6b4f"/>' +
-  '<path d="M22 68 L42 46 L56 58 L78 32" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
-  '<path d="M62 32 L78 32 L78 48" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
-  '</svg>'
-)}`;
+const l = document.createElement('link');
+l.rel = 'manifest';
+l.href = 'manifest.webmanifest';
+document.head.appendChild(l);
 
-const manifest = {
-    name: 'Fluxo — Finanças Pessoais',
-    short_name: 'Fluxo',
-    description: 'Organizador financeiro pessoal completo.',
-    start_url: '.',
-    scope: '.',
-    display: 'standalone',
-    orientation: 'portrait-primary',
-    background_color: '#f1f3ee',
-    theme_color: '#0b2b21',
-    lang: 'pt-BR',
-    icons: [
-        { src: pwaIconSvg, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-        { src: pwaIconSvg, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-    ]
-};
-const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-const manifestURL = URL.createObjectURL(manifestBlob);
-const linkManifest = document.createElement('link');
-linkManifest.rel = 'manifest';
-linkManifest.href = manifestURL;
-document.head.appendChild(linkManifest);
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW não registrado:', err));
+  });
+}
 
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const topActions = document.querySelector('.top-actions');
-    if (topActions && !document.querySelector('#btn-install')) {
-        const btn = document.createElement('button');
-        btn.id = 'btn-install';
-        btn.className = 'btn btn-ghost btn-sm';
-        btn.innerHTML = `${icon('download', 14)} Instalar App`;
-        btn.setAttribute('aria-label', 'Instalar aplicativo');
-        btn.onclick = async () => {
-            if(!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') btn.remove();
-            deferredPrompt = null;
-        };
-        topActions.insertBefore(btn, topActions.firstChild);
-    }
+  e.preventDefault();
+  deferredPrompt = e;
+  const topActions = document.querySelector('.top-actions');
+  if (topActions && !document.querySelector('#btn-install')) {
+    const btn = document.createElement('button');
+    btn.id = 'btn-install';
+    btn.className = 'btn btn-ghost btn-sm';
+    btn.innerHTML = icon('download', 14) + ' Instalar App';
+    btn.setAttribute('aria-label', 'Instalar aplicativo');
+    btn.onclick = async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') btn.remove();
+      deferredPrompt = null;
+    };
+    topActions.insertBefore(btn, topActions.firstChild);
+  }
 });
 
 window.addEventListener('appinstalled', () => {
-    const btn = document.querySelector('#btn-install');
-    if (btn) btn.remove();
-    deferredPrompt = null;
+  const btn = document.querySelector('#btn-install');
+  if (btn) btn.remove();
+  deferredPrompt = null;
 });
-
-// Register minimal Service Worker via Blob URL for offline caching
-const swCode = `
-const CACHE_NAME = 'fluxo-v1';
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-self.addEventListener('fetch', e => {
-    if (e.request.method !== 'GET') return;
-    e.respondWith(
-        caches.match(e.request).then(cached => {
-            const fetchPromise = fetch(e.request).then(response => {
-                if (response && response.status === 200) {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-                }
-                return response;
-            }).catch(() => cached);
-            return cached || fetchPromise;
-        })
-    );
-});
-`;
-try {
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    const swURL = URL.createObjectURL(swBlob);
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(swURL).catch(err => console.log('SW registration failed (expected in some sandbox environments):', err));
-    }
-} catch(e) {
-    console.log('SW Blob registration not supported in this environment.');
-}
 
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
