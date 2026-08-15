@@ -2573,46 +2573,27 @@ $("#fab").addEventListener("click", openQuickModal);
 window.addEventListener("hashchange", render);
 
 /* ---------- PWA Implementation ---------- */
-const pwaIconSvg = `data:image/svg+xml,${encodeURIComponent(
-'<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100">' +
-'<rect width="100" height="100" rx="22" fill="#0e6b4f"/>' +
-'<path d="M22 68 L42 46 L56 58 L78 32" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
-'<path d="M62 32 L78 32 L78 48" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
-'</svg>'
-)}`;
-
-const manifest = {
-name: 'Fluxo — Finanças Pessoais',
-short_name: 'Fluxo',
-description: 'Organizador financeiro pessoal completo.',
-start_url: '.',
-scope: '.',
-display: 'standalone',
-orientation: 'portrait-primary',
-background_color: '#f1f3ee',
-theme_color: '#0b2b21',
-lang: 'pt-BR',
-icons: [
-{ src: pwaIconSvg, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-{ src: pwaIconSvg, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-]
-};
-const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-const linkManifest = document.createElement('link');
-linkManifest.rel = 'manifest';
-linkManifest.href = URL.createObjectURL(manifestBlob);
-document.head.appendChild(linkManifest);
-
-/* ----- Botão de instalação: aviso único, fallback pelo menu, nunca dentro do app ----- */
 const isStandalone = () =>
 window.matchMedia('(display-mode: standalone)').matches ||
 window.matchMedia('(display-mode: window-controls-overlay)').matches ||
 navigator.standalone === true;
 
+// Manifest + Service Worker reais (arquivos na mesma pasta do index.html)
+const linkManifest = document.createElement('link');
+linkManifest.rel = 'manifest';
+linkManifest.href = 'manifest.webmanifest';
+document.head.appendChild(linkManifest);
+
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', () => {
+navigator.serviceWorker.register('sw.js').catch(err => console.log('SW não registrado:', err));
+});
+}
+
 let deferredPrompt = null;
 
 function createInstallButton(){
-if (isStandalone()) return; // dentro do app instalado (PC ou celular): sem botão
+if (isStandalone()) return; // dentro do app instalado: sem botão
 const topActions = document.querySelector('.top-actions');
 if(!topActions || document.querySelector('#btn-install')) return;
 const btn = document.createElement('button');
@@ -2621,15 +2602,13 @@ btn.className = 'btn btn-ghost btn-sm';
 btn.innerHTML = `${icon('download',14)} Instalar App`;
 btn.setAttribute('aria-label','Instalar aplicativo');
 btn.onclick = async () => {
-// 1) Diálogo nativo disponível → abre e o navegador instala/sobrepõe
 if (deferredPrompt) {
 deferredPrompt.prompt();
 await deferredPrompt.userChoice;
 deferredPrompt = null;
-// o aviso de sucesso fica por conta do appinstalled (notificação única)
+// aviso de sucesso fica por conta do appinstalled (notificação única)
 return;
 }
-// 2) Sem diálogo (caso comum no Windows/Brave) → orienta pelo menu, como antes
 toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
 };
 topActions.insertBefore(btn, topActions.firstChild);
@@ -2643,41 +2622,9 @@ createInstallButton();
 });
 
 window.addEventListener('appinstalled', () => {
-toast('Aplicativo instalado com sucesso!'); // notificação única (não duplica)
+toast('Aplicativo instalado com sucesso!'); // notificação única
 deferredPrompt = null;
 });
-
-// Service Worker (cache offline). Em navegadores desktop o registro via Blob é
-// bloqueado por segurança — o try/catch garante que isso NUNCA quebre o site.
-const swCode = `
-const CACHE_NAME = 'fluxo-v1';
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-self.addEventListener('fetch', e => {
-if (e.request.method !== 'GET') return;
-e.respondWith(
-caches.match(e.request).then(cached => {
-const fetchPromise = fetch(e.request).then(response => {
-if (response && response.status === 200) {
-const clone = response.clone();
-caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-}
-return response;
-}).catch(() => cached);
-return cached || fetchPromise;
-})
-);
-});
-`;
-try {
-const swBlob = new Blob([swCode], {type: 'application/javascript'});
-const swURL = URL.createObjectURL(swBlob);
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register(swURL).catch(err => console.log('SW não registrado:', err));
-}
-} catch(e) {
-console.log('SW não suportado neste ambiente.');
-}
     
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
