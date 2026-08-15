@@ -2579,81 +2579,75 @@ linkManifest.rel = 'manifest';
 linkManifest.href = 'manifest.webmanifest';
 document.head.appendChild(linkManifest);
 
+// Registra o Service Worker REAL (arquivo sw.js na mesma pasta)
 if ('serviceWorker' in navigator) {
-window.addEventListener('load', () => {
-navigator.serviceWorker.register('sw.js').catch(err => console.log('SW não registrado:', err));
-});
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.log('SW não registrado:', err);
+    });
+  });
 }
 
 /* ----- Botão "Instalar App": só no navegador, nunca dentro do app ----- */
 const isStandalone = () =>
-window.matchMedia('(display-mode: standalone)').matches ||
-window.matchMedia('(display-mode: window-controls-overlay)').matches ||
-navigator.standalone === true;
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+  navigator.standalone === true;
 
 let deferredPrompt = null;
 
 function createInstallButton(){
-// Verificação dupla: se está em standalone, não cria o botão
-if (isStandalone()) {
-// Se por algum motivo o botão existe, remove
-const existing = document.querySelector('#btn-install');
-if (existing) existing.remove();
-return;
+  // Se está em standalone (app instalado), não cria o botão
+  if (isStandalone()) {
+    const existing = document.querySelector('#btn-install');
+    if (existing) existing.remove();
+    return;
+  }
+
+  const topActions = document.querySelector('.top-actions');
+  if(!topActions || document.querySelector('#btn-install')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'btn-install';
+  btn.className = 'btn btn-ghost btn-sm';
+  btn.innerHTML = `${icon('download',14)} Instalar App`;
+  btn.setAttribute('aria-label','Instalar aplicativo');
+  btn.onclick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      return;
+    }
+    toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
+  };
+  topActions.insertBefore(btn, topActions.firstChild);
 }
 
-const topActions = document.querySelector('.top-actions');
-if(!topActions || document.querySelector('#btn-install')) return;
-
-const btn = document.createElement('button');
-btn.id = 'btn-install';
-btn.className = 'btn btn-ghost btn-sm';
-btn.innerHTML = `${icon('download',14)} Instalar App`;
-btn.setAttribute('aria-label','Instalar aplicativo');
-btn.onclick = async () => {
-// 1) Diálogo nativo disponível → abre e instala/sobrepõe
-if (deferredPrompt) {
-deferredPrompt.prompt();
-await deferredPrompt.userChoice;
-deferredPrompt = null;
-// o aviso de sucesso fica por conta do appinstalled (notificação única)
-return;
-}
-// 2) Sem diálogo → orienta instalar pelo menu do navegador
-toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
-};
-topActions.insertBefore(btn, topActions.firstChild);
-}
-
-// Só cria o botão se NÃO estiver em standalone
+// Cria o botão imediatamente se não estiver em standalone
 if (!isStandalone()) {
-createInstallButton();
+  createInstallButton();
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
-// Não faz nada se estiver em modo standalone
-if (isStandalone()) return;
-
-e.preventDefault();
-deferredPrompt = e;
-createInstallButton();
+  if (isStandalone()) return;
+  e.preventDefault();
+  deferredPrompt = e;
+  createInstallButton();
 });
 
 window.addEventListener('appinstalled', () => {
-toast('Aplicativo instalado com sucesso!'); // notificação única (não duplica)
-deferredPrompt = null;
-// Remove o botão após instalar
-const btn = document.querySelector('#btn-install');
-if (btn) btn.remove();
+  toast('Aplicativo instalado com sucesso!');
+  deferredPrompt = null;
+  const btn = document.querySelector('#btn-install');
+  if (btn) btn.remove();
 });
 
-// Listener para mudanças no modo de exibição (caso o usuário instale sem reload)
 window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
-if (e.matches) {
-// Entrou em modo standalone: remove o botão
-const btn = document.querySelector('#btn-install');
-if (btn) btn.remove();
-}
+  if (e.matches) {
+    const btn = document.querySelector('#btn-install');
+    if (btn) btn.remove();
+  }
 });
     
 (function init(){
