@@ -533,6 +533,16 @@ header.top{padding-top:1rem}
 14 · ACESSIBILIDADE / MOVIMENTO REDUZIDO
 ================================================================ */
 .btn:focus-visible,.portal:focus-visible,.hub:focus-visible{outline:2px solid var(--c-gold-hi);outline-offset:3px}
+/* ---------- Botão voltar ao Fluxo ---------- */
+.voltar-row{display:flex;align-items:center;justify-content:center;gap:.9rem;margin:0 0 1.5rem}
+.voltar-row::before,.voltar-row::after{content:"";height:1px;flex:none;width:min(90px,16vw);
+background:linear-gradient(90deg,transparent,rgba(201,162,39,.45))}
+.voltar-row::after{background:linear-gradient(90deg,rgba(201,162,39,.45),transparent)}
+.voltar-row .btn{max-width:100%;text-decoration:none}
+@media (max-width:480px){
+.voltar-row{gap:.6rem;margin-bottom:1.1rem}
+.voltar-row .btn{padding:.7rem 1rem;font-size:.68rem;letter-spacing:.12em}
+}
 </style>
 </head>
 <body>
@@ -600,6 +610,12 @@ header.top{padding-top:1rem}
 <div class="torch" aria-hidden="true"><div class="flame"></div><div class="wrap"></div><div class="band"></div><div class="stick"></div></div>
 </header>
 <main>
+<div class="voltar-row">
+<a class="btn ghost" href="index.html" aria-label="Voltar para o Fluxo (página de finanças)">
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 L7 12 L15 20" fill="none" stroke="url(#gGold)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+Voltar ao Fluxo
+</a>
+</div>
 <section id="altar">
 <h2 class="altar-title">Entregai o Tomo de Vossas Finanças</h2>
 <div class="sword-divider" aria-hidden="true"><span class="line"></span><svg class="ic"><use href="#i-sword"/></svg><span class="line"></span></div>
