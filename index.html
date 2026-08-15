@@ -2603,10 +2603,16 @@ linkManifest.rel = 'manifest';
 linkManifest.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(linkManifest);
 
-/* ----- Botão de instalação: fixo e com mecânica simples ----- */
+/* ----- Botão de instalação: 1 notificação só e nunca dentro do app ----- */
+const isStandalone = () =>
+window.matchMedia('(display-mode: standalone)').matches ||
+window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+navigator.standalone === true;
+
 let deferredPrompt = null;
 
 function createInstallButton(){
+if (isStandalone()) return; // dentro do app instalado (PC ou celular): sem botão
 const topActions = document.querySelector('.top-actions');
 if(!topActions || document.querySelector('#btn-install')) return;
 const btn = document.createElement('button');
@@ -2615,32 +2621,25 @@ btn.className = 'btn btn-ghost btn-sm';
 btn.innerHTML = `${icon('download',14)} Instalar App`;
 btn.setAttribute('aria-label','Instalar aplicativo');
 btn.onclick = async () => {
-// Diálogo nativo disponível → abre e o navegador instala/sobrepõe
-if (deferredPrompt) {
+if(!deferredPrompt) return;
 deferredPrompt.prompt();
-const { outcome } = await deferredPrompt.userChoice;
+await deferredPrompt.userChoice;
 deferredPrompt = null;
-if (outcome === 'accepted') toast('Aplicativo instalado com sucesso!');
-return;
-}
-// Sem diálogo: orienta pelo menu do navegador (sem recarregar nada)
-const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-toast(standalone
-? 'Você já está usando o Fluxo instalado neste dispositivo.'
-: 'Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
+// sem aviso aqui — o evento appinstalled abaixo cuida da única notificação
 };
 topActions.insertBefore(btn, topActions.firstChild);
 }
-createInstallButton(); // botão fixo desde o primeiro carregamento
+createInstallButton();
 
 window.addEventListener('beforeinstallprompt', (e) => {
 e.preventDefault();
-deferredPrompt = e; // guarda o diálogo para o botão usar
+deferredPrompt = e;
+createInstallButton();
 });
 
 window.addEventListener('appinstalled', () => {
-toast('Aplicativo instalado com sucesso!');
-// o botão NÃO é removido: permite reinstalar/sobrepor depois
+toast('Aplicativo instalado com sucesso!'); // notificação única
+deferredPrompt = null;
 });
 
 // Service Worker (cache offline)
@@ -2673,7 +2672,6 @@ navigator.serviceWorker.register(swURL).catch(err => console.log('SW não regist
 } catch(e) {
 console.log('SW não suportado neste ambiente.');
 }
-
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
 $("#btn-menu").innerHTML=icon("menu",19);
