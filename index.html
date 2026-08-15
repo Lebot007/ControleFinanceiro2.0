@@ -2523,7 +2523,12 @@ case "demo-load": confirmModal({title:"Carregar dados de exemplo", okLabel:"Carr
 msg:"Será criado um cenário fictício (salário, aluguel, cartões, parcelas). Você pode removê-lo depois em Configurações.",
 onOk:()=>{ seedDemo(); save(); render(); toast("Dados de exemplo carregados."); }}); break;
 case "demo-remove": removeDemo(); break;
-case "rep-help": toast("Relatórios personalizados processam detalhamentos mensais para um limite máximo de 24 meses. Períodos maiores terão os gráficos e tabelas comparativas limitados a 24 meses a partir da data inicial.", "info"); break;
+case "rep-help": {
+const ov=openModal({title:"Limite de período dos relatórios",
+body:`<p style="font-size:14px;line-height:1.7;color:var(--ink2)">${icon("info",15)} Relatórios personalizados processam detalhamentos mensais para um limite máximo de <b style="color:var(--ink)">24 meses</b>. Períodos maiores terão os gráficos e tabelas comparativas limitados a 24 meses a partir da data inicial.</p>`,
+foot:`<button class="btn btn-ghost" data-x>Fechar</button>`});
+ov.querySelector("[data-x]").onclick=ov._close;
+break; }
 }
 });
 document.addEventListener("click", e=>{
