@@ -2097,6 +2097,20 @@ ${lk ? `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bott
 : `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Proteja o acesso ao Fluxo neste navegador com uma senha. Você receberá uma <b style="color:var(--ink)">chave de recuperação</b> (arquivo) que serve apenas para redefinir a senha, caso a esqueça.</p>
 <button class="btn btn-primary" data-action="lock-create">${icon("shield",15)} Criar senha de acesso</button>`}
 </div>`;
+function renderSettings(){
+const s=state.settings;
+const lk = lockGet();
+const lockCard = `<div class="card"><div class="card-h"><h3>${icon("shield",16)} Segurança e bloqueio</h3></div>
+${lk ? `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Bloqueio ativo para <b style="color:var(--ink)">${esc(lk.user)}</b>. A senha protege apenas o acesso neste navegador; seus dados e backups continuam em "Backup dos dados".</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<button class="btn btn-primary" data-action="lock-now">${icon("shield",15)} Bloquear agora</button>
+<button class="btn btn-ghost" data-action="lock-key">${icon("download",15)} Baixar nova chave de recuperação</button>
+<button class="btn btn-ghost" data-action="lock-change">${icon("pencil",15)} Trocar senha</button>
+<button class="btn btn-danger" data-action="lock-remove">${icon("trash",15)} Remover bloqueio</button>
+</div>`
+: `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Proteja o acesso ao Fluxo neste navegador com uma senha. Você receberá uma <b style="color:var(--ink)">chave de recuperação</b> (arquivo) que serve apenas para redefinir a senha, caso a esqueça.</p>
+<button class="btn btn-primary" data-action="lock-create">${icon("shield",15)} Criar senha de acesso</button>`}
+</div>`;
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Configurações</h1><p>Preferências, categorias, backup e privacidade.</p></div></div>
 <div class="grid settings-grid">
@@ -2105,7 +2119,7 @@ viewEl().innerHTML=`
 <select id="set-cur" aria-label="Selecionar moeda">${opt("BRL","Real (R$)",s.currency==="BRL")}${opt("USD","Dólar (US$)",s.currency==="USD")}${opt("EUR","Euro (€)",s.currency==="EUR")}</select></div>
 <div class="set-row"><div><div class="sr-t">Formato de data</div><div class="sr-d">Usado na tela, no PDF e no CSV</div></div>
 <select id="set-date" aria-label="Selecionar formato de data">${opt("dd/mm/aaaa","31/12/2026",s.dateFormat==="dd/mm/aaaa")}${opt("aaaa-mm-dd","2026-12-31",s.dateFormat==="aaaa-mm-dd")}${opt("mm/dd/aaaa","12/31/2026",s.dateFormat==="mm/dd/aaaa")}</select></div>
-<div class="set-row"><div><div class="sr-t">Primeiro dia do mês</div><div class="sr-d">Usado nos ciclos de orçamento e “Este mês”</div></div>
+<div class="set-row"><div><div class="sr-t">Primeiro dia do mês</div><div class="sr-d">Usado nos ciclos de orçamento e "Este mês"</div></div>
 <select id="set-ms" aria-label="Selecionar primeiro dia do mês">${Array.from({length:28},(_,i)=>opt(i+1,"Dia "+(i+1),s.monthStart===(i+1))).join("")}</select></div>
 <div class="set-row"><div><div class="sr-t">Tema</div><div class="sr-d">Claro ou escuro</div></div>
 <div class="seg" id="set-theme"><button data-th="light" class="${s.theme==="light"?"on":""}" aria-label="Tema claro">${icon("sun",14)} Claro</button>
@@ -2131,13 +2145,13 @@ ${icon(c.icon,13)} ${esc(c.name)}</span>`).join("")}</div>`).join("")}
 • O Fluxo <b style="color:var(--ink)">não envia nada para servidores</b>, não usa APIs externas de armazenamento e não coleta informações pessoais.<br>
 • Se você usar o sistema em outro computador ou limpar os dados do navegador, use o backup (.json) para levar suas informações.<br>
 • Ao importar um backup, o sistema cria automaticamente uma cópia de segurança dos dados atuais antes de substituí-los.</p></div>
+${lockCard}
 <div class="card"><div class="card-h"><h3>${icon("sparkles",16)} Dados de exemplo</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Quer conhecer o sistema preenchido? ${state.demo?"Os dados atuais incluem o exemplo.":"Você pode carregar um cenário de demonstração (removível a qualquer momento)."}</p>
 ${state.demo
 ? `<button class="btn btn-danger" data-action="demo-remove" aria-label="Remover dados de exemplo">${icon("trash",15)} Remover dados de exemplo</button>`
 : `<button class="btn btn-ghost" data-action="demo-load" aria-label="Carregar dados de exemplo">${icon("sparkles",15)} Carregar dados de exemplo</button>`}
 </div>
-${lockCard}
 <div class="card" style="border-color:var(--down)"><div class="card-h"><h3 style="color:var(--down)">${icon("alert",16)} Zona de risco</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Apaga <b>todos</b> os lançamentos, contas, cartões, categorias personalizadas e configurações. Exige confirmação dupla. Faça um backup antes.</p>
 <button class="btn btn-danger" data-action="wipe" aria-label="Apagar todos os dados">${icon("trash",15)} Apagar todos os dados</button>
