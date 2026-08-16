@@ -65,7 +65,6 @@ input[type="checkbox"]{accent-color:var(--brand);width:16px;height:16px;cursor:p
 .nav-link.active{background:rgba(31,196,141,.16);color:#fff;font-weight:600}
 .nav-link.active::before{content:"";position:absolute;left:-14px;top:20%;bottom:20%;width:3.5px;border-radius:4px;background:#1fc48d}
 .nav-link .ic{opacity:.85}
-/* --- Botão RPG (Grimório das Fortunas) --- */
 .nav-rpg{
 position:relative;overflow:hidden;margin-top:2px;
 background:linear-gradient(135deg, rgba(112,72,232,.28), rgba(201,162,39,.22));
@@ -419,80 +418,144 @@ out.accounts.forEach(a=>{ if(!a.createdAt) a.createdAt = todayISO(); });
 return out;
 }
 function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(state)); }catch(e){ toast("Não foi possível salvar (armazenamento cheio?).", "err"); } }
-
+/* ---------- Bloqueio / senha de acesso ---------- */
+const LOCK_KEY = "fluxo.lock.v1", UNLOCK_KEY = "fluxo.unlocked";
+function lockGet(){ try{ const r = localStorage.getItem(LOCK_KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function lockSet(o){ localStorage.setItem(LOCK_KEY, JSON.stringify(o)); }
+function lockClear(){ localStorage.removeItem(LOCK_KEY); }
+const isUnlocked = () => localStorage.getItem(UNLOCK_KEY) === "1";
+const setUnlocked = () => localStorage.setItem(UNLOCK_KEY, "1");
+const setLocked = () => localStorage.removeItem(UNLOCK_KEY);
+async function sha256hex(str){
+const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function randomToken(){
+const a = crypto.getRandomValues(new Uint8Array(24));
+return Array.from(a).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function checkPassword(lock, pass){ return (await sha256hex(lock.salt + ":" + pass)) === lock.hash; }
+async function buildLock(user, pass){
+const salt = randomToken(), token = randomToken();
+const lock = { user: user||"Usuário", salt, hash: await sha256hex(salt+":"+pass),
+recHash: await sha256hex("rec:"+token), createdAt: new Date().toISOString() };
+return { lock, token };
+}
+function recoveryContent(token){ return JSON.stringify({meta:{app:APP_ID,kind:"chave-de-recuperacao",exportedAt:new Date().toISOString()},token},null,2); }
+async function downloadRecoveryKey(){
+const lock = lockGet(); if(!lock) return;
+const token = randomToken();
+lock.recHash = await sha256hex("rec:"+token);
+lockSet(lock);
+download("fluxo-chave-recuperacao.json", recoveryContent(token), "application/json");
+toast("Nova chave baixada. A chave anterior foi invalidada.");
+}
+function paintLockButton(){
+const top = document.querySelector(".top-actions"); if(!top) return;
+let b = document.querySelector("#btn-lock");
+if(lockGet() && !b){
+b = document.createElement("button");
+b.id="btn-lock"; b.className="icon-btn"; b.title="Bloquear site";
+b.setAttribute("aria-label","Bloquear site");
+b.innerHTML = icon("shield",17);
+b.onclick = ()=>{ setLocked(); location.replace("login.html"); };
+top.insertBefore(b, top.firstChild);
+} else if(!lockGet() && b){ b.remove(); }
+}
+function openLockModal(change){
+const lock = lockGet();
+const passField = (id,label) => `
+<div class="field"><label>${label} <b>*</b></label>
+<div style="position:relative"><input id="${id}" type="password" autocomplete="off" style="padding-right:44px">
+<button class="icon-btn" type="button" data-eye="${id}" style="position:absolute;right:6px;top:50%;transform:translateY(-50%)" aria-label="Mostrar senha">${icon("eye",16)}</button></div></div>`;
+const ov = openModal({
+title: change ? "Trocar senha de acesso" : "Criar senha de acesso",
+body: (change ? passField("lk-cur","Senha atual") + passField("lk-new1","Nova senha") + passField("lk-new2","Confirmar nova senha")
+: `<div class="field"><label>Nome de exibição</label><input id="lk-user" maxlength="30" placeholder="Ex.: Maria"></div>` + passField("lk-new1","Senha") + passField("lk-new2","Confirmar senha"))
++ `<div class="hint">${icon("info",13)} <span>Dica: misture letras, números e símbolos para uma senha mais forte. Ao salvar, será baixada a sua <b>chave de recuperação</b> — um arquivo que serve apenas para redefinir a senha, caso você a esqueça. Ele não contém seus dados financeiros.</span></div>`,
+foot: `<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn btn-primary" data-save>${icon("check",15)} Salvar</button>`});
+ov.querySelectorAll("[data-eye]").forEach(b=> b.onclick = ()=>{
+const inp = ov.querySelector("#"+b.dataset.eye);
+const show = inp.type === "password";
+inp.type = show ? "text" : "password";
+b.innerHTML = icon(show ? "eyeOff" : "eye", 16);
+b.setAttribute("aria-label", show ? "Ocultar senha" : "Mostrar senha"); });
+ov.querySelector("[data-x]").onclick = ov._close;
+ov.querySelector("[data-save]").onclick = async ()=>{
+const p1 = ov.querySelector("#lk-new1").value, p2 = ov.querySelector("#lk-new2").value;
+if(change && !(await checkPassword(lock, ov.querySelector("#lk-cur").value))) return toast("Senha atual incorreta.", "err");
+if(p1.length < 4) return toast("A senha precisa de pelo menos 4 caracteres.", "err");
+if(p1 !== p2) return toast("As senhas não conferem.", "err");
+const user = change ? lock.user : ((ov.querySelector("#lk-user")?.value.trim()) || "Usuário");
+const { lock: nl, token } = await buildLock(user, p1);
+lockSet(nl);
+download("fluxo-chave-recuperacao.json", recoveryContent(token), "application/json");
+setUnlocked();
+ov._close(); paintLockButton(); render();
+toast(change ? "Senha alterada. Nova chave baixada." : "Senha criada. Chave de recuperação baixada.");
+};
+}
 /* ---------- Data Integrity Audit ---------- */
 function runAudit() {
-    let fixes = 0;
-    let warnings = [];
-
-    // 1. paidDate consistency
-    state.transactions.forEach(t => {
-        if (t.status === 'pago' && !t.paidDate) {
-            t.paidDate = t.date || todayISO();
-            fixes++;
-        }
-    });
-
-    // 2. Orphaned categories
-    const catIds = new Set(state.categories.map(c => c.id));
-    state.transactions.forEach(t => {
-        if (t.categoryId && !catIds.has(t.categoryId)) {
-            t.categoryId = null;
-            fixes++;
-        }
-    });
-    state.recurrences.forEach(r => {
-        if (r.categoryId && !catIds.has(r.categoryId)) {
-            r.categoryId = null;
-            fixes++;
-        }
-    });
-
-    // 3. Orphaned accounts/cards
-    const accIds = new Set(state.accounts.map(a => a.id));
-    const cardIds = new Set(state.cards.map(c => c.id));
-    state.transactions.forEach(t => {
-        if (t.accountId && !accIds.has(t.accountId)) { t.accountId = null; fixes++; }
-        if (t.cardId && !cardIds.has(t.cardId)) { t.cardId = null; fixes++; }
-    });
-    state.recurrences.forEach(r => {
-        if (r.accountId && !accIds.has(r.accountId)) { r.accountId = null; fixes++; }
-        if (r.cardId && !cardIds.has(r.cardId)) { r.cardId = null; fixes++; }
-    });
-
-    // 4. Installment consistency
-    const groups = {};
-    state.transactions.forEach(t => {
-        if (t.groupId) {
-            if (!groups[t.groupId]) groups[t.groupId] = [];
-            groups[t.groupId].push(t);
-        }
-    });
-    Object.values(groups).forEach(g => {
-        const expectedN = g[0].installments;
-        g.forEach(t => {
-            if (!t.installment || !t.installments) {
-                t.installment = 1; t.installments = expectedN || 1; fixes++;
-            }
-        });
-    });
-
-    // 5. LocalStorage usage
-    try {
-        const size = new Blob([JSON.stringify(state)]).size;
-        const limit = 4 * 1024 * 1024; 
-        if (size > limit * 0.85) {
-            warnings.push("O armazenamento local está ficando cheio. Considere exportar um backup e limpar dados antigos.");
-        }
-    } catch(e) {}
-
-    if (fixes > 0) {
-        save();
-        toast(`${fixes} pequena(s) inconsistência(s) de dados corrigida(s) automaticamente.`, "warn");
-    }
-    warnings.forEach(w => toast(w, "warn"));
+let fixes = 0;
+let warnings = [];
+state.transactions.forEach(t => {
+if (t.status === 'pago' && !t.paidDate) {
+t.paidDate = t.date || todayISO();
+fixes++;
 }
-
+});
+const catIds = new Set(state.categories.map(c => c.id));
+state.transactions.forEach(t => {
+if (t.categoryId && !catIds.has(t.categoryId)) {
+t.categoryId = null;
+fixes++;
+}
+});
+state.recurrences.forEach(r => {
+if (r.categoryId && !catIds.has(r.categoryId)) {
+r.categoryId = null;
+fixes++;
+}
+});
+const accIds = new Set(state.accounts.map(a => a.id));
+const cardIds = new Set(state.cards.map(c => c.id));
+state.transactions.forEach(t => {
+if (t.accountId && !accIds.has(t.accountId)) { t.accountId = null; fixes++; }
+if (t.cardId && !cardIds.has(t.cardId)) { t.cardId = null; fixes++; }
+});
+state.recurrences.forEach(r => {
+if (r.accountId && !accIds.has(r.accountId)) { r.accountId = null; fixes++; }
+if (r.cardId && !cardIds.has(r.cardId)) { r.cardId = null; fixes++; }
+});
+const groups = {};
+state.transactions.forEach(t => {
+if (t.groupId) {
+if (!groups[t.groupId]) groups[t.groupId] = [];
+groups[t.groupId].push(t);
+}
+});
+Object.values(groups).forEach(g => {
+const expectedN = g[0].installments;
+g.forEach(t => {
+if (!t.installment || !t.installments) {
+t.installment = 1; t.installments = expectedN || 1; fixes++;
+}
+});
+});
+try {
+const size = new Blob([JSON.stringify(state)]).size;
+const limit = 4 * 1024 * 1024;
+if (size > limit * 0.85) {
+warnings.push("O armazenamento local está ficando cheio. Considere exportar um backup e limpar dados antigos.");
+}
+} catch(e) {}
+if (fixes > 0) {
+save();
+toast(`${fixes} pequena(s) inconsistência(s) de dados corrigida(s) automaticamente.`, "warn");
+}
+warnings.forEach(w => toast(w, "warn"));
+}
 /* ---------- 3. Derivados ---------- */
 const catById  = id => state.categories.find(c=>c.id===id);
 const accById  = id => state.accounts.find(a=>a.id===id);
@@ -684,6 +747,7 @@ shield:'<path d="m12 3 7 2.8v5.7c0 4.4-2.9 7.4-7 9-4.1-1.6-7-4.6-7-9V5.8z"/><pat
 info:'<circle cx="12" cy="12" r="8.6"/><path d="M12 11v5"/><path d="M12 7.8h.01"/>',
 wallet:'<path d="M19 7.5V6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20H19a2 2 0 0 0 2-2V9.5a2 2 0 0 0-2-2H5.5"/><path d="M16.5 13.5h.01"/>',
 eye:'<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+eyeOff:'<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/><path d="M4.5 4.5l15 15"/>',
 pig:'<path d="M19.5 12.5c0-3.6-3.1-6-7.2-6-3.9 0-7 2.3-7 5.8 0 1.9.9 3.3 2.1 4.4l.4 2.8h2.3l.5-1.6c.6.1 1.1.2 1.7.2.6 0 1.2-.1 1.8-.3l.5 1.7h2.3l.4-2.6c1.2-.8 2.2-2.2 2.2-4.4z"/><path d="M19.5 11h1.8v3h-1.9"/><path d="M9.3 11h.01"/>',
 gift:'<rect x="3.5" y="8" width="17" height="4"/><path d="M5 12v8.5h14V12"/><path d="M12 8v12.5"/><path d="M12 8s-4.8.3-5.6-2C5.8 4.2 8.2 3 9.6 4.2 11 5.4 12 8 12 8zm0 0s4.8.3 5.6-2c.6-1.8-1.8-3-3.2-1.8C13 5.4 12 8 12 8z"/>'
 };
@@ -710,9 +774,9 @@ ${foot?`<div class="modal-f">${foot}</div>`:""}
 </div>`;
 root.appendChild(ov);
 requestAnimationFrame(()=>{
-    ov.classList.add("show");
-    const firstInput = ov.querySelector('input, select, textarea, button');
-    if (firstInput) firstInput.focus();
+ov.classList.add("show");
+const firstInput = ov.querySelector('input, select, textarea, button');
+if (firstInput) firstInput.focus();
 });
 const close = ()=>{ const i=modalStack.indexOf(ov); if(i>-1) modalStack.splice(i,1);
 ov.classList.remove("show"); setTimeout(()=>{ov.remove(); onClose&&onClose();}, 210); };
@@ -1342,54 +1406,45 @@ const viewEl = () => $("#view");
 function emptyBlock(ic, title, msg, btn){
 return `<div class="empty"><div class="e-art">${icon(ic,32)}</div><h4>${title}</h4><p>${msg}</p>${btn||""}</div>`;
 }
-
 /* ---------- Automatic Insights ---------- */
 function getInsights() {
-    const insights = [];
-    const [cs, ce] = cycleRange(new Date());
-    const inCyc = t => inRange(t.date, cs, ce);
-    
-    const txCyc = state.transactions.filter(t => inCyc(t) && t.status === 'pago');
-    const recCyc = txCyc.filter(t => t.type === 'receita').reduce((s, t) => s + t.value, 0);
-    const despCyc = txCyc.filter(t => t.type === 'despesa').reduce((s, t) => s + t.value, 0);
-    
-    if (recCyc > 0) {
-        const rate = Math.round(((recCyc - despCyc) / recCyc) * 100);
-        if (rate > 20) insights.push({icon: 'trendUp', text: `Excelente! Você economizou <b>${rate}%</b> da sua receita neste ciclo.`});
-        else if (rate < 0) insights.push({icon: 'alert', text: `Atenção: Suas despesas superaram as receitas neste ciclo.`});
-    }
-
-    const despList = txCyc.filter(t => t.type === 'despesa').sort((a, b) => b.value - a.value);
-    if (despList.length > 0) {
-        const top = despList[0];
-        insights.push({icon: 'arrowDR', text: `Maior despesa do mês: <b>${esc(top.desc)}</b> (${fmtMoney(top.value)}).`});
-    }
-
-    const catSpend = {};
-    txCyc.filter(t => t.type === 'despesa').forEach(t => {
-        catSpend[t.categoryId] = (catSpend[t.categoryId] || 0) + t.value;
-    });
-    
-    const last3Months = lastMonths(4).slice(1, 4);
-    const avgCatSpend = {};
-    last3Months.forEach(m => {
-        state.transactions.filter(t => monthKey(t.date) === m.key && t.type === 'despesa' && t.status === 'pago').forEach(t => {
-            avgCatSpend[t.categoryId] = (avgCatSpend[t.categoryId] || 0) + t.value;
-        });
-    });
-    Object.keys(avgCatSpend).forEach(k => avgCatSpend[k] /= 3);
-
-    for (const [catId, spent] of Object.entries(catSpend)) {
-        const avg = avgCatSpend[catId] || 0;
-        if (avg > 0 && spent > avg * 1.3) {
-            const c = catById(catId);
-            if (c) insights.push({icon: 'alert', text: `Gastos com <b>${esc(c.name)}</b> estão <b>${Math.round((spent/avg - 1)*100)}%</b> acima da média dos últimos 3 meses.`});
-        }
-    }
-
-    return insights.slice(0, 3);
+const insights = [];
+const [cs, ce] = cycleRange(new Date());
+const inCyc = t => inRange(t.date, cs, ce);
+const txCyc = state.transactions.filter(t => inCyc(t) && t.status === 'pago');
+const recCyc = txCyc.filter(t => t.type === 'receita').reduce((s, t) => s + t.value, 0);
+const despCyc = txCyc.filter(t => t.type === 'despesa').reduce((s, t) => s + t.value, 0);
+if (recCyc > 0) {
+const rate = Math.round(((recCyc - despCyc) / recCyc) * 100);
+if (rate > 20) insights.push({icon: 'trendUp', text: `Excelente! Você economizou <b>${rate}%</b> da sua receita neste ciclo.`});
+else if (rate < 0) insights.push({icon: 'alert', text: `Atenção: Suas despesas superaram as receitas neste ciclo.`});
 }
-
+const despList = txCyc.filter(t => t.type === 'despesa').sort((a, b) => b.value - a.value);
+if (despList.length > 0) {
+const top = despList[0];
+insights.push({icon: 'arrowDR', text: `Maior despesa do mês: <b>${esc(top.desc)}</b> (${fmtMoney(top.value)}).`});
+}
+const catSpend = {};
+txCyc.filter(t => t.type === 'despesa').forEach(t => {
+catSpend[t.categoryId] = (catSpend[t.categoryId] || 0) + t.value;
+});
+const last3Months = lastMonths(4).slice(1, 4);
+const avgCatSpend = {};
+last3Months.forEach(m => {
+state.transactions.filter(t => monthKey(t.date) === m.key && t.type === 'despesa' && t.status === 'pago').forEach(t => {
+avgCatSpend[t.categoryId] = (avgCatSpend[t.categoryId] || 0) + t.value;
+});
+});
+Object.keys(avgCatSpend).forEach(k => avgCatSpend[k] /= 3);
+for (const [catId, spent] of Object.entries(catSpend)) {
+const avg = avgCatSpend[catId] || 0;
+if (avg > 0 && spent > avg * 1.3) {
+const c = catById(catId);
+if (c) insights.push({icon: 'alert', text: `Gastos com <b>${esc(c.name)}</b> estão <b>${Math.round((spent/avg - 1)*100)}%</b> acima da média dos últimos 3 meses.`});
+}
+}
+return insights.slice(0, 3);
+}
 function renderDashboard(){
 const [ps,pe] = periodRange("dashboard");
 const inP = t => inRange(t.date, ps, pe);
@@ -1425,16 +1480,14 @@ const periodBtns=[["mes","Este mês"],["prev","Mês passado"],["30d","Próximos 
 const kpi=(ic,label,val,sub,color)=>`<div class="card kpi lift" style="--kc:${color}22;--ki:${color}">
 <div class="k-top"><span class="k-ic">${icon(ic,15)}</span>${label}</div>
 <div class="k-val num">${val}</div>${sub?`<div class="k-sub">${sub}</div>`:""}</div>`;
-
 const insights = getInsights();
 const insightsHTML = insights.length ? `
 <div class="card" style="margin-bottom:16px">
-    <div class="card-h"><h3>${icon("sparkles", 16)} Insights do mês</h3></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-        ${insights.map(i => `<div class="hint">${icon(i.icon, 14)} <span>${i.text}</span></div>`).join("")}
-    </div>
+<div class="card-h"><h3>${icon("sparkles", 16)} Insights do mês</h3></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+${insights.map(i => `<div class="hint">${icon(i.icon, 14)} <span>${i.text}</span></div>`).join("")}
+</div>
 </div>` : '';
-
 viewEl().innerHTML = `
 <div class="card hero-balance lift" style="margin-bottom:18px">
 <div><div class="hb-label">Patrimônio atual</div>
@@ -1483,7 +1536,7 @@ function filteredTx(){
 const f=ui.txF;
 let list=[...state.transactions];
 if(f.q){ const q=f.q.toLowerCase(); list=list.filter(t=> (t.desc+" "+(t.note||"")).toLowerCase().includes(q)); }
-if(f.type) list=list.filter(t=>t.type===f.type);
+if(f.type) list=list.filter(t=>f.type===t.type);
 if(f.cat) list=list.filter(t=>t.categoryId===f.cat);
 if(f.acc) list=list.filter(t=>t.accountId===f.acc||t.cardId===f.acc);
 if(f.status) list=list.filter(t=>txStatus(t)===f.status);
@@ -2032,6 +2085,18 @@ bindPeriodInputs("reports", $("#p-from"), $("#p-to"));
 }
 function renderSettings(){
 const s=state.settings;
+const lk = lockGet();
+const lockCard = `<div class="card"><div class="card-h"><h3>${icon("shield",16)} Segurança e bloqueio</h3></div>
+${lk ? `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Bloqueio ativo para <b style="color:var(--ink)">${esc(lk.user)}</b>. A senha protege apenas o acesso neste navegador; seus dados e backups continuam em “Backup dos dados”.</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<button class="btn btn-primary" data-action="lock-now">${icon("shield",15)} Bloquear agora</button>
+<button class="btn btn-ghost" data-action="lock-key">${icon("download",15)} Baixar nova chave de recuperação</button>
+<button class="btn btn-ghost" data-action="lock-change">${icon("pencil",15)} Trocar senha</button>
+<button class="btn btn-danger" data-action="lock-remove">${icon("trash",15)} Remover bloqueio</button>
+</div>`
+: `<p style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Proteja o acesso ao Fluxo neste navegador com uma senha. Você receberá uma <b style="color:var(--ink)">chave de recuperação</b> (arquivo) que serve apenas para redefinir a senha, caso a esqueça.</p>
+<button class="btn btn-primary" data-action="lock-create">${icon("shield",15)} Criar senha de acesso</button>`}
+</div>`;
 viewEl().innerHTML=`
 <div class="page-head"><div><h1>Configurações</h1><p>Preferências, categorias, backup e privacidade.</p></div></div>
 <div class="grid settings-grid">
@@ -2072,6 +2137,7 @@ ${state.demo
 ? `<button class="btn btn-danger" data-action="demo-remove" aria-label="Remover dados de exemplo">${icon("trash",15)} Remover dados de exemplo</button>`
 : `<button class="btn btn-ghost" data-action="demo-load" aria-label="Carregar dados de exemplo">${icon("sparkles",15)} Carregar dados de exemplo</button>`}
 </div>
+${lockCard}
 <div class="card" style="border-color:var(--down)"><div class="card-h"><h3 style="color:var(--down)">${icon("alert",16)} Zona de risco</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Apaga <b>todos</b> os lançamentos, contas, cartões, categorias personalizadas e configurações. Exige confirmação dupla. Faça um backup antes.</p>
 <button class="btn btn-danger" data-action="wipe" aria-label="Apagar todos os dados">${icon("trash",15)} Apagar todos os dados</button>
@@ -2313,10 +2379,10 @@ let route=(location.hash.replace("#/","")||"dashboard").split("?")[0];
 if(!ROUTES[route]) route="dashboard";
 const key=ROUTES[route]==="/dashboard"?"dashboard":route;
 $$("#nav .nav-link").forEach(a=>{
-    const isActive = a.dataset.nav===key;
-    a.classList.toggle("active", isActive);
-    if(isActive) a.setAttribute("aria-current", "page");
-    else a.removeAttribute("aria-current");
+const isActive = a.dataset.nav===key;
+a.classList.toggle("active", isActive);
+if(isActive) a.setAttribute("aria-current", "page");
+else a.removeAttribute("aria-current");
 });
 $("#page-title").textContent=TITLES[key]||"Fluxo";
 closeDrawer();
@@ -2523,6 +2589,13 @@ case "demo-load": confirmModal({title:"Carregar dados de exemplo", okLabel:"Carr
 msg:"Será criado um cenário fictício (salário, aluguel, cartões, parcelas). Você pode removê-lo depois em Configurações.",
 onOk:()=>{ seedDemo(); save(); render(); toast("Dados de exemplo carregados."); }}); break;
 case "demo-remove": removeDemo(); break;
+case "lock-now": setLocked(); location.replace("login.html"); break;
+case "lock-create": openLockModal(false); break;
+case "lock-change": openLockModal(true); break;
+case "lock-key": downloadRecoveryKey(); break;
+case "lock-remove": confirmModal({title:"Remover bloqueio", danger:true, okLabel:"Remover",
+msg:"Remover a senha de acesso? O Fluxo voltará a abrir sem senha neste navegador.",
+onOk:()=>{ lockClear(); setUnlocked(); paintLockButton(); render(); toast("Bloqueio removido."); }}); break;
 case "rep-help": {
 const ov=openModal({title:"Limite de período dos relatórios",
 body:`<p style="font-size:14px;line-height:1.7;color:var(--ink2)">${icon("info",15)} Relatórios personalizados processam detalhamentos mensais para um limite máximo de <b style="color:var(--ink)">24 meses</b>. Períodos maiores terão os gráficos e tabelas comparativas limitados a 24 meses a partir da data inicial.</p>`,
@@ -2571,85 +2644,69 @@ $("#scrim").addEventListener("click", closeDrawer);
 $("#btn-new-top").addEventListener("click", openQuickModal);
 $("#fab").addEventListener("click", openQuickModal);
 window.addEventListener("hashchange", render);
-
 /* ---------- PWA Implementation ---------- */
 // Conecta aos arquivos REAIS que já estão no GitHub (mesma pasta do index.html)
 const linkManifest = document.createElement('link');
 linkManifest.rel = 'manifest';
 linkManifest.href = 'manifest.webmanifest';
 document.head.appendChild(linkManifest);
-
 // Registra o Service Worker REAL (arquivo sw.js na mesma pasta)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(err => {
-      console.log('SW não registrado:', err);
-    });
-  });
+window.addEventListener('load', () => {
+navigator.serviceWorker.register('sw.js').catch(err => {
+console.log('SW não registrado:', err);
+});
+});
 }
-
 /* ----- Botão "Instalar App": só no navegador, nunca dentro do app ----- */
 const isStandalone = () =>
-  window.matchMedia('(display-mode: standalone)').matches ||
-  window.matchMedia('(display-mode: window-controls-overlay)').matches ||
-  navigator.standalone === true;
-
+window.matchMedia('(display-mode: standalone)').matches ||
+window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+navigator.standalone === true;
 let deferredPrompt = null;
-
 function createInstallButton(){
-  // Se está em standalone (app instalado), não cria o botão
-  if (isStandalone()) {
-    const existing = document.querySelector('#btn-install');
-    if (existing) existing.remove();
-    return;
-  }
-
-  const topActions = document.querySelector('.top-actions');
-  if(!topActions || document.querySelector('#btn-install')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'btn-install';
-  btn.className = 'btn btn-ghost btn-sm';
-  btn.innerHTML = `${icon('download',14)} Instalar App`;
-  btn.setAttribute('aria-label','Instalar aplicativo');
-  btn.onclick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      return;
-    }
-    toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
-  };
-  topActions.insertBefore(btn, topActions.firstChild);
+// Se está em standalone (app instalado), não cria o botão
+if (isStandalone()) {
+const existing = document.querySelector('#btn-install');
+if (existing) existing.remove();
+return;
 }
-
+const topActions = document.querySelector('.top-actions');
+if(!topActions || document.querySelector('#btn-install')) return;
+const btn = document.createElement('button');
+btn.id = 'btn-install';
+btn.className = 'btn btn-ghost btn-sm';
+btn.innerHTML = `${icon('download',14)} Instalar App`;
+btn.setAttribute('aria-label','Instalar aplicativo');
+btn.onclick = async () => {
+if (deferredPrompt) {
+deferredPrompt.prompt();
+await deferredPrompt.userChoice;
+deferredPrompt = null;
+return;
+}
+toast('Não foi possível abrir o diálogo agora. Instale pelo menu do navegador (⋮ ou ☰ → "Instalar aplicativo…").', 'info');
+};
+topActions.insertBefore(btn, topActions.firstChild);
+}
 // Cria o botão imediatamente se não estiver em standalone
 if (!isStandalone()) {
-  createInstallButton();
+createInstallButton();
 }
-
 window.addEventListener('beforeinstallprompt', (e) => {
-  if (isStandalone()) return;
-  e.preventDefault();
-  deferredPrompt = e;
-  createInstallButton();
+if (isStandalone()) return;
+e.preventDefault();
+deferredPrompt = e;
+createInstallButton();
 });
-
 window.addEventListener('appinstalled', () => {
-  toast('Aplicativo instalado com sucesso!');
-  deferredPrompt = null;
-  const btn = document.querySelector('#btn-install');
-  if (btn) btn.remove();
+toast('Aplicativo instalado com sucesso!');
+deferredPrompt = null;
+const btn = document.querySelector('#btn-install');
+if (btn) btn.remove();
 });
-
-window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
-  if (e.matches) {
-    const btn = document.querySelector('#btn-install');
-    if (btn) btn.remove();
-  }
-});
-    
+/* Se há bloqueio ativo e a sessão não está desbloqueada, vai para a tela de login */
+if (lockGet() && !isUnlocked()) location.replace("login.html");
 (function init(){
 $("#brand-mark").innerHTML=icon("trendUp",21);
 $("#btn-menu").innerHTML=icon("menu",19);
@@ -2658,6 +2715,7 @@ $("#btn-new-top").innerHTML=icon("plus",16)+" Novo lançamento";
 $("#fab").innerHTML=icon("plus",24);
 buildNav();
 applyTheme();
+paintLockButton();
 materializeAll(); save();
 runAudit(); // Run data integrity audit
 if(!state.initialized) onboarding();
