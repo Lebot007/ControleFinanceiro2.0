@@ -2130,8 +2130,7 @@ ${icon(c.icon,13)} ${esc(c.name)}</span>`).join("")}</div>`).join("")}
 • Todos os seus dados financeiros ficam armazenados <b style="color:var(--ink)">localmente, no seu navegador</b> (localStorage).<br>
 • O Fluxo <b style="color:var(--ink)">não envia nada para servidores</b>, não usa APIs externas de armazenamento e não coleta informações pessoais.<br>
 • Se você usar o sistema em outro computador ou limpar os dados do navegador, use o backup (.json) para levar suas informações.<br>
-• Ao importar um backup, o sistema cria automaticamente uma cópia de segurança dos dados atuais antes de substituí-los.</p>
-</div>
+• Ao importar um backup, o sistema cria automaticamente uma cópia de segurança dos dados atuais antes de substituí-los.</p></div>
 ${lockCard}
 <div class="card"><div class="card-h"><h3>${icon("sparkles",16)} Dados de exemplo</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Quer conhecer o sistema preenchido? ${state.demo?"Os dados atuais incluem o exemplo.":"Você pode carregar um cenário de demonstração (removível a qualquer momento)."}</p>
@@ -2139,8 +2138,7 @@ ${state.demo
 ? `<button class="btn btn-danger" data-action="demo-remove" aria-label="Remover dados de exemplo">${icon("trash",15)} Remover dados de exemplo</button>`
 : `<button class="btn btn-ghost" data-action="demo-load" aria-label="Carregar dados de exemplo">${icon("sparkles",15)} Carregar dados de exemplo</button>`}
 </div>
-<div class="card" style="border-color:var(--down)">
-${icon("alert",16)} Zona de risco</h3></div>
+<div class="card" style="border-color:var(--down)">${icon("alert",16)} Zona de risco</h3></div>
 <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Apaga <b>todos</b> os lançamentos, contas, cartões, categorias personalizadas e configurações. Exige confirmação dupla. Faça um backup antes.</p>
 <button class="btn btn-danger" data-action="wipe" aria-label="Apagar todos os dados">${icon("trash",15)} Apagar todos os dados</button>
 </div>
