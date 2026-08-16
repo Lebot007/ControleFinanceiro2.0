@@ -2259,7 +2259,7 @@ foot:`<button class="btn btn-ghost" data-x>Cancelar</button><button class="btn b
 ov.querySelector("[data-x]").onclick=ov._close;
 ov.querySelector("[data-ok]").onclick=()=>{
 if(ov.querySelector("#wipe-input").value.trim()!=="APAGAR") return toast("Digite APAGAR para confirmar.","err");
-try{localStorage.removeItem(DB_KEY); localStorage.removeItem(AUTO_KEY);}catch(e){}
+try{localStorage.removeItem(DB_KEY); localStorage.removeItem(AUTO_KEY); localStorage.removeItem("fluxo.lock.v1"); localStorage.removeItem("fluxo.unlocked");}catch(e){}
 location.hash=""; location.reload();
 };
 }});
