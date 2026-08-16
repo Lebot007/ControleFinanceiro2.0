@@ -212,8 +212,8 @@ $("#btn-reset-ok").onclick = ()=>{
 try{
 localStorage.removeItem("fluxo.v1");
 localStorage.removeItem("fluxo.autobackup");
-localStorage.removeItem(LOCK_KEY);
-localStorage.removeItem(UNLOCK_KEY);
+localStorage.removeItem("fluxo.lock.v1");
+localStorage.removeItem("fluxo.unlocked");
 }catch(e){}
 location.replace("index.html");
 };
