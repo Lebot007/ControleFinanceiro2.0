@@ -86,6 +86,10 @@ background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent)
 transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 @keyframes rpgshine{0%,55%{left:-70%}100%{left:140%}}
 @media (prefers-reduced-motion:reduce){.nav-rpg::after{animation:none}}
+  /* --- Ajuste p/ notebooks pequenos (ThinkPad etc.) --- */
+#nav{padding-bottom:12px}
+#nav::-webkit-scrollbar-track,#nav::-webkit-scrollbar-corner{background:transparent}
+.nav-rpg span:not(.rpg-tag){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .side-foot{padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.09);font-size:11.5px;color:var(--side-dim);position:relative}
 .side-foot .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#1fc48d;margin-right:6px;box-shadow:0 0 8px #1fc48d}
 #main{flex:1;margin-left:246px;display:flex;flex-direction:column;min-width:0}
