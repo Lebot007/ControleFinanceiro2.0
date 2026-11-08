@@ -787,6 +787,13 @@ const v=Math.round(Number(t.value)||0);
 if(t.type==='receita')rec+=v; else if(t.type==='despesa')desp+=v;
 if(t.status==='pago'&&(t.accountId in saldo)){saldo[t.accountId]+= t.type==='receita'? v : -v;}
 });
+/* Transferências entre contas: saem da origem e entram no destino
+   (mesma regra de saldo do app — sem isto o "Tesouro" divergia do Fluxo). */
+(d.transfers||[]).forEach(t=>{
+const v=Math.round(Number(t.value)||0);
+if(t.from in saldo)saldo[t.from]-=v;
+if(t.to in saldo)saldo[t.to]+=v;
+});
 let patrimonio=0, investido=0;
 contas.forEach(a=>{
 const s=saldo[a.id]||0; patrimonio+=s;
