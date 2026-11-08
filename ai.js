@@ -1,8 +1,14 @@
 /* ============================================================
-   Fluxo — Assistente Financeiro (IA local)
+   Fluxo — Assistente Financeiro (IA local, estilo Pierre)
    Chat em linguagem natural (pt-BR) que automatiza o app:
    cria contas/cartões, lança despesas e receitas, transfere,
    paga faturas, consulta saldos e gera relatórios.
+
+   Além de executar comandos, ele:
+   - MEMORIZA fatos do usuário (memória persistente — memoria.js)
+     com “lembre-se que…”, “edite a memória…” e “esqueça…”
+   - ENSINA o passo a passo das funcionalidades do site
+   - PLANEJA gastos com base no contexto e na memória (RAG)
 
    100% local: nada é enviado a servidores. Sem dependências.
    ============================================================ */
@@ -285,7 +291,9 @@ function extractDesc(raw, ctx){
 /* ---------- 3. Estado do chat ---------- */
 let history = [];       /* [{r:'u'|'b', t?} | {r:'b', card} ] */
 let pending  = null;    /* preenchimento de campos em andamento */
+let awaiting = null;    /* confirmação sim/não pendente (memória/planejamento) */
 let lastAction = null;  /* última ação executada (para desfazer) */
+let lastPrompt = null;  /* último System Prompt montado (RAG) — AIChat.lastSystemPrompt() */
 
 function chatLoad(){
   try{
@@ -312,14 +320,15 @@ panel.setAttribute("aria-label", "Assistente Fluxo");
 panel.innerHTML =
 '<div class="ai-head">'+
   '<div class="ai-avatar">'+icon("sparkles",20)+'</div>'+
-  '<div class="ai-title"><b>Assistente Fluxo</b><span>IA local · seus dados ficam no navegador</span></div>'+
+  '<div class="ai-title"><b>Fluxo</b><span>mentor financeiro · memória ativa · 100% local</span></div>'+
+  '<button class="icon-btn" id="ai-mem-btn" title="Minha memória" aria-label="Abrir Minha Memória">'+icon("book",16)+'</button>'+
   '<button class="icon-btn" id="ai-clear" title="Limpar conversa" aria-label="Limpar conversa">'+icon("trash",16)+'</button>'+
   '<button class="icon-btn" id="ai-close" title="Fechar" aria-label="Fechar assistente">'+icon("x",17)+'</button>'+
 '</div>'+
 '<div id="ai-msgs" aria-live="polite"></div>'+
 '<div id="ai-chips"></div>'+
 '<form id="ai-form" autocomplete="off">'+
-  '<input id="ai-input" placeholder="Ex.: cadastrar despesa de mercado 250,50" aria-label="Mensagem para o assistente" maxlength="280">'+
+  '<input id="ai-input" placeholder="Ex.: cadastrar despesa 250,50 · lembre-se que…" aria-label="Mensagem para o assistente" maxlength="280">'+
   '<button id="ai-send" type="submit" aria-label="Enviar mensagem">'+
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-4.6 16-4-6.4z"/><path d="M20 4 11.4 13.6"/></svg>'+
   '</button>'+
@@ -347,14 +356,111 @@ function close(){
 function toggle(){ isOpen() ? close() : open(); }
 fab.addEventListener("click", toggle);
 panel.querySelector("#ai-close").addEventListener("click", close);
-panel.querySelector("#ai-clear").addEventListener("click", ()=>{
+function clearChatConfirm(){
   confirmModal({
     title:"Limpar conversa", okLabel:"Limpar", danger:true,
-    msg:"Apagar todo o histórico da conversa com o assistente?<br><span style=\"color:var(--ink2)\">Seus dados financeiros <b>não</b> são afetados.</span>",
-    onOk:()=>{ history=[]; chatSave(); pending=null; renderChat(); greet(); }
+    msg:"Apagar todo o histórico da conversa com o assistente?<br><span style=\"color:var(--ink2)\">Sua <b>memória</b> e seus dados financeiros <b>não</b> são afetados.</span>",
+    onOk:()=>{ history=[]; chatSave(); pending=null; awaiting=null; renderChat(); greet(); }
   });
-});
-window.AIChat = { open, close, toggle, isOpen };
+}
+panel.querySelector("#ai-clear").addEventListener("click", clearChatConfirm);
+panel.querySelector("#ai-mem-btn").addEventListener("click", ()=>openMemModal());
+window.AIChat = { open, close, toggle, isOpen, memory:()=>openMemModal(), lastSystemPrompt:()=>lastPrompt };
+
+/* ---------- 4c. Minha Memória (modal: ver / editar / apagar fatos) ---------- */
+let memOverlay = null;
+function memEsc(e){ if(e.key === "Escape"){ e.stopPropagation(); closeMemModal(); } }
+function closeMemModal(){
+  if(!memOverlay) return;
+  const ov = memOverlay; memOverlay = null;
+  document.removeEventListener("keydown", memEsc, true);
+  ov.classList.remove("show");
+  setTimeout(()=>ov.remove(), 180);
+}
+function openMemModal(){
+  if(memOverlay){ closeMemModal(); return; }
+  const M = window.FluxoMemoria;
+  if(!M){ botSay("O módulo de memória não carregou — recarregue a página. 😕"); return; }
+  const ov = document.createElement("div");
+  ov.id = "ai-mem-overlay";
+  document.body.appendChild(ov);
+  memOverlay = ov;
+  requestAnimationFrame(()=>ov.classList.add("show"));
+  ov.addEventListener("mousedown", e=>{ if(e.target === ov) closeMemModal(); });
+  document.addEventListener("keydown", memEsc, true);
+  paintMem();
+  const x = ov.querySelector("[data-close]");
+  if(x) x.focus();
+}
+function paintMem(){
+  const ov = memOverlay; if(!ov) return;
+  const M = window.FluxoMemoria, facts = M.all();
+  ov.innerHTML =
+  '<div class="ai-mem-card" role="dialog" aria-modal="true" aria-label="Minha Memória">'+
+    '<div class="ai-mem-head">'+
+      '<div class="ai-mem-ic">'+icon("book",17)+'</div>'+
+      '<div class="ai-mem-tt"><b>Minha Memória</b><span>'+facts.length+' fato'+(facts.length===1?'':'s')+' · fica só no seu navegador</span></div>'+
+      '<button class="ai-mem-x" data-close title="Fechar" aria-label="Fechar Minha Memória">'+icon("x",16)+'</button>'+
+    '</div>'+
+    '<p class="ai-mem-sub">Tudo que o Fluxo lembra sobre você. Edite ou apague à vontade — <b>seus dados financeiros não são afetados</b>.</p>'+
+    '<div class="ai-mem-list">'+
+      (facts.length ? facts.map(f=>
+        '<div class="ai-mem-row" data-id="'+f.id+'">'+
+          '<span class="ai-mem-tag '+esc(f.kind)+'">'+esc(M.KIND_LABEL[f.kind]||f.kind)+'</span>'+
+          '<span class="ai-mem-text">'+esc(f.text)+'</span>'+
+          '<button class="ai-mem-act" data-edit title="Editar fato" aria-label="Editar fato">'+icon("pencil",14)+'</button>'+
+          '<button class="ai-mem-act" data-del title="Apagar fato" aria-label="Apagar fato">'+icon("trash",14)+'</button>'+
+        '</div>').join("")
+      : '<div class="ai-mem-empty">'+icon("sparkles",26)+'<b>Nada guardado ainda</b><span>Me conte no chat: “lembre-se que meu salário é 3000”.</span></div>')+
+    '</div>'+
+    (facts.length ? '<div class="ai-mem-foot"><button class="ai-mem-wipe" data-wipe>Apagar toda a memória</button></div>' : '')+
+  '</div>';
+  const closeBtn = ov.querySelector("[data-close]");
+  if(closeBtn) closeBtn.onclick = closeMemModal;
+  ov.querySelectorAll(".ai-mem-row").forEach(row=>{
+    const id = row.dataset.id;
+    row.querySelector("[data-edit]").onclick = ()=>editMemRow(row, id);
+    const del = row.querySelector("[data-del]");
+    del.onclick = ()=>{
+      if(del.dataset.armed){ M.remove(id); paintMem(); toast("Fato apagado da memória."); }
+      else{
+        del.dataset.armed = "1"; del.classList.add("armed"); del.textContent = "Apagar?";
+        setTimeout(()=>{ if(del.isConnected){ delete del.dataset.armed; del.classList.remove("armed"); del.innerHTML = icon("trash",14); } }, 2600);
+      }
+    };
+  });
+  const wipe = ov.querySelector("[data-wipe]");
+  if(wipe) wipe.onclick = ()=>{
+    if(wipe.dataset.armed){ M.clear(); paintMem(); toast("Memória apagada."); }
+    else{
+      wipe.dataset.armed = "1"; wipe.classList.add("armed"); wipe.textContent = "Apagar TUDO mesmo? (toque de novo)";
+      setTimeout(()=>{ if(wipe.isConnected){ delete wipe.dataset.armed; wipe.classList.remove("armed"); wipe.textContent = "Apagar toda a memória"; } }, 3200);
+    }
+  };
+}
+function editMemRow(row, id){
+  const M = window.FluxoMemoria;
+  const f = M.all().find(x=>x.id===id);
+  if(!f) return;
+  row.innerHTML =
+    '<span class="ai-mem-tag '+esc(f.kind)+'">'+esc(M.KIND_LABEL[f.kind]||f.kind)+'</span>'+
+    '<input class="ai-mem-input" value="'+esc(f.text)+'" maxlength="200" aria-label="Editar fato">'+
+    '<button class="ai-mem-act ok" data-save title="Salvar" aria-label="Salvar edição">'+icon("check",14)+'</button>'+
+    '<button class="ai-mem-act" data-cancel title="Cancelar" aria-label="Cancelar edição">'+icon("x",14)+'</button>';
+  const inp = row.querySelector("input");
+  inp.focus(); try{ inp.select(); }catch(e){}
+  const save = ()=>{
+    const r = M.update(id, inp.value);
+    if(r.ok){ paintMem(); toast("Fato atualizado."); }
+    else{ inp.classList.add("err"); toast("Esse texto não parece um fato útil.", "warn"); }
+  };
+  row.querySelector("[data-save]").onclick = save;
+  row.querySelector("[data-cancel]").onclick = paintMem;
+  inp.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){ e.preventDefault(); save(); }
+    if(e.key === "Escape"){ paintMem(); }
+  });
+}
 
 /* ---------- 5. Renderização ---------- */
 function miniMD(text){
@@ -588,9 +694,9 @@ function setChips(list){
 }
 function defaultChips(){
   const chips = [];
-  if(!state.accounts.length) chips.push("Criar conta no Nubank com 500", "O que você faz?");
-  else if(!state.transactions.length) chips.push("Recebi 3000 de salário", "Cadastrar despesa de mercado 250,50", "O que você faz?");
-  else chips.push("Qual meu saldo?", "Resumo do mês", "Relatório do mês em PDF", "Cadastrar despesa de mercado 250,50");
+  if(!state.accounts.length) chips.push("Criar conta no Nubank com 500", "O que você faz?", "Como funciona a memória?");
+  else if(!state.transactions.length) chips.push("Recebi 3000 de salário", "Cadastrar despesa de mercado 250,50", "lembre-se que meu salário é 3000");
+  else chips.push("Qual meu saldo?", "Resumo do mês", "O que você sabe sobre mim?", "Como recupero minha senha?");
   return chips;
 }
 
@@ -747,15 +853,13 @@ function actPayPending(match, type){
 /* ---------- 7. Intenções ---------- */
 
 function greet(){
-  botSay("Oi! Eu sou o **assistente do Fluxo**. 👋\n"+
-    "Me pede em português o que você precisa que eu cuido do resto — sem tocar em menus:\n"+
-    "- **Criar conta**: “criar conta no Inter com 500”\n"+
-    "- **Despesa**: “cadastrar despesa de mercado 250,50”\n"+
-    "- **Receita**: “recebi 3000 de salário”\n"+
-    "- **Cartão**: “criar cartão Nubank com limite 5000”\n"+
-    "- **Transferir**: “transferir 500 do Inter para a Poupança”\n"+
-    "- **Consultar**: “qual meu saldo?” · “resumo do mês”\n"+
-    "- **Relatório**: “relatório do mês em PDF”",
+  const nome = (window.FluxoMemoria && window.FluxoMemoria.knownName()) || "";
+  botSay("Oi"+(nome ? ", **"+nome+"**" : "")+"! Eu sou o **Fluxo**, seu mentor financeiro. 👋\n"+
+    "Além de executar comandos (“cadastrar despesa de mercado 250,50”), eu:\n"+
+    "- **Memorizo** o que você me contar: “lembre-se que meu salário é 3000”\n"+
+    "- **Explico** o app: “como recupero minha senha?”\n"+
+    "- **Planejo** com você: “tenho apenas 40 reais para gastar”\n"+
+    "Toque no 📖 para ver e editar a **Minha Memória**.",
     {chips: defaultChips()});
 }
 
@@ -768,6 +872,9 @@ function helpText(){
     "- **Transferências**: “transferir 500 da conta X para a Y”\n"+
     "- **Consultas**: “qual meu saldo?” · “resumo do mês” · “quanto gastei com alimentação?” · “o que falta pagar?”\n"+
     "- **Relatório em PDF**: “relatório do mês em PDF” · “relatório de outubro”\n"+
+    "- **Memória**: “lembre-se que meu salário é 3000” · “edite a memória: X para Y” · “esqueça o salário” · “o que você sabe sobre mim?”\n"+
+    "- **Ensino**: “como recupero minha senha?” · “como cadastro um cartão?” · “como faço backup?”\n"+
+    "- **Planejamento**: “tenho apenas 40 reais para gastar”\n"+
     "- **Extras**: “orcamento 4000” · “modo escuro” · “abrir cartões” · “desfazer”\n"+
     "Se faltar alguma informação, eu pergunto antes de salvar nada.";
 }
@@ -893,6 +1000,11 @@ const EXEC = {
       p.categoryId = c ? c.id : (state.categories.find(c=>c.type===type && NORM(c.name)==="outros")||{}).id || null;
     }
     actAddTx(type, {...p, accountId: p.cardId ? null : p.account});
+    /* memoriza automaticamente o salário na primeira receita dessa categoria */
+    if(type === "receita"){
+      const c = p.categoryId ? catById(p.categoryId) : null;
+      if(c && NORM(c.name).includes("salario")) maybeRememberSalary(p.value);
+    }
   },
   transfer(p){
     const from = accById(p.from), to = accById(p.to);
@@ -916,9 +1028,413 @@ const EXEC = {
   }
 };
 
+/* ---------- 7b. Memória, ensino e planejamento ---------- */
+
+/* Confirmação sim/não pendente (conflito de memória, planejamento…) */
+function askConfirm(question, onYes, onNo, chips){
+  awaiting = {yes:onYes, no:onNo || null};
+  botSay(question, {chips: chips || ["Sim","Não"]});
+}
+
+/* Contexto financeiro atual — injetado no System Prompt (camada RAG) */
+function buildAIContext(){
+  try{
+    const [cs, ce] = cycleRange(new Date());
+    const desp = state.transactions.filter(x => x.type === "despesa" && inRange(x.date, cs, ce)).reduce((s,x)=>s+x.value,0);
+    return {
+      saldoTotal: fmtMoney(netWorth()),
+      gastosCiclo: fmtMoney(desp),
+      orcamento: state.budgets.monthly ? fmtMoney(state.budgets.monthly) : "",
+      ciclo: fmtDate(cs) + " a " + fmtDate(ce),
+      contas: state.accounts.length,
+      cartoes: state.cards.length
+    };
+  }catch(e){ return {}; }
+}
+
+/* --- Comando “lembre-se que [fato]” --- */
+function handleRememberFact(factText){
+  const M = window.FluxoMemoria;
+  if(!M){ botSay("O módulo de memória não carregou — recarregue a página. 😕"); return; }
+  const v = M.valid(factText);
+  if(!v.ok){
+    botSay("Hmm, “"+factText+"” não me parece uma informação útil para guardar. 😅\nTente algo como: **lembre-se que meu salário é 3000**.");
+    return;
+  }
+  const dup = M.duplicateOf(v.text);
+  if(dup){ botSay("Eu já sabia disso! 😉 Está anotado: **"+dup.text+"**."); return; }
+  const conf = M.conflictFor(v.text);
+  if(conf){
+    const sal = /salario|ordenado|vencimento/.test(NORM(conf.fact.text)) && /salario|ordenado|vencimento/.test(NORM(v.text));
+    askConfirm((sal ? "**Você mudou de emprego?** 🤔\n" : "") +
+      "Já tenho anotado: “"+conf.fact.text+"”.\nDevo **atualizar** para “"+v.text+"”?",
+      ()=>{ const r = M.update(conf.fact.id, v.text);
+            botSay(r.ok ? "✓ Memória atualizada: **"+r.fact.text+"**." : "Não consegui atualizar agora."); },
+      ()=>{ botSay("Sem problema — mantive o que estava: **"+conf.fact.text+"**."); },
+      ["Sim, atualizar", "Não, manter"]);
+    return;
+  }
+  const r = M.add(v.text);
+  if(r.ok) botSay("✓ Anotado! Vou lembrar que **"+r.fact.text+"**.");
+  else botSay("Não consegui guardar isso agora ("+r.reason+").");
+}
+function handleRemember(text){
+  const m = /\b(?:lembre[-\s]?se|lembra|anot[ae]|guard[ae]|memoriz[ae]|salv[ae])(?:\s+na\s+mem[óo]ria)?\s+que\s+(.+)/i.exec(text);
+  if(!m){ botSay("Me conte assim: **lembre-se que meu salário é 3000**. 🙂"); return; }
+  handleRememberFact(m[1]);
+}
+function handleRememberName(text){
+  const m = /\b(?:meu nome (?:e|é)|me chamo|pode me chamar de|meu apelido (?:e|é))\s+(.+)$/i.exec(text);
+  const nome = m ? m[1].replace(/[.!?,;:]+$/g, "").trim() : "";
+  if(!nome || nome.split(/\s+/).length > 4){ botSay("Me diga assim: **meu nome é Maria**. 🙂"); return; }
+  handleRememberFact("Meu nome é " + cap1(nome));
+}
+
+/* --- Comando “esqueça [fato]” --- */
+function handleForget(text){
+  const M = window.FluxoMemoria;
+  if(!M){ botSay("O módulo de memória não carregou — recarregue a página. 😕"); return; }
+  const t = NORM(text);
+  /* “esquece a conversa” → limpar o chat, não a memória */
+  if(/\b(conversa|historico|chat)\b/.test(t)){ clearChatConfirm(); return; }
+  let rest = "";
+  const mm = /mem[óo]ria[:\s-]*/i.exec(text);
+  if(mm) rest = text.slice(mm.index + mm[0].length);
+  else{
+    const mv = /\b(?:esque[çc][ae]|nao precisa (?:lembrar|guardar|anotar))\b\s*(?:que\s+|de\s+|isso[:,]?\s*)?/i.exec(text);
+    if(mv) rest = text.slice(mv.index + mv[0].length);
+  }
+  const target = rest.replace(/[.!?]+$/g, "").trim();
+  if(!target){
+    botSay("O que devo esquecer, exatamente? 🙂\nPor exemplo: **esqueça que meu salário é 3000** — ou toque no 📖 para gerenciar tudo que lembro.",
+      {chips:["O que você sabe sobre mim?"]});
+    return;
+  }
+  if(/^(tudo|toda a memoria|toda memoria)$/.test(NORM(target))){
+    askConfirm("Apagar **toda** a memória ("+M.count()+" fato(s))? Isso **não** afeta seus dados financeiros.",
+      ()=>{ M.clear(); botSay("✓ Pronto, esqueci tudo. Minha memória está zerada. 🧠"); },
+      ()=>{ botSay("Melhor assim — mantive tudo. 😉"); },
+      ["Sim, apagar tudo", "Não"]);
+    return;
+  }
+  const hits = M.find(target);
+  if(!hits.length){
+    const facts = M.all();
+    botSay("Não encontrei nada parecido com “"+target+"” na memória." +
+      (facts.length ? "\nO que tenho anotado:\n"+facts.slice(0,8).map(f=>"- "+f.text).join("\n") : " Ela está vazia."));
+    return;
+  }
+  if(hits.length === 1 || hits[0].score >= (hits[1] ? hits[1].score : 0) + 3){
+    const f = M.remove(hits[0].fact.id);
+    botSay("✓ Esqueci! Apaguei da memória: **"+(f ? f.text : target)+"**.");
+    return;
+  }
+  botSay("Encontrei mais de um fato parecido — qual devo esquecer?\n"+
+    hits.slice(0,3).map(h=>"- "+h.fact.text).join("\n"),
+    {chips: hits.slice(0,3).map(h=>"esqueça "+h.fact.text)});
+}
+
+/* --- Comando “edite a memória: [antigo] para [novo]” --- */
+function handleMemoryEdit(text){
+  const M = window.FluxoMemoria;
+  if(!M){ botSay("O módulo de memória não carregou — recarregue a página. 😕"); return; }
+  const mm = /mem[óo]ria[:]?\s*/i.exec(text);
+  const rest = mm ? text.slice(mm.index + mm[0].length) : "";
+  const low = rest.toLowerCase();
+  const i = low.indexOf(" para ");
+  if(!rest.trim() || i < 0){
+    botSay("Me mostre assim: **edite a memória: [fato antigo] para [fato novo]**. 🙂");
+    return;
+  }
+  const oldTxt = rest.slice(0,i).trim();
+  const newTxt = rest.slice(i+6).replace(/[.!?]+$/g, "").trim();
+  const v = M.valid(newTxt);
+  if(!v.ok){ botSay("O novo texto não parece um fato útil (“"+newTxt+"”). Tente reformular."); return; }
+  const hits = M.find(oldTxt);
+  if(!hits.length){ botSay("Não achei “"+oldTxt+"” na memória. Toque no 📖 para ver os fatos exatos."); return; }
+  if(hits.length > 1 && hits[0].score < hits[1].score + 2){
+    botSay("Encontrei vários parecidos:\n"+hits.slice(0,3).map(h=>"- "+h.fact.text).join("\n")+"\nMe diga qual com mais detalhes.");
+    return;
+  }
+  const before = hits[0].fact.text;
+  const r = M.update(hits[0].fact.id, v.text);
+  botSay(r.ok ? "✓ Memória atualizada:\n- De: "+before+"\n- Para: **"+r.fact.text+"**"
+              : "Não consegui atualizar: "+r.reason);
+}
+
+/* --- Consulta “o que você sabe sobre mim?” --- */
+function handleMemoryShow(text){
+  const M = window.FluxoMemoria;
+  if(!M){ botSay("O módulo de memória não carregou — recarregue a página. 😕"); return; }
+  if(/\bcomo funciona\b/.test(NORM(text))){
+    botSay("Minha memória funciona assim: 🧠\n"+
+      "- **“lembre-se que [fato]”** — salvo o fato (ex.: “lembre-se que meu salário é 3000”)\n"+
+      "- **“edite a memória: [antigo] para [novo]”** — corrijo o que mudou\n"+
+      "- **“esqueça [fato]”** — apago para sempre\n"+
+      "Tudo fica **só no seu navegador**, e você gerencia tudo no 📖 **Minha Memória** (aí em cima).",
+      {chips:["O que você sabe sobre mim?", "lembre-se que meu salário é 3000"]});
+    return;
+  }
+  const facts = M.all();
+  if(!facts.length){
+    botSay("Minha memória está vazia por enquanto. 🧠\nMe conte algo: **lembre-se que meu salário é 3000** — eu passo a usar isso para planejar com você.",
+      {chips:["lembre-se que meu salário é 3000", "Como funciona a memória?"]});
+    return;
+  }
+  openMemModal();
+  botSay("Abri a **Minha Memória** — "+facts.length+" fato(s) guardado(s). Lá você edita ou apaga qualquer um. 📖");
+}
+
+/* --- Ensino: passo a passo real das funcionalidades do site --- */
+const TEACH_KB = [
+  {re:/recuper\w*|esquec\w*\s*(a|minha)?\s*senha|perd\w*\s*(a|minha)?\s*senha|nao (lembro|sei)[^.]{0,20}senha|chave de recuperacao/,
+   title:"Recuperar o acesso (senha esquecida)",
+   steps:[
+    "Na tela de bloqueio, toque em **“Esqueci minha senha”**.",
+    "Selecione o arquivo **fluxo-chave-recuperacao.json** (baixado quando você criou a senha).",
+    "A chave é validada na hora, dentro do navegador — nada é enviado para fora.",
+    "Crie a **nova senha** (mínimo 4 caracteres) e confirme.",
+    "Pronto: uma **nova chave** é baixada e a antiga deixa de valer — guarde-a!"],
+   tip:"Sem a chave e sem a senha, só resta o reset total (que apaga TUDO). Por isso, guarde a chave em lugar seguro."},
+
+  {re:/\bsenha\b|bloque\w*|desbloque\w*|tranc\w*|\bescudo\b/,
+   title:"Senha de acesso e bloqueio",
+   steps:[
+    "Vá em **Configurações → Segurança e bloqueio**.",
+    "Toque em **“Criar senha de acesso”** (ou “Trocar senha”, se já tiver uma).",
+    "Escolha um nome de exibição e a senha (mínimo 4 caracteres).",
+    "Ao salvar, o app baixa sua **chave de recuperação** (.json) — é ela que salva você se esquecer a senha.",
+    "Para sair: ícone de **escudo** no topo, ou **“Bloquear agora”** nas configurações."],
+   tip:"A senha protege apenas o acesso neste navegador; seus dados e backups continuam salvos localmente."},
+
+  {re:/\bcart(ao|oes)\b/,
+   title:"Cadastrar e usar cartões",
+   steps:[
+    "Abra **Cartões de crédito** na barra lateral.",
+    "Toque em **“Novo cartão”**.",
+    "Preencha nome, banco, **limite** e os dias de **fechamento/vencimento** da fatura.",
+    "Para lançar compras: botão **“Compra”** no cartão — ou me peça: “comprei 200 no cartão Nubank”.",
+    "A fatura fecha por ciclo (dia de fechamento); quite com **“pagar fatura do Nubank”**."],
+   tip:"Compras no cartão ficam **pendentes** até a fatura ser paga — o saldo da conta só muda quando você quita a fatura."},
+
+  {re:/transfer\w*|mover dinheiro/,
+   title:"Transferir entre contas",
+   steps:[
+    "Abra **Contas e carteiras**.",
+    "Toque em **“Transferir”**.",
+    "Escolha a conta de **origem**, a de **destino**, o valor e a data.",
+    "Confirme — a transferência aparece no histórico e não altera seu patrimônio total."],
+   tip:"Ou me peça direto: “transferir 500 do Inter para a Poupança”."},
+
+  {re:/parcel\w*/,
+   title:"Parcelar uma compra",
+   steps:[
+    "Toque no **+** (canto inferior direito) ou abra **Lançamentos → Novo**.",
+    "Preencha a despesa normalmente.",
+    "Ative a opção **“Parcelar”** e informe o **nº de parcelas** e a data da primeira.",
+    "Cada parcela vira um lançamento mensal próprio (ex.: R$ 1.200 em 12x = 12 de R$ 100)."],
+   tip:"No cartão, cada parcela entra na fatura do mês correspondente."},
+
+  {re:/recorren\w*|\bfixa\b|repetir/,
+   title:"Lançamentos recorrentes",
+   steps:[
+    "No formulário de lançamento, ative **“Repetir automaticamente”**.",
+    "Escolha a frequência: mensal, semanal, anual ou personalizada (dias).",
+    "Defina quando termina (data ou nº de ocorrências).",
+    "As próximas ocorrências são geradas sozinhas — pause ou interrompa quando quiser."],
+   tip:"Ideal para aluguel, salário, assinaturas e afins."},
+
+  {re:/lancamento|lancar|despesa|receita|\bgasto\b|contas a pagar|novo registro/,
+   title:"Lançar despesas e receitas",
+   steps:[
+    "Toque no **+** no canto inferior direito (ou **Lançamentos → Novo**).",
+    "Escolha o tipo: **despesa**, **receita** ou conta a pagar.",
+    "Preencha valor, descrição, categoria, conta/cartão, forma de pagamento e data.",
+    "Marque **pago** ou **pendente**; ative parcelamento ou recorrência se precisar."],
+   tip:"Ou simplesmente me peça: “cadastrar despesa de mercado 250,50”."},
+
+  {re:/\bcarteira\b|\bcontas? e carteiras|conta\b/,
+   title:"Cadastrar contas e carteiras",
+   steps:[
+    "Abra **Contas e carteiras** na barra lateral.",
+    "Toque em **“Nova conta”**.",
+    "Informe nome, tipo (corrente, poupança, dinheiro, digital ou investimentos) e o **saldo inicial**.",
+    "Use **“Transferir”** para mover dinheiro entre contas (não altera o patrimônio)."],
+   tip:"Você também pode me pedir: “criar conta no Inter com 500”."},
+
+  {re:/backup|export\w*|import\w*|\bcsv\b|planilha|guardar dados|salvar dados/,
+   title:"Backup e exportação",
+   steps:[
+    "Vá em **Configurações → Backup dos dados**.",
+    "**Exportar backup (.json)** salva tudo (contas, lançamentos, cartões, metas).",
+    "**Exportar lançamentos (.csv)** gera planilha para Excel/Sheets.",
+    "Para restaurar: **Importar backup (.json)** — o app cria uma cópia dos dados atuais antes de substituir."],
+   tip:"Seus dados nunca saem do navegador; o backup é o único jeito de levá-los para outro dispositivo."},
+
+  {re:/relatorio|\bpdf\b/,
+   title:"Relatórios",
+   steps:[
+    "Abra **Relatórios** na barra lateral.",
+    "Escolha o período (mês, ano ou personalizado).",
+    "Use **Imprimir/PDF** para gerar o documento.",
+    "Ou me peça: **“relatório do mês em PDF”** — eu gero e entrego aqui no chat."],
+   tip:"O relatório traz receitas, despesas por categoria, contas, cartões e lançamentos do período."},
+
+  {re:/orcamento|\bmeta\b|metas|planejamento|planejar|economizar/,
+   title:"Orçamento e metas",
+   steps:[
+    "Abra **Planejamento** na barra lateral.",
+    "Defina o **orçamento mensal** (teto de gastos).",
+    "Opcional: limite de gasto **por categoria**.",
+    "Cadastre **metas**: economia mensal e patrimônio desejado."],
+   tip:"Atalho: me diga “orcamento 4000” ou “meta de economia 500”."},
+
+  {re:/tema|escuro|claro/,
+   title:"Tema claro/escuro",
+   steps:[
+    "Toque no ícone de **lua/sol** na barra superior.",
+    "Ou em **Configurações → Preferências → Tema**."],
+   tip:"Atalho de voz: “modo escuro” ou “modo claro”."},
+
+  {re:/instal\w*|\bpwa\b|aplicativo|offline|sem internet|funciona sem/,
+   title:"Instalar e usar offline",
+   steps:[
+    "No computador: ícone de **instalação** na barra de endereço do navegador.",
+    "No celular: menu do navegador → **“Instalar aplicativo”** ou “Adicionar à tela inicial”.",
+    "Depois de instalado, o Fluxo abre como app e **funciona offline**."],
+   tip:"Os dados continuam salvos só no seu navegador, mesmo instalado."},
+
+  {re:/apagar|reset\w*|zerar|limpar dados|comecar de novo/,
+   title:"Apagar todos os dados",
+   steps:[
+    "Vá em **Configurações**, até a seção de risco.",
+    "Toque em **“Apagar todos os dados”**.",
+    "Digite **APAGAR** para confirmar — a ação é irreversível."],
+   tip:"Antes de apagar, exporte um backup (.json) se quiser guardar seu histórico."},
+
+  {re:/categoria/,
+   title:"Categorias",
+   steps:[
+    "Vá em **Configurações → Categorias**.",
+    "Toque em **“Nova”** para criar.",
+    "Clique em uma categoria existente para **editar** nome, ícone ou cor."],
+   tip:"Categorias em uso por lançamentos não podem ser excluídas — reatribua antes."},
+
+  {re:/quem (e|es) (voce|vc)|o que (voce|vc) (faz|e|consegue)|como funciona|como (uso|usar|comeco)/,
+   title:"Quem eu sou",
+   steps:[
+    "Sou o **Fluxo**, seu mentor financeiro dentro do app.",
+    "Executo comandos: “criar conta no Nubank com 500”.",
+    "Memorizo fatos: “lembre-se que meu salário é 3000”.",
+    "Explico o app: é só perguntar “como…”.",
+    "Planejo com você: “tenho apenas 40 reais para gastar”."],
+   tip:"Digite **ajuda** para ver a lista completa de comandos."}
+];
+
+function handleTeach(text){
+  const t = NORM(text);
+  const kb = TEACH_KB.find(k => k.re.test(t));
+  if(!kb){
+    botSay("Ainda não aprendi isso, mas posso te mostrar onde encontrar no site. 🧭\n"+
+      "- **Contas e cartões**: barra lateral\n- **Relatórios e backups**: Relatórios / Configurações\n"+
+      "Ou digite **ajuda** para ver tudo que eu sei fazer.");
+    return;
+  }
+  botSay("**"+kb.title+"** — passo a passo:\n"+
+    kb.steps.map(s=>"- "+s).join("\n") +
+    (kb.tip ? "\n💡 "+kb.tip : ""));
+}
+
+/* --- Planejamento contextual (“tenho apenas R$ 40 para gastar”) --- */
+function handlePlan(text){
+  const M = window.FluxoMemoria;
+  const moneys = extractMoneyAll(blankDates(text));
+  const value = moneys.length ? moneys[0].cents : 0;
+  if(!value){
+    botSay("Quanto você tem disponível? Me diga, por exemplo: **tenho apenas 40 reais para gastar**. 🙂");
+    return;
+  }
+  /* contexto financeiro real (memória de curto prazo = dados do app) */
+  const today = todayISO();
+  const txToday = state.transactions.filter(x => x.type === "despesa" && (x.date === today || x.paidDate === today));
+  const spentToday = txToday.reduce((s,x)=>s+x.value,0);
+  const [cs, ce] = cycleRange(new Date());
+  const despCiclo = state.transactions.filter(x => x.type === "despesa" && inRange(x.date, cs, ce));
+  const spentCycle = despCiclo.reduce((s,x)=>s+x.value,0);
+  const budget = state.budgets.monthly || 0;
+  const daysLeft = Math.max(1, daysBetween(today, ce));
+  /* memória persistente: preferências e fatos relevantes (RAG) */
+  const relevantFacts = M ? M.relevant(text, 5) : [];
+  const prefs = M ? M.all().filter(f => f.kind === "preferencia") : [];
+  /* prioridade sugerida: preferência anotada ou a maior categoria do ciclo */
+  let sugestao = "o essencial (mercado e contas)";
+  const byCat = {};
+  despCiclo.forEach(x => { byCat[x.categoryId] = (byCat[x.categoryId]||0)+x.value; });
+  const topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  const topCatName = topCat ? ((catById(topCat[0])||{}).name || "") : "";
+  const prefMention = (prefs.find(p => /mercado|alimentac|supermercado/.test(NORM(p.text))) || relevantFacts.find(f => f.kind === "preferencia")) || null;
+  if(prefMention) sugestao = "o que você mais usa (" + prefMention.text.toLowerCase() + ")";
+  else if(topCatName) sugestao = "**" + topCatName + "** (sua maior categoria do ciclo)";
+  let msg = "Certo, vamos planejar com cuidado. 🧮\n";
+  msg += spentToday > 0
+    ? "- Hoje você já gastou **" + fmtMoney(spentToday) + "** (" + txToday.length + " lançamento(s)).\n"
+    : "- Hoje você ainda não gastou nada. 👏\n";
+  msg += "- No ciclo atual (" + fmtDate(cs) + " a " + fmtDate(ce) + "): **" + fmtMoney(spentCycle) + "** em despesas";
+  msg += budget ? ", com orçamento de " + fmtMoney(budget) + " (restam **" + fmtMoney(Math.max(0, budget - spentCycle)) + "**).\n" : ".\n";
+  msg += "Com **" + fmtMoney(value) + "** para os próximos " + daysLeft + " dia(s), sugiro priorizar " + sugestao + " e segurar gastos discricionários.";
+  askConfirm(msg + "\nQuer que eu **reserve** esses " + fmtMoney(value) + " na memória?",
+    ()=>{ if(M){ M.add("Reserva do ciclo: " + fmtMoney(value) + " até " + fmtDate(ce)); }
+          botSay("✓ Reservado! Vou lembrar que você tem **" + fmtMoney(value) + "** para o resto do ciclo (até " + fmtDate(ce) + "). Se passar disso, eu te lembro nos resumos. 💪"); },
+    ()=>{ if(M){ M.add("Disponível para gastar: " + fmtMoney(value) + " (dito em " + fmtDate(today) + ")"); }
+          botSay("✓ Anotado! Vou lembrar que você tem **" + fmtMoney(value) + "** disponíveis. 😉"); },
+    ["Sim, reservar", "Só anotar"]);
+}
+
+/* Pergunta sobre o SITE (“como…”, “onde…”, “esqueci a senha”) → ensinar, não executar.
+   Se a frase traz valor + verbo de ação, o usuário quer EXECUTAR — não aprender. */
+function isTeachQuestion(t){
+  const senhaLost = /\b(esquec\w*|perd\w*|nao (lembro|sei))\b.{0,18}\b(senha|acesso)\b/.test(t);
+  const qStart = /^(como|como que|como eu|onde|aonde|quando|quais?|o que e|quem|me ensin\w+|ensin\w+|me explica|explique|explica|explicar|duvida|ajuda( com| para| no| na)?|socorro)\b/.test(t);
+  if(!qStart && !senhaLost) return false;
+  const topic = /\b(senha|recuper\w*|bloque\w*|desbloque\w*|cart\w+|conta|carteira|banco|backup|export\w*|import\w*|relatorio|pdf|csv|planilha|orcamento|meta|metas|planejamento|tema|escuro|claro|instal\w*|pwa|offline|online|apagar|reset\w*|zerar|parcel\w*|recorren\w*|fixa|transfer\w*|lancamento|lancar|despesa|receita|gasto|contas a pagar|categoria|site|app|fluxo|assistente|dados)\b/.test(t);
+  if(!topic) return false;
+  if(/\d/.test(t) && /\b(quero|faca|faz|fazer|cadastr\w*|cri\w*|adicion\w*|registr\w*|lanc\w*|transfere|transferir|paguei|comprei|recebi|gastei)\b/.test(t)) return false;
+  return true;
+}
+
+/* Escassez explícita: “tenho apenas R$ 40 (para gastar)”, “me restam 20 reais” */
+function isPlanNeed(t){
+  if(!/\d/.test(t)) return false;
+  if(/\b(recebi|salario|deposito|depositaram|rendeu|ganhei|vendi|transfer\w*|enviar|envia|enviei|mandar|manda|mandei|pagar|paguei|pagamento|comprei|compra|gastei|despesa|receita)\b/.test(t)) return false;
+  return /\b(tenho|resto|restam?|resta|sobrou|sobraram|sobra|sobrando|disponivel|disponho)\b/.test(t) &&
+         /\b(apenas|so|somente|unico|ultimo|restam?|resta|sobr\w+|para (o resto|gastar|semana|mes|ciclo))\b/.test(t);
+}
+
+/* Memoriza o salário automaticamente na primeira receita dessa categoria */
+function maybeRememberSalary(cents){
+  const M = window.FluxoMemoria;
+  if(!M || !cents) return;
+  if(M.all().some(f => /salario/.test(NORM(f.text)))) return; /* já sabe (ou conflito tratado via comando) */
+  const r = M.add("Salário: " + fmtMoney(cents));
+  if(r.ok && r.status === "added")
+    botSay("💾 Guardei na memória: seu salário é **" + fmtMoney(cents) + "** — isso me ajuda a planejar com você. Ajuste quando quiser no 📖 **Minha Memória**.");
+}
+
 /* Classificação */
 function classify(t){
   const has = re => re.test(t);
+  /* --- memória (prioridade máxima) --- */
+  if(has(/\b(lembre[- ]se|lembra|anote|anota|guarde|guarda|memorize|memoriza|salve|salva)\b[^.?!]{0,14}\bque\b/)) return "remember";
+  if(has(/\b(meu nome e|me chamo|pode me chamar de|meu apelido e)\b/)) return "remember_name";
+  if(has(/\b(edite|editar|mude|muda|altere|alterar|troque|trocar|atualize|atualizar|corrige|corrigir)\b.{0,20}\bmemoria\b/)) return "memory_edit";
+  if(has(/\b(esquec[ae]|apague?|apaga|remova?|remove|deleta?|delete)\b.{0,18}\bmemoria\b/) ||
+     has(/\b(esquec[ae])\b\s+(que|de|isso|tudo|o|a|os|as|meu|minha|meus|minhas)\b/) ||
+     has(/\bnao precisa (lembrar|guardar|anotar)\b/)) return "forget";
+  if(has(/\bmemoria\b/) || has(/\bsobre mim\b/) || has(/\bo que voce (sabe|lembra|memorizou|anotou)\b/)) return "memory_show";
+  /* --- ensino: pergunta sobre o site vem antes de qualquer comando --- */
+  if(isTeachQuestion(t)) return "teach";
+  /* --- planejamento: “tenho apenas R$ 40” --- */
+  if(isPlanNeed(t)) return "plan";
   if(has(/\b(ajuda|socorro|help|comandos?|exemplos?|o que (vc|voce|voce) (faz|pode|consegue)|como (uso|funciona))\b/)) return "help";
   if(has(/^(oi|ola|opa|eae|e ai|ei|hey|bom dia|boa tarde|boa noite|salve|tudo bem|tudo bom|fala)\b/)) return "greet";
   if(has(/\b(obrigad[oa]|valeu|vlw|show|top|perfeit[oa]|mandou bem|demais)\b/)) return "thanks";
@@ -933,7 +1449,7 @@ function classify(t){
   if(has(/\b(orcamento|teto de gastos?)\b/)) return "budget";
   if(has(/\bmeta\b/)) return "goal";
   if(has(/\b(tema|modo)\s+(escuro|dark|claro|light)\b/) || has(/\b(ativar|desativar|ligar|desligar)\b.{0,14}\b(escuro|dark|claro|light)\b/)) return "theme";
-  if(has(/\bqual (e|é|meu|o|a)?\s*(meu |o |a )?(saldo|patrimonio)/) || has(/\bquanto (dinheiro )?(eu )?tenho\b/) || has(/\bsaldo (atual|total|geral|disponivel)\b/)) return "balance";
+  if(has(/\bqual (e|é|meu|o|a)?\s*(meu |o |a )?(saldo|patrimonio)/) || has(/\bquanto (dinheiro )?(eu )?tenho\b/) || has(/\bsaldo (atual|total|geral|disponivel)\b/) || has(/\b(vejo|ver|consulto|consultar|confiro|checo)\b.{0,26}\bsaldo\b/)) return "balance";
   if(has(/\b(resumo|panorama|balanco|como (esta|ta|andam|ta indo|andando))\b/) ) return "summary";
   if(has(/\bquanto (gastei|gasto|foi gasto|gastamos)\b/) || has(/\bgastos? (com|em|no|na|de|da)\b/) || has(/\btotal (com|de|da|em)\b/)) return "spend_query";
   if(has(/\b(minhas|meus|quais|listar|mostra|mostrar)\b.{0,22}\b(contas|carteiras|bancos)\b/)) return "list_accounts";
@@ -955,6 +1471,15 @@ function handle(text){
   const card = findCard(moneySrc);
 
   switch(intent){
+
+  /* --- memória, ensino e planejamento --- */
+  case "remember":      handleRemember(text); return;
+  case "remember_name": handleRememberName(text); return;
+  case "forget":        handleForget(text); return;
+  case "memory_edit":   handleMemoryEdit(text); return;
+  case "memory_show":   handleMemoryShow(text); return;
+  case "teach":         handleTeach(text); return;
+  case "plan":          handlePlan(text); return;
 
   case "help": botSay(helpText()); return;
 
@@ -1277,6 +1802,23 @@ function send(text){
   text = String(text||"").trim().slice(0, 280);
   if(!text) return;
   pushUser(text);
+  const t = NORM(text);
+  /* confirmação sim/não pendente (conflito de memória, planejamento…) */
+  if(awaiting){
+    const a = awaiting; awaiting = null;
+    if(/\b(sim|isso|isso mesmo|claro|com certeza|pode|pode sim|ah sim|confirmo|atualiza|atualize|manda|vai|beleza|blz|bora|quero|reservar|reserva|anotar|anota|ok|certo|perfeito|show|top)\b/.test(t)){
+      botReply(()=>{ try{ a.yes(); }catch(e){ botSay("Tive um problema ao confirmar isso. 😕"); } }); return;
+    }
+    if(/\b(nao|negativo|deixa|deixa quieto|cancela|cancelar|agora nao|melhor nao|esquece|n)\b/.test(t)){
+      botReply(()=>{ if(a.no) a.no(); else botSay("Deixa quieto então. 🙂"); }); return;
+    }
+    botReply(()=>botSay("Ok, deixo essa confirmação de lado. 🙂"));
+    /* a mensagem atual segue o fluxo normal abaixo */
+  }
+  /* camada RAG: monta o System Prompt desta interação (persona + memória + contexto) */
+  try{
+    if(window.FluxoMemoria) lastPrompt = window.FluxoMemoria.systemPrompt(text, buildAIContext());
+  }catch(e){ /* memória é opcional */ }
   if(pending){
     const done = continuePending(text);
     if(done) return;
