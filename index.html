@@ -21,6 +21,7 @@ if(localStorage.getItem("fluxo.lock.v1")&&localStorage.getItem("fluxo.unlocked")
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ai.css">
 <style>
 :root{
 --bg:#f1f3ee; --surface:#ffffff; --surface2:#f7f8f4; --ink:#16241e; --ink2:#5d6d64;
@@ -2988,6 +2989,7 @@ const f=e.target.files[0]; if(f) handleImportFile(f); e.target.value="";
 document.addEventListener("keydown", e=>{
 const typing=/input|textarea|select/i.test(document.activeElement?.tagName||"");
 if(e.key==="Escape"){ if(modalStack.length){ modalStack[modalStack.length-1]._close(); return; }
+if(window.AIChat && window.AIChat.isOpen()){ AIChat.close(); return; }
 $("#search-results").classList.remove("open"); closeDrawer(); }
 if(typing) return;
 if(e.key==="/"){ e.preventDefault(); $("#global-search").focus(); }
@@ -3078,5 +3080,6 @@ if(!location.hash) location.hash="#/dashboard";
 render();
 })();
 </script>
+<script src="ai.js"></script>
 </body>
 </html>
