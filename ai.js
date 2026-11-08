@@ -82,6 +82,7 @@ const sendEl  = panel.querySelector("#ai-send");
 function isOpen(){ return panel.classList.contains("open"); }
 function open(){
   panel.classList.add("open");
+  document.body.classList.add("ai-chat-open");
   fab.setAttribute("aria-label", "Fechar assistente financeiro");
   fab.classList.remove("has-news");
   if(!history.length) greet();
@@ -89,6 +90,7 @@ function open(){
 }
 function close(){
   panel.classList.remove("open");
+  document.body.classList.remove("ai-chat-open");
   fab.setAttribute("aria-label", "Abrir assistente financeiro");
 }
 function toggle(){ isOpen() ? close() : open(); }
@@ -245,7 +247,11 @@ function renderChat(){
   history.forEach(m => msgsEl.appendChild(m.pdf ? pdfNode(m.pdf) : msgNode(m)));
   scrollBottom();
 }
-function scrollBottom(){ msgsEl.scrollTop = msgsEl.scrollHeight; }
+function scrollBottom(){
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  /* garante o ajuste depois do layout assentar (fontes, imagens, bolhas) */
+  requestAnimationFrame(()=>{ if(msgsEl.isConnected) msgsEl.scrollTop = msgsEl.scrollHeight; });
+}
 
 function pushUser(text){
   history.push({r:"u", t:text});
@@ -254,8 +260,11 @@ function pushUser(text){
   scrollBottom();
 }
 
-/* Indicador de digitação com status do que o agente está fazendo */
-let typingEl = null;
+/* Indicador de digitação com status do que o agente está fazendo.
+   Se a resposta demorar um pouco, a frase evolui — nada de contagem
+   de segundos ou avisos técnicos na cara do usuário. */
+let typingEl = null, typingTimer = null, typingIdx = 0;
+const TYPING_PHRASES = ["pensando…", "ainda pensando…", "quase lá…", "últimos ajustes…"];
 function showTyping(status){
   if(!typingEl){
     typingEl = document.createElement("div");
@@ -264,9 +273,19 @@ function showTyping(status){
   }
   typingEl.innerHTML = `<div class="ai-bot-ic">${icon("sparkles",14)}</div>`+
     `<div class="ai-bub ai-typing"><i></i><i></i><i></i>${status ? '<span class="ai-status">'+esc(status)+'</span>' : ''}</div>`;
+  typingIdx = 0;
+  clearInterval(typingTimer);
+  typingTimer = setInterval(()=>{
+    typingIdx = Math.min(typingIdx + 1, TYPING_PHRASES.length - 1);
+    const s = typingEl && typingEl.querySelector(".ai-status");
+    if(s) s.textContent = TYPING_PHRASES[typingIdx];
+  }, 6000);
   scrollBottom();
 }
-function hideTyping(){ if(typingEl){ typingEl.remove(); typingEl=null; } }
+function hideTyping(){
+  clearInterval(typingTimer); typingTimer = null;
+  if(typingEl){ typingEl.remove(); typingEl=null; }
+}
 
 function botSay(text, opts={}){
   hideTyping();
@@ -483,7 +502,7 @@ window.FluxoUI = {
 function llmHistory(){
   return history
     .filter(m => m.t && typeof m.t === "string")          /* só bolhas de texto */
-    .slice(-16)
+    .slice(-8)                                            /* contexto suficiente, prompt leve */
     .map(m => ({role: m.r === "u" ? "user" : "assistant", content: m.t}));
 }
 
@@ -501,7 +520,7 @@ async function agir(text){
   try{
     const out = await window.FluxoAgente.turn(text, {
       history: llmHistory(),
-      onStatus: s => showTyping(s + "…")
+      onStatus: s => showTyping(/…$/.test(s) ? s : s + "…")
     });
     hideTyping();
     if(out.text) botSay(out.text);
@@ -511,7 +530,7 @@ async function agir(text){
     }
   }catch(e){
     hideTyping();
-    botSay("Meu cérebro deu um nó agora — pode repetir? Se persistir, veja se a internet está ok.");
+    botSay("Meu cérebro deu um nó agora 😵‍💫 Pode repetir? Se persistir, aguarde uns segundos — o serviço gratuito de IA às vezes respira fundo.");
   }finally{
     setBusy(false);
     if(isOpen()){ try{ inputEl.focus(); }catch(e){} }

@@ -1,23 +1,24 @@
 /* ============================================================
    Fluxo — Agente Autônomo (o "cérebro" do assistente)
    ------------------------------------------------------------
-   Substitui o antigo parser de intenções (if/else + regex) por
-   um AGENTE DE IA real com Tool Calling, rodando no navegador:
+   Um AGENTE DE IA real com Tool Calling, rodando no navegador:
 
      1. O usuário escreve QUALQUER COISA em linguagem natural.
-     2. O agente envia a conversa (com memória + contexto do app)
-        para um LLM gratuito e SEM CHAVE (Pollinations, modelo
-        GPT-OSS 20B, endpoint compatível com OpenAI, CORS aberto).
-     3. O modelo DECIDE sozinho o que fazer e responde com
-        chamadas de ferramentas (tool_calls) — zero regras fixas.
-     4. O loop do agente executa cada ferramenta aqui no navegador
-        (criar contas, lançar transações, consultar dados, salvar
-        memória...) e devolve o resultado para o modelo.
-     5. O modelo responde ao usuário em português, de forma natural.
+     2. UMA ÚNICA chamada ao LLM gratuito e sem chave (Pollinations,
+        GPT-OSS 20B, endpoint compatível com OpenAI, CORS aberto)
+        decide o que fazer — o entendimento é 100% do modelo.
+     3. As ferramentas (criar contas, lançar transações, consultar
+        dados, memorizar...) executam AQUI, no navegador.
+     4. A resposta final é montada NA HORA, localmente (síntese
+        instantânea com a voz do Fluxo) — sem gastar uma segunda
+        chamada do serviço, que era o que deixava o chat lento.
 
-   Resiliência: timeout por chamada, retentativas com pausa,
-   nomes de ferramenta higienizados (o modelo às vezes emite
-   sufixos internos) e resposta amigável se tudo falhar.
+   VELOCIDADE (regra de ouro): o usuário nunca espera de graça.
+   - Uma geração do serviço por mensagem, no máximo.
+   - HTTP 402 (limite gratuito: ~1 geração/45s por IP): fila silenciosa
+     que entrega sozinha quando a janela abre — sem contagem de segundos
+     na tela; se a fila andar mal, resposta amigável imediata.
+   - Timeout curto por tentativa + retentativas ágeis.
 
    Privacidade: os DADOS financeiros ficam só no navegador
    (localStorage); apenas o texto da conversa + o contexto
@@ -31,9 +32,8 @@ if(window.FluxoAgente) return;   /* evita instância dupla */
 const ENDPOINT = "https://text.pollinations.ai/openai";
 const MODEL    = "openai";              /* GPT-OSS 20B — tier anônimo, com tools */
 const REFERRER = "lebot007-fluxo";      /* identificação do app (não é chave) */
-const TIMEOUT_MS  = 75000;              /* por tentativa */
-const MAX_RETRIES = 2;                  /* retentativas por chamada (rede/5xx) */
-const MAX_WAITS   = 3;                  /* esperas pela cota gratuita (HTTP 402) por chamada */
+const TIMEOUT_MS  = 30000;              /* por tentativa — falha rápido, nunca trava o usuário */
+const MAX_RETRIES = 2;                  /* retentativas por chamada (rede/5xx/timeout) */
 
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
@@ -56,13 +56,19 @@ function parseArgs(raw){
 
 /**
  * Uma chamada ao LLM (compatível com /v1/chat/completions).
- * O tier gratuito limita a ~1 geração a cada ~37s por IP: ao receber
- * HTTP 402, espera o tempo indicado em Retry-After e continua — quem
- * chama acompanha via onWait(segundos).
+ * RÁPIDA E RESILIENTE:
+ * - HTTP 402 (limite gratuito: ~1 geração/45s por IP): entra numa FILA
+ *   silenciosa — espera o tempo do Retry-After (com teto de paciência)
+ *   e entrega sozinho quando a janela abre. Nada de contagem de
+ *   segundos na tela: só frases amigáveis do indicador de digitação.
+ * - 429/5xx: retentativas ágeis. Timeout curto por tentativa.
  * @returns {object} corpo da resposta ({choices:[{message}]})
  */
-async function llmChat(messages, tools, onWait){
-  let retries = 0, waits = 0;
+const PATIENCE_MS = 55000;   /* espera máxima total na fila gratuita por mensagem */
+
+async function llmChat(messages, tools, onStatus){
+  let retries = 0, queued = 0;
+  const t0 = Date.now();
   for(;;){
     const ctl = new AbortController();
     const tm  = setTimeout(()=>ctl.abort(), TIMEOUT_MS);
@@ -77,25 +83,27 @@ async function llmChat(messages, tools, onWait){
           messages,
           tools: tools || undefined,
           tool_choice: tools ? "auto" : undefined,
-          max_tokens: 2048,
-          reasoning_effort: "low"      /* respostas mais rápidas e cabe no limite de saída */
+          max_tokens: 700,
+          reasoning_effort: "low"      /* raciocínio curto: decisão mais rápida */
         })
       });
       clearTimeout(tm);
 
-      /* cota gratuita esgotada NESTA janela → espera a próxima vaga */
+      /* limite gratuito atingido (~1 geração/45s por IP): fila silenciosa */
       if(res.status === 402){
-        if(waits >= MAX_WAITS) throw new Error("serviço gratuito ocupado agora");
-        const ra = Math.min((parseInt(res.headers.get("retry-after") || "37", 10) || 37) + 1, 46);
-        if(onWait) onWait(ra);
-        await sleep(ra * 1000);
-        waits++;
+        const ra = parseInt(res.headers.get("retry-after") || "0", 10) || 0;
+        const waitMs = Math.min(Math.max(ra * 1000, 8000), 50000);
+        if(queued >= 2 || Date.now() - t0 + waitMs > PATIENCE_MS)
+          throw new Error("serviço gratuito ocupado");
+        queued++;
+        if(onStatus) onStatus("fila do serviço gratuito — respondendo já…");
+        await sleep(waitMs);
         continue;
       }
       if(res.status === 429 || res.status >= 500){       /* lotado / instável → tenta de novo */
         if(retries >= MAX_RETRIES) throw new Error("HTTP " + res.status);
         retries++;
-        await sleep(2500 * retries);
+        await sleep(1500 * retries);
         continue;
       }
       if(!res.ok) throw new Error("HTTP " + res.status);
@@ -104,7 +112,7 @@ async function llmChat(messages, tools, onWait){
       clearTimeout(tm);
       if(e && e.name === "AbortError"){
         if(retries >= MAX_RETRIES) throw new Error("tempo esgotado");
-        retries++; await sleep(2000); continue;
+        retries++; await sleep(1200); continue;
       }
       throw e;
     }
@@ -675,50 +683,43 @@ function buildSystemPrompt(userMsg){
     };
   }catch(e){}
 
-  const facts = M ? M.all().slice(-25) : [];
+  const facts = M ? M.all().slice(-12) : [];
 
   return [
-"Você é o **Fluxo**, assistente financeiro pessoal do app Fluxo (organizador de finanças em português, os dados ficam salvos somente no navegador do usuário).",
+"Você é o **Fluxo**, assistente financeiro pessoal do app Fluxo (organizador de finanças em português; os dados ficam salvos somente no navegador do usuário).",
 
-"## PERSONA",
-"- Mentor financeiro: amigável, direto, paciente e EDUCACIONAL — explique o porquê das sugestões.",
-"- Responda SEMPRE em português do Brasil, em textos curtos. Use **negrito** nos números-chave e bullets “- ” para listas/passos.",
-"- Você EXECUTA ações de verdade (via ferramentas), CONSULTA os dados reais do app, ENSINA as funcionalidades e PLANEJA gastos com o usuário.",
+"## ESTILO",
+"- Português do Brasil, amigável e DIRETO. Mentor paciente: quando ensinar, explique o porquê em 1 frase.",
+"- Respostas CURTAS: no máximo 3 frases ou 5 bullets curtos. Use **negrito** nos números-chave e listas com “- ”. Obs.: ao executar ações, o app já mostra cartões de confirmação automáticos — não repita todos os detalhes.",
 
 "## COMO AGIR",
 "- Para executar qualquer coisa no app, use as ferramentas — nunca diga que fez algo sem chamar a ferramenta.",
-"- Pedidos compostos (ex.: criar 3 contas de uma vez): emita TODAS as chamadas de ferramenta NA MESMA mensagem (em paralelo), não uma de cada vez.",
+"- Pedidos compostos (ex.: criar 3 contas de uma vez): emita TODAS as chamadas de ferramenta NA MESMA mensagem (em paralelo).",
 "- Se faltar informação essencial (valor, conta, nome), faça UMA pergunta objetiva em vez de adivinhar.",
 "- NUNCA invente dados financeiros: consulte antes de afirmar saldos, gastos ou lançamentos.",
-"- Valores estão em REAIS; datas use aaaa-mm-dd nas ferramentas e dd/mm nas respostas.",
-"- Depois de executar, confirme de forma natural o que foi feito (os cartões de confirmação aparecem sozinhos).",
-"- Se algo falhar (ferramenta retorna erro), explique com bom humor e sugira o próximo passo.",
+"- Valores em REAIS; datas aaaa-mm-dd nas ferramentas e dd/mm nas respostas.",
+"- Se algo falhar, explique com bom humor e sugira o próximo passo.",
 
 "## MEMÓRIA (autônoma)",
-"- Sempre que o usuário revelar um fato duradouro — salário/renda, dia de pagamento, aluguel, preferências (“odeio fast food”), objetivos, nome — chame salvar_memoria, MESMO que ele não peça para lembrar.",
-"- Não salve: conversa fiada (“oi”, “obrigado”), perguntas, valores de compras pontuais.",
-"- Se salvar_memoria retornar “conflito”, pergunte ao usuário antes de atualizar (ex.: mudou de emprego?) e, se ele confirmar, use editar_memoria.",
-"- “lembre-se que X” → salvar_memoria(X) e confirme: “Anotado! Vou lembrar que X”.",
-"- “edite a memória” → editar_memoria; “esqueça X” → confirme com o usuário e use apagar_memoria.",
+"- Fato duradouro (salário, dia de pagamento, aluguel, preferências, objetivos, nome) → chame salvar_memoria, MESMO sem pedido.",
+"- Não salve conversa fiada, perguntas nem compras pontuais.",
+"- Retornou “conflito” → pergunte ao usuário; se ele confirmar, use editar_memoria. “lembre-se que X” → salvar_memoria(X). “esqueça X” → confirme e use apagar_memoria.",
 "- Use a memória de forma proativa: se ele disse que odeia fast food e pedir sugestão de economia, mencione isso.",
 
-"## ENSINO DO APP (quando o usuário perguntar “como…”, ENSINE — não execute)",
-"- **Recuperar senha**: tela de bloqueio → “Esqueci minha senha” → selecionar o arquivo fluxo-chave-recuperacao.json (baixado quando a senha foi criada) → definir nova senha. Sem a chave e sem a senha, só resta o reset total (apaga TUDO — digite APAGAR).",
-"- **Senha/bloqueio**: Configurações → Segurança e bloqueio → criar/trocar senha (mín. 4 caracteres) → baixa nova chave de recuperação. Protege apenas o acesso neste navegador.",
-"- **Lançamentos**: botão + (canto inferior direito) ou Lançamentos → Novo; despesa/receita, valor, categoria, conta/cartão, forma, data; há parcelamento e recorrência.",
-"- **Contas e cartões**: Contas e carteiras → Nova conta / Cartões de crédito → Novo cartão (limite + dias de fechamento/vencimento). Transferir move dinheiro entre contas (não muda o patrimônio).",
-"- **Faturas**: compras no cartão ficam pendentes; quitar via “pagar fatura” (por mim ou na página do cartão).",
-"- **Orçamento e metas**: Planejamento → teto mensal, limite por categoria e metas (economia/patrimônio).",
-"- **Relatórios**: página Relatórios ou peça-me “relatório do mês em PDF”.",
-"- **Backup**: Configurações → Backup dos dados → exportar .json (tudo) ou .csv (lançamentos); importar restaura. Único jeito de levar os dados a outro dispositivo.",
-"- **Instalar/offline**: ícone de instalação no navegador (ou menu → Adicionar à tela inicial); depois funciona offline.",
-"- **Tema**: ícone lua/sol na barra superior, ou me peça “modo escuro”.",
-"- **Apagar tudo**: Configurações → seção de risco → digitar APAGAR.",
-"- Se perguntarem algo que não existe no app, seja honesto: “Ainda não aprendi isso, mas posso te mostrar onde encontrar no site.”",
+"## ENSINO DO APP (se perguntarem “como…”, ENSINE — não execute)",
+"- **Recuperar senha**: tela de bloqueio → “Esqueci minha senha” → selecionar o arquivo fluxo-chave-recuperacao.json (baixado ao criar a senha). Sem chave e sem senha, só reset total (digitar APAGAR). Criar/trocar senha: Configurações → Segurança e bloqueio.",
+"- **Lançamentos**: botão + (canto inferior direito) ou Lançamentos → Novo; despesa/receita, parcelamento e recorrência.",
+"- **Contas e cartões**: Contas e carteiras → Nova conta / Novo cartão (limite, dias de fechamento/vencimento). Transferir move dinheiro entre contas.",
+"- **Faturas**: compras no cartão ficam pendentes; quitar na página do cartão ou pedindo “pagar fatura” a mim.",
+"- **Orçamento e metas**: Planejamento → teto mensal, limite por categoria, metas.",
+"- **Relatórios**: página Relatórios ou me peça “relatório do mês em PDF”.",
+"- **Backup**: Configurações → exportar .json (tudo) ou .csv (lançamentos); importar restaura — único jeito de levar os dados a outro dispositivo.",
+"- **Instalar/offline**: ícone de instalação do navegador ou menu → Adicionar à tela inicial.",
+"- **Tema**: ícone lua/sol na barra superior. **Apagar tudo**: Configurações → digitar APAGAR.",
+"- Não existe no app? Seja honesto e ofereça o caminho mais parecido.",
 
-"## SOBRE VOCÊ (se perguntarem)",
-"- Você é um agente de IA (modelo GPT-OSS via Pollinations, gratuito e sem cadastro).",
-"- Os dados financeiros e a memória ficam SOMENTE no navegador do usuário; apenas o texto da conversa e o contexto necessário são enviados ao serviço de IA para você pensar.",
+"## SOBRE VOCÊ",
+"- Agente de IA (GPT-OSS via Pollinations, gratuito e sem cadastro). Dados financeiros e memória ficam SOMENTE no navegador; só o texto da conversa e o contexto necessário vão ao serviço de IA.",
 
 "## CONTEXTO ATUAL DO APP",
 "- Hoje: " + DIAS[now.getDay()] + ", " + now.getDate() + " de " + MESES[now.getMonth()] + " de " + now.getFullYear(),
@@ -738,11 +739,93 @@ facts.length ? facts.map(f => "- [" + ((M.KIND_LABEL[f.kind]) || f.kind) + "] " 
   ].join("\n\n");
 }
 
-/* ---------- 7. O loop do agente ---------- */
-const MAX_STEPS = 6;   /* limite de rodadas de ferramentas por mensagem */
+/* ---------- 7. Síntese local (resposta instantânea pós-ferramenta) ----------
+   Depois que as ferramentas rodam, a resposta final é montada AQUI,
+   na hora — sem gastar mais nenhuma chamada do serviço de IA (era
+   isso que deixava o chat lento e batia na cota a cada mensagem).
+   Os cartões de confirmação já mostram os detalhes; o texto só
+   confirma com a voz do Fluxo. Zero regras de ENTENDIMENTO aqui:
+   quem decidiu o que fazer foi o modelo; isto é só apresentação. */
+function synthTool(name, out){
+  if(!out || out.ok === false){
+    let s = "⚠️ Não deu certo: " + ((out && out.motivo) || "algo falhou") + ".";
+    const d = out && (out.disponiveis || out.candidatos);
+    if(d && d.length) s += "\nOpções que encontrei: **" + d.join("** · **") + "**.";
+    else if(out && out.tenho && out.tenho.length) s += "\nO que tenho guardado: " + out.tenho.slice(0,5).join(" · ");
+    return s;
+  }
+  switch(name){
+    case "criar_conta":
+      return "✅ Conta **" + out.conta + "** criada com saldo **" + out.saldo + "**.";
+    case "criar_cartao":
+      return "✅ Cartão **" + out.cartao + "** cadastrado — limite **" + out.limite + "**.";
+    case "lancar_transacao":
+      return "✅ " + (out.tipo === "receita" ? "Receita" : "Despesa") + " **" + out.lancamento + "** de **" + out.valor + "** registrada.";
+    case "transferir":
+      return "✅ Transferência de **" + out.valor + "** de **" + out.de + "** para **" + out.para + "** registrada.";
+    case "pagar_fatura":
+      return out.total
+        ? "✅ Fatura do **" + out.cartao + "** quitada: **" + out.total + "** (" + out.parcelas + " compra" + (out.parcelas > 1 ? "s" : "") + "), debitado de **" + out.conta + "**."
+        : "👍 A fatura do **" + (out.cartao || "cartão") + "** já está em dia — nada a pagar.";
+    case "consultar_saldo": {
+      let s = "💰 **Saldo total: " + out.saldo_total + "**";
+      (out.contas || []).forEach(c => { s += "\n- " + c.nome + ": **" + c.saldo + "**"; });
+      (out.cartoes || []).forEach(c => { s += "\n- " + c.nome + " · fatura **" + c.fatura_atual + "** (disponível " + c.disponivel + ")"; });
+      return s;
+    }
+    case "consultar_resumo": {
+      let s = "📊 **" + out.periodo + "**\n- Receitas: **" + out.receitas + "**\n- Despesas: **" + out.despesas + "**\n- Resultado: **" + out.resultado + "**\n- Saldo hoje: **" + out.saldo_hoje + "**";
+      if(out.maiores_categorias && out.maiores_categorias.length)
+        s += "\n\nOnde mais saiu dinheiro:\n- " + out.maiores_categorias.join("\n- ");
+      if(out.pendentes && out.pendentes.quantidade)
+        s += "\n\nEm aberto: **" + out.pendentes.quantidade + " conta(s), " + out.pendentes.total + "**.";
+      return s;
+    }
+    case "consultar_transacoes": {
+      if(!out.quantidade) return "Procurei e não achei nada com isso — quer tentar outra palavra?";
+      let s = "Achei **" + out.quantidade + " lançamento(s)** (" + out.periodo + "), total **" + out.total + "**:";
+      (out.lancamentos || []).forEach(t => {
+        s += "\n- " + t.data + " · " + t.descricao + " — **" + t.valor + "** (" + t.categoria + ")";
+      });
+      if(out.truncado) s += "\n\n+ " + out.truncado + ".";
+      return s;
+    }
+    case "gerar_relatorio_pdf":
+      return out.ok ? "📄 Relatório de **" + out.mes + "** pronto — o download já começou." : "⚠️ Não consegui gerar o PDF agora. Tente pela página **Relatórios**?";
+    case "definir_orcamento":
+      return "✅ Orçamento mensal definido: **" + out.orcamento + "**.";
+    case "definir_meta":
+      return "✅ Meta definida: **" + out.meta + "**.";
+    case "navegar":
+      return "👀 Já te levei para **" + out.pagina + "**.";
+    case "mudar_tema":
+      return "🎨 Tema **" + out.tema + "** ativado.";
+    case "desfazer":
+      return out.resultado || "Pronto, ação desfeita.";
+    case "salvar_memoria":
+      if(out.status === "duplicado") return "Isso já estava na minha memória 😄";
+      if(out.status === "conflito")
+        return "Hmm, isso conflita com o que eu sabia: **" + out.existente + "**.\nQuer que eu atualize para: **" + out.novo + "**?";
+      return "🧠 Anotado! Vou lembrar que **" + out.fato + "**.";
+    case "buscar_memoria": {
+      if(!out.fatos || !out.fatos.length) return "Ainda não guardei nada sobre isso.";
+      return "Isto é o que eu sei sobre você:\n- " + out.fatos.join("\n- ");
+    }
+    case "editar_memoria":
+      return "✅ Memória atualizada — agora sei: **" + out.depois + "**.";
+    case "apagar_memoria":
+      return "🗑️ Feito — apaguei **" + out.apagado + "** da memória.";
+    default:
+      return "✅ Feito!";
+  }
+}
+
+/* ---------- 8. O loop do agente ---------- */
+const MAX_STEPS = 3;   /* seguro contra respostas vazias do modelo (raro) */
 
 /**
- * Executa um turno completo: mensagem → (LLM ⇄ ferramentas)* → resposta final.
+ * Executa um turno completo: mensagem → 1 chamada ao LLM → ferramentas
+ * → resposta final (texto do modelo ou síntese local instantânea).
  * @param {string} userText   a mensagem do usuário
  * @param {object} opts       {history:[{role,content}], onStatus:fn(string)}
  * @returns {Promise<{text:string, cards:object[]}>}
@@ -752,13 +835,13 @@ async function turn(userText, opts){
   const cards = [];
   const messages = [
     {role:"system", content: buildSystemPrompt(userText)},
-    ...(opts.history || []).slice(-16),
+    ...(opts.history || []).slice(-8),
     {role:"user", content: String(userText || "").slice(0, 500)}
   ];
 
   for(let step = 0; step < MAX_STEPS; step++){
-    const resp = await llmChat(messages, TOOL_DEFS, seg => {
-      opts.onStatus && opts.onStatus("serviço gratuito: aguardando " + seg + "s para a próxima etapa");
+    const resp = await llmChat(messages, TOOL_DEFS, s => {
+      opts.onStatus && opts.onStatus(s);
     });
     const m = resp && resp.choices && resp.choices[0] && resp.choices[0].message;
     if(!m) throw new Error("resposta vazia do modelo");
@@ -769,7 +852,7 @@ async function turn(userText, opts){
       args: parseArgs(c.function && c.function.arguments)
     })).filter(c => c.name);
 
-    /* sem ferramentas → resposta final */
+    /* sem ferramentas → o próprio modelo já respondeu ao usuário */
     if(!calls.length){
       const text = String(m.content || "").trim();
       if(text) return {text, cards};
@@ -779,11 +862,8 @@ async function turn(userText, opts){
       continue;
     }
 
-    /* registra a mensagem do assistente com as chamadas */
-    messages.push({role:"assistant", content: m.content || null,
-      tool_calls: calls.map(c => ({id:c.id, type:"function", function:{name:c.name, arguments:JSON.stringify(c.args)}}))});
-
-    /* executa cada chamada (em ordem) e devolve o resultado ao modelo */
+    /* executa TODAS as ferramentas chamadas (o modelo pode paralelizar) */
+    const results = [];
     for(const c of calls){
       opts.onStatus && opts.onStatus(TOOL_LABEL[c.name] || c.name);
       let out;
@@ -794,18 +874,29 @@ async function turn(userText, opts){
         catch(e){ out = {ok:false, motivo:"erro ao executar: " + (e && e.message ? e.message : e)}; }
       }
       if(out && out.receipt){ cards.push(out.receipt); delete out.receipt; }
-      try{ messages.push({role:"tool", tool_call_id:c.id, content: JSON.stringify(out).slice(0, 4000)}); }
-      catch(e){ messages.push({role:"tool", tool_call_id:c.id, content:'{"ok":false,"motivo":"erro interno"}'}); }
+      results.push({name:c.name, out});
     }
+
+    /* resposta final IMEDIATA: o texto que o modelo escreveu junto das
+       chamadas (se houver e nada tiver falhado) ou a síntese local —
+       zero chamadas extras, zero espera a mais. */
+    const pre    = String(m.content || "").trim();
+    const synth  = results.map(r => synthTool(r.name, r.out)).join("\n\n");
+    const failed = results.some(r => r.out && r.out.ok === false);
+    let text;
+    if(pre && !failed)      text = pre;               /* o modelo já falou */
+    else if(pre && failed)  text = pre + "\n\n" + synth; /* garante que o erro apareça */
+    else                    text = synth;               /* síntese instantânea */
+    return {text, cards};
   }
 
   /* estourou o limite de rodadas: resume o que conseguiu fazer */
   const feitas = cards.length
     ? "Consegui executar " + cards.length + " ação(ões) — os cartões aí em cima mostram os detalhes. Quer que eu continue?"
-    : "Fiz várias tentativas, mas a resposta ficou longa demais. Pode repetir o pedido, talvez em partes?";
+    : "Fiquei sem palavras agora — pode repetir de outro jeito?";
   return {text: feitas, cards};
 }
 
-/* ---------- 8. API pública ---------- */
-window.FluxoAgente = { turn, llmChat, buildSystemPrompt, TOOL_DEFS, TOOL_RUN };
+/* ---------- 9. API pública ---------- */
+window.FluxoAgente = { turn, llmChat, buildSystemPrompt, synthTool, TOOL_DEFS, TOOL_RUN };
 })();
