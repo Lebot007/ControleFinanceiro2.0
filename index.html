@@ -2366,8 +2366,8 @@ ${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.p
 <div class="grid charts-2" style="margin-bottom:16px">
 <div class="card"><div class="card-h"><h3>Comparação mensal</h3><span class="sub">meses do período selecionado</span></div>
 ${monthsP.length?`<div class="table-wrap"><table class="responsive"><thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th><th scope="col">Resultado</th></tr></thead><tbody>
-${monthsP.map(m=>`<tr><td>${esc(m.label)}</td><td class="num val-up">${fmtMoney(m.r)}</td><td class="num val-down">${fmtMoney(m.d)}</td>
-<td class="num ${m.r-m.d>=0?"val-up":"val-down"}">${fmtMoney(m.r-m.d)}</td></tr>`).join("")}</tbody></table></div>`
+${monthsP.map(m=>`<tr><td data-label="Mês">${esc(m.label)}</td><td data-label="Receitas" class="num val-up">${fmtMoney(m.r)}</td><td data-label="Despesas" class="num val-down">${fmtMoney(m.d)}</td>
+<td data-label="Resultado" class="num ${m.r-m.d>=0?"val-up":"val-down"}">${fmtMoney(m.r-m.d)}</td></tr>`).join("")}</tbody></table></div>`
 :"<p style='color:var(--ink2)'>Sem meses no período.</p>"}
 <p style="font-size:12px;color:var(--ink2);margin-top:10px">Comparação com o período anterior (${fmtDate(pPs)} — ${fmtDate(pPe)}):
 despesas ${desp<=pDesp?"caíram":"subiram"} de <b>${fmtMoney(pDesp)}</b> para <b>${fmtMoney(desp)}</b>;
