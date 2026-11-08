@@ -96,7 +96,8 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 #topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 26px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 #btn-menu{display:none}
 #page-title{font-family:var(--disp);font-weight:700;font-size:17px;white-space:nowrap}
-#searchbox{flex:1;max-width:430px;position:relative;margin-left:auto}
+#searchbox{flex:1;max-width:430px;min-width:0;position:relative;margin-left:auto}
+#global-search{min-width:0}
 #searchbox .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink2)}
 #global-search{width:100%;padding:9px 12px 9px 36px;border:1px solid var(--line);border-radius:11px;background:var(--surface);transition:border-color .15s,box-shadow .15s}
 #global-search:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);outline:none}
@@ -107,7 +108,7 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 .sr-item:hover{background:var(--surface2)}
 .sr-item small{color:var(--ink2);margin-left:auto;white-space:nowrap}
 .top-actions{display:flex;gap:8px;align-items:center}
-#view{padding:26px 26px 90px;max-width:1280px;width:100%;margin:0 auto;animation:viewIn .3s ease}
+#view{padding:26px 26px 90px;max-width:1320px;width:100%;margin:0 auto;animation:viewIn .3s ease}
 @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 #fab{position:fixed;right:20px;bottom:22px;z-index:55;width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#1fc48d,#0c7a58);color:#fff;display:none;place-items:center;box-shadow:0 12px 28px -8px rgba(14,107,79,.55);transition:transform .2s}
@@ -130,6 +131,7 @@ transform:skewX(-20deg);animation:rpgshine 4s ease-in-out infinite}
 .card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .card-h h3{font-size:15px;font-weight:700}.card-h .sub{font-size:12px;color:var(--ink2);font-weight:400}
 .grid{display:grid;gap:16px}
+.grid>*{min-width:0}
 .kpis{grid-template-columns:repeat(4,1fr)}
 .kpi{padding:16px 18px;position:relative;overflow:hidden}
 .kpi::after{content:"";position:absolute;right:-24px;top:-24px;width:84px;height:84px;border-radius:50%;background:var(--kc,var(--brand-soft));opacity:.35;transition:transform .3s}
@@ -273,7 +275,8 @@ tr:hover .row-actions{opacity:1}@media (hover:none){.row-actions{opacity:1}}
 .kpis{grid-template-columns:repeat(2,1fr)!important}.charts-2{grid-template-columns:1fr!important}
 }
 @media (max-width:640px){
-#view{padding:18px 14px 100px}#topbar{padding:10px 14px}#page-title{display:none}.grid2{grid-template-columns:1fr}
+#view{padding:18px 14px 100px}#topbar{padding:10px 12px;gap:8px}#page-title{display:none}.grid2{grid-template-columns:1fr}
+#btn-install .ilbl{display:none}#btn-install{padding:6px 9px}#btn-lock{display:none}
 .kpis{grid-template-columns:1fr 1fr!important;gap:10px}.kpi .k-val{font-size:18px}.hero-balance{padding:20px 18px}
 .hero-balance .hb-side{margin-left:0;width:100%;gap:16px}.bill{flex-wrap:wrap;gap:10px;padding:12px 14px}
 .bill .b-mid{flex:1 1 170px}.bill .b-val{margin-left:auto}.bill .row-actions{width:100%;justify-content:flex-end}
@@ -1018,7 +1021,7 @@ body: `
 </div>
 <div class="grid2">
 <div class="field" id="w-acc"><label>Conta <b>*</b></label><select id="f-acc">${accOptions(edit?.accountId)}</select>
-${state.accounts.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Cadastre uma conta em “Contas”.</small>`}</div>
+${state.accounts.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Cadastre uma conta em “Contas e carteiras”.</small>`}</div>
 <div class="field" id="w-card" style="display:none"><label>Cartão <b>*</b></label><select id="f-card">${cardOptions(edit?.cardId||opts.cardId)}</select>
 ${state.cards.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Cadastre um cartão em “Cartões”.</small>`}</div>
 </div>
@@ -2183,7 +2186,7 @@ return `<div class="card" style="margin-top:18px"><div class="card-h"><h3>${icon
 <div class="hint">${icon("info",14)} <span>Mova dinheiro de uma conta para outra sem lançar despesa nem receita — o patrimônio continua o mesmo.</span></div></div>`;
 }
 return `<div class="card" style="margin-top:18px"><div class="card-h"><h3>${icon("transfer",16)} Últimas transferências</h3>
-<div style="display:flex;gap:8px;align-items:center">
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
 <button class="btn btn-ghost btn-sm no-print" data-action="goto" data-route="lancamentos">Ver todas</button>
 <button class="btn btn-primary btn-sm no-print" data-action="new-transfer">${icon("plus",13)} Transferir</button></div></div>
 ${last.map(t=>{const a=accById(t.from), b=accById(t.to);
@@ -2361,7 +2364,7 @@ ${ui.per.reports.period==="custom"?`<input type="date" id="p-from" value="${ui.p
 </div>
 <div class="grid charts-2" style="margin-bottom:16px">
 <div class="card"><div class="card-h"><h3>Comparação mensal</h3><span class="sub">meses do período selecionado</span></div>
-${monthsP.length?`<div class="table-wrap"><table><thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th><th scope="col">Resultado</th></tr></thead><tbody>
+${monthsP.length?`<div class="table-wrap"><table class="responsive"><thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th><th scope="col">Resultado</th></tr></thead><tbody>
 ${monthsP.map(m=>`<tr><td>${esc(m.label)}</td><td class="num val-up">${fmtMoney(m.r)}</td><td class="num val-down">${fmtMoney(m.d)}</td>
 <td class="num ${m.r-m.d>=0?"val-up":"val-down"}">${fmtMoney(m.r-m.d)}</td></tr>`).join("")}</tbody></table></div>`
 :"<p style='color:var(--ink2)'>Sem meses no período.</p>"}
@@ -2684,18 +2687,28 @@ receitas:"/receitas", cartoes:"/cartoes", carteiras:"/carteiras", planejamento:"
 relatorios:"/relatorios", configuracoes:"/configuracoes"
 };
 const NAV=[
-["dashboard","Visão geral","home"], ["lancamentos","Lançamentos","receipt"],
-["contas","Contas a pagar","inbox"], ["receitas","Receitas","trendUp"],
-["cartoes","Cartões","creditCard"], ["carteiras","Contas","bank"],
-["planejamento","Planejamento","target"], ["relatorios","Relatórios","chart"],
+["sec","Principal"],
+["dashboard","Visão geral","home"],
+["sec","Movimentações"],
+["lancamentos","Lançamentos","receipt"],
+["contas","Contas a pagar","inbox"],
+["receitas","Receitas","trendUp"],
+["sec","Controle"],
+["carteiras","Contas e carteiras","bank"],
+["cartoes","Cartões de crédito","creditCard"],
+["planejamento","Planejamento","target"],
+["relatorios","Relatórios","chart"],
+["sec","Sistema"],
 ["configuracoes","Configurações","gear"]
 ];
 const TITLES={dashboard:"Visão geral", lancamentos:"Lançamentos", contas:"Contas a pagar", receitas:"Receitas",
 cartoes:"Cartões de crédito", carteiras:"Contas e carteiras", planejamento:"Planejamento",
 relatorios:"Relatórios", configuracoes:"Configurações"};
 function buildNav(){
-$("#nav").innerHTML = `<div class="nav-sec">Menu</div>` +
-NAV.map(([r,l,ic])=>`<a class="nav-link" href="#/${r}" data-nav="${r}">${icon(ic,17)}<span>${l}</span></a>`).join("") +
+$("#nav").innerHTML =
+NAV.map(([r,l,ic])=> r==="sec"
+? `<div class="nav-sec">${l}</div>`
+: `<a class="nav-link" href="#/${r}" data-nav="${r}" title="${l}">${icon(ic,17)}<span>${l}</span></a>`).join("") +
 `<div class="nav-sec">Jornada do Herói</div>
 <a class="nav-link nav-rpg" href="fluxo-cards.html">
 ${icon("sparkles",17)}<span>Grimório das Fortunas</span><span class="rpg-tag">RPG</span>
@@ -2740,7 +2753,7 @@ ob.innerHTML=`<div class="ob-card">
 <div class="ob-note">${icon("shield",13)} Dados 100% locais · exporte backups quando quiser</div>
 </div>`;
 document.body.appendChild(ob);
-$("#ob-start").onclick=()=>{ state.initialized=true; save(); ob.remove(); toast("Bem-vindo ao Fluxo! Cadastre sua primeira conta em “Contas”."); };
+$("#ob-start").onclick=()=>{ state.initialized=true; save(); ob.remove(); toast("Bem-vindo ao Fluxo! Cadastre sua primeira conta em “Contas e carteiras”."); };
 $("#ob-demo").onclick=()=>{ seedDemo(); state.initialized=true; save(); ob.remove(); render(); toast("Dados de exemplo carregados — remova-os em Configurações quando quiser."); };
 }
 /* Delegação global */
@@ -3018,7 +3031,7 @@ if(!topActions || document.querySelector('#btn-install')) return;
 const btn = document.createElement('button');
 btn.id = 'btn-install';
 btn.className = 'btn btn-ghost btn-sm';
-btn.innerHTML = `${icon('download',14)} Instalar App`;
+btn.innerHTML = `${icon('download',14)}<span class="ilbl"> Instalar App</span>`;
 btn.setAttribute('aria-label','Instalar aplicativo');
 btn.onclick = async () => {
 if (deferredPrompt) {
