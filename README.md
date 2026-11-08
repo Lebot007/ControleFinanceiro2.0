@@ -1,10 +1,10 @@
 # 💰 Fluxo — Finanças Pessoais
 
-Organizador financeiro pessoal completo que roda **100% no navegador**: contas, receitas, despesas, cartões de crédito, parcelas, orçamento, metas, relatórios e um **assistente com IA que automatiza tudo por conversa**.
+Organizador financeiro pessoal completo que roda **100% no navegador**: contas, receitas, despesas, cartões de crédito, parcelas, orçamento, metas, relatórios e um **assistente com IA de verdade** (agente autônomo com Tool Calling) que automatiza tudo por conversa.
 
 🔗 **Acesso o app:** <https://lebot007.github.io/ControleFinanceiro2.0/>
 
-> 🔒 **Privacidade primeiro:** todos os dados ficam salvos apenas no seu navegador (localStorage). Nada é enviado a servidores — nem lançamentos, nem conversas com o assistente, nem relatórios.
+> 🔒 **Privacidade primeiro:** seus dados financeiros (lançamentos, contas, memória, relatórios) ficam salvos **apenas no seu navegador**. Para o assistente “pensar”, apenas o **texto da conversa + o contexto necessário** é enviado a um serviço de IA gratuito (sem cadastro, sem chave) — os dados em si nunca saem do seu computador.
 
 ---
 
@@ -25,14 +25,15 @@ Organizador financeiro pessoal completo que roda **100% no navegador**: contas, 
 - **PWA**: instala como aplicativo e funciona offline
 - **Tema claro/escuro**
 
-### 🤖 Assistente com IA (chat, estilo Pierre)
-Um assistente em português que entende comandos em linguagem natural e **faz tudo sem você tocar em menus** — com **memória persistente**, **modo ensino** e **planejamento contextual**, na estética minimalista dark + verde-menta (inspirada no Pierre):
+### 🤖 Assistente com IA (agente autônomo, estilo Pierre)
+Um **agente de IA real** em português — nada de respostas programadas: ele **raciocina** sobre o que você escreve, **decide sozinho** o que fazer, executa ações de verdade no app (via *Tool Calling*) e **aprende** com a conversa. Com **memória persistente**, **modo ensino** e **planejamento contextual**, na estética minimalista que segue o tema do site:
 
 | Você fala | Ele faz |
 |---|---|
-| “criar conta no Inter com 500” | Cria a conta com saldo inicial |
+| “crie as contas Inter com 1905, Cauda com 255 e Infinitepay com 146” | **Multi-ação**: cria as 3 contas de uma vez |
 | “criar cartão Nubank com limite 5000” | Cadastra o cartão |
 | “cadastrar despesa de mercado 250,50” | Lança a despesa (infere categoria, data e conta) |
+| “quanto sobrou do meu salário depois que paguei o aluguel?” | **Raciocina**: cruza memória + lançamentos reais |
 | “gastei 30 com uber ontem” | Lança ontem, categoria Transporte |
 | “recebi 3000 de salário” | Registra a receita e **memoriza o salário** |
 | “comprei 200 no cartão Nubank” | Compra no cartão (pendente até a fatura) |
@@ -40,17 +41,22 @@ Um assistente em português que entende comandos em linguagem natural e **faz tu
 | “pagar fatura do Nubank” | Quita a fatura do ciclo atual |
 | “relatório do mês em PDF” | **Gera e entrega o PDF no chat** |
 | “qual meu saldo?” / “resumo do mês” | Consulta tudo |
-| “lembre-se que meu salário é 3000” | **Memoriza** (“✓ Anotado! Vou lembrar que…”) |
+| “lembre-se que meu salário é 3000” | **Memoriza** (e também aprende sozinho, sem comando) |
 | “edite a memória: X para Y” / “esqueça X” | **Edita/apaga** fatos da memória |
 | “o que você sabe sobre mim?” | Abre a **Minha Memória** (ver/editar/apagar) |
 | “como recupero minha senha?” / “como cadastro um cartão?” | **Ensina o passo a passo** do site |
-| “tenho apenas 40 reais para gastar” | **Planeja** com o contexto e oferece reservar |
+| “tenho apenas 40 reais para gastar” | **Planeja** com o contexto e com a memória |
 | “orcamento 4000” / “meta de economia 500” | Define orçamento e metas |
 | “desfazer” | Reverte a última ação |
 
-**Memória do assistente (arquitetura híbrida):** a conversa atual é a camada de sessão; os **fatos, preferências e perfil** ficam salvos no navegador (`localStorage`, chave `fluxo.memory.v1`) e são recuperados por relevância (padrão RAG) a cada interação — o módulo `memoria.js` também monta o **System Prompt** completo (persona + memória + contexto financeiro) pronto para ser enviado a um modelo como o GLM 5.3. Conflitos (ex.: salário antigo vs. novo) são sempre confirmados antes de atualizar, e fatos inúteis (“oi”) são rejeitados. Tudo apagável pelo usuário, a qualquer momento.
+**Como o agente funciona (arquitetura autônoma):**
 
-Ele conversa: se faltar informação, pergunta (com sugestões clicáveis) e nada é salvo sem confirmação dos dados no cartão de resposta. O histórico da conversa fica salvo no navegador.
+1. **O cérebro** (`agente.js`) é um loop de agente no navegador: a mensagem (com **memória** e **contexto financeiro real** injetados no System Prompt) vai para um LLM gratuito e **sem chave nem cadastro** — a API pública da [Pollinations](https://pollinations.ai) (endpoint compatível com OpenAI, modelo GPT-OSS 20B com *Tool Calling*).
+2. **As mãos** são 18 ferramentas que o modelo invoca sozinho — criar contas/cartões, lançar transações, transferir, pagar faturas, consultar saldos/resumos/lançamentos, gerar PDF, definir orçamento/metas, navegar, trocar tema, desfazer e **gerenciar a memória** (salvar/buscar/editar/apagar). O loop executa cada ferramenta no app e devolve o resultado ao modelo, quantas rodadas forem necessárias.
+3. **A memória** (`memoria.js`) é a camada de longo prazo: fatos, preferências e perfil ficam no navegador (`fluxo.memory.v1`), são injetados a cada interação (padrão RAG) e o agente **aprende sozinho** — se você comentar que odeia fast food, ele guarda e usa no planejamento. Conflitos (salário antigo vs. novo) são confirmados antes de atualizar; fatos inúteis (“oi”) são rejeitados; tudo é visível e apagável no ícone de livro (**Minha Memória**).
+4. **Resiliência**: se o serviço de IA estiver fora, o agente responde com bom humor (“meu cérebro deu um nó”) em vez de quebrar. O tier gratuito limita a ~1 geração a cada ~37 s por IP — ações com várias etapas podem levar alguns segundos a mais, e o painel mostra o que ele está fazendo a cada passo.
+
+O histórico da conversa fica salvo no navegador, e o assistente segue o tema claro/escuro do site automaticamente.
 
 ---
 
@@ -72,8 +78,9 @@ Ele conversa: se faltar informação, pergunta (com sugestões clicáveis) e nad
 | Arquivo | Papel |
 |---|---|
 | `index.html` | Aplicação principal (SPA em arquivo único) |
-| `ai.js` + `ai.css` | Assistente conversacional (NLP local + chat estilo Pierre: dark + verde-menta) |
-| `memoria.js` | **Memória persistente do assistente** (CRUD + validação + conflitos + RAG + System Prompt) |
+| `agente.js` | **O cérebro do assistente**: loop de agente autônomo (LLM + 18 ferramentas de Tool Calling) |
+| `ai.js` + `ai.css` | Interface do chat (painel, bolhas, cartões, PDF, modal de memória) — sem regras de conversa |
+| `memoria.js` | **Memória persistente do assistente** (CRUD + validação + conflitos + RAG) |
 | `relatorio-pdf.js` | Gerador de PDF sem dependências |
 | `login.html` | Tela de desbloqueio por senha |
 | `fluxo-cards.html` | “Grimório das Fortunas” — carta RPG gerada a partir de um backup |
@@ -81,7 +88,7 @@ Ele conversa: se faltar informação, pergunta (com sugestões clicáveis) e nad
 
 ## 🛠️ Tecnologias
 
-HTML, CSS e JavaScript puros — sem frameworks, sem build, sem dependências externas. Gráficos em SVG, PDF gerado à mão (PDF 1.4 + Helvetica/WinAnsi), NLP com regras e distância de edição (Levenshtein). Os dados persistem em `localStorage`.
+HTML, CSS e JavaScript puros — sem frameworks, sem build. Gráficos em SVG, PDF gerado à mão (PDF 1.4 + Helvetica/WinAnsi). O agente de IA roda no navegador via API pública da Pollinations (OpenAI-compatível, tier gratuito anônimo, sem chave). Os dados persistem em `localStorage`.
 
 ## 📄 Licença
 
