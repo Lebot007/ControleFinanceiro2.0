@@ -391,7 +391,7 @@ function msgNode(m){
 }
 function renderChat(){
   msgsEl.innerHTML = "";
-  history.forEach(m => msgsEl.appendChild(msgNode(m)));
+  history.forEach(m => msgsEl.appendChild(m.pdf ? pdfNode(m.pdf) : msgNode(m)));
   scrollBottom();
 }
 function scrollBottom(){ msgsEl.scrollTop = msgsEl.scrollHeight; }
@@ -437,6 +437,143 @@ function botReply(fn, delay){
     delay || 320 + Math.random()*280);
 }
 
+/* ---------- 4b. Relatório em PDF ---------- */
+const pdfCache = {};   /* monthKey -> {url, size, filename} */
+
+function pdfNode(m){
+  const row = document.createElement("div");
+  row.className = "ai-row";
+  row.innerHTML = `<div class="ai-bot-ic">${icon("sparkles",14)}</div>
+  <div class="ai-card">
+    <div class="ai-card-h">${icon("download",15)} Relatório em PDF</div>
+    <div class="ai-pdf">
+      <div class="ai-file">PDF</div>
+      <div class="ai-pmeta">
+        <div class="ai-pname"></div>
+        <div class="ai-psub"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-pdf>Baixar</button>
+    </div>
+  </div>`;
+  const nameEl = row.querySelector(".ai-pname");
+  const subEl  = row.querySelector(".ai-psub");
+  const paint = c => { nameEl.textContent = c.filename; subEl.textContent = (m.label ? m.label + " · " : "") + c.size; };
+  const cached = pdfCache[m.mk];
+  if(cached) paint(cached);
+  else { nameEl.textContent = "relatorio-fluxo-" + m.mk + ".pdf"; subEl.textContent = m.label || ""; }
+  row.querySelector("[data-pdf]").addEventListener("click", () => downloadPdf(m.mk));
+  return row;
+}
+
+function downloadPdf(mk){
+  let c = pdfCache[mk];
+  if(!c){ c = makePdfForMk(mk); if(!c) return; }
+  const a = document.createElement("a");
+  a.href = c.url; a.download = c.filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ciclo do relatório: consistente com o app (respeita o "primeiro dia do mês") */
+function cycleForReport(mm){
+  const now = new Date();
+  if(mm.y === now.getFullYear() && mm.m === now.getMonth()) return cycleRange(now);
+  return cycleRange(new Date(mm.y, mm.m, 15));
+}
+
+function buildReportData(mm){
+  if(!window.FluxoPDF) throw new Error("gerador de PDF não carregado");
+  const [ps, pe] = cycleForReport(mm);
+  const txs = state.transactions.filter(t => t.date >= ps && t.date <= pe)
+    .sort((a,b) => a.date.localeCompare(b.date) || String(a.id).localeCompare(String(b.id)));
+  const rec  = txs.filter(t => t.type === "receita");
+  const desp = txs.filter(t => t.type === "despesa");
+  const sumRec  = rec.reduce((s,t) => s + t.value, 0);
+  const sumDesp = desp.reduce((s,t) => s + t.value, 0);
+  const res = sumRec - sumDesp;
+  const byCat = (list, total) => {
+    const m = {};
+    list.forEach(t => { const c = catById(t.categoryId); const k = c ? c.name : "Sem categoria"; m[k] = (m[k]||0) + t.value; });
+    return Object.entries(m).sort((a,b) => b[1] - a[1]).map(([nome, v]) => ({
+      nome, valor: fmtMoney(v),
+      pct: total > 0 ? (100 * v / total).toLocaleString("pt-BR", {maximumFractionDigits:1}) + "%" : "—"
+    }));
+  };
+  const transfers = state.transfers.filter(t => t.date >= ps && t.date <= pe)
+    .sort((a,b) => a.date.localeCompare(b.date));
+  const data = {
+    titulo: "Fluxo — Relatório Financeiro",
+    periodo: "Ciclo de " + fmtDate(ps) + " a " + fmtDate(pe),
+    geradoEm: fmtDate(todayISO()),
+    filename: "relatorio-fluxo-" + mkOf(mm) + ".pdf",
+    resumo: [
+      {label:"Receitas", value: fmtMoney(sumRec), color: [0.05, 0.51, 0.37]},
+      {label:"Despesas", value: fmtMoney(sumDesp), color: [0.80, 0.25, 0.25]},
+      {label:"Resultado do ciclo", value: (res >= 0 ? "+ " : "- ") + fmtMoney(Math.abs(res)), color: res >= 0 ? [0.05,0.51,0.37] : [0.80,0.25,0.25]},
+      {label:"Saldo atual", value: fmtMoney(netWorth())}
+    ],
+    despesasCategoria: byCat(desp, sumDesp),
+    totalDespesas: fmtMoney(sumDesp),
+    receitasCategoria: byCat(rec, sumRec),
+    totalReceitas: fmtMoney(sumRec),
+    contas: state.accounts.map(a => {
+      const b = accountBalance(a);
+      return {nome: a.name, tipo: ACC_TYPES[a.type] || a.type, saldo: fmtMoney(b), neg: b < 0};
+    }),
+    cartoes: state.cards.map(c => {
+      const s = cardStats(c);
+      return {nome: c.name + (c.bank ? " (" + c.bank + ")" : ""), fatura: fmtMoney(s.invoiceNow),
+              aberto: fmtMoney(s.used), disponivel: fmtMoney(s.available)};
+    }),
+    lancamentos: txs.map(t => ({
+      data: fmtDate(t.date).slice(0, 5),
+      desc: t.desc + (t.installment ? " (" + t.installment + "/" + t.installments + ")" : ""),
+      categoria: (catById(t.categoryId) || {name:"—"}).name,
+      valor: fmtMoney(t.value),
+      tipo: t.type
+    })),
+    transferencias: transfers.map(t => ({
+      data: fmtDate(t.date).slice(0, 5),
+      desc: transferLabel(t),
+      fluxo: ((accById(t.from)||{name:"?"}).name) + " -> " + ((accById(t.to)||{name:"?"}).name),
+      valor: fmtMoney(t.value)
+    }))
+  };
+  return FluxoPDF.buildMonthlyReport(data);
+}
+
+function makePdfForMk(mk){
+  try{
+    const mm = {y: +mk.slice(0,4), m: +mk.slice(5,7) - 1};
+    const built = buildReportData(mm);
+    const blob = new Blob([built.bytes], {type: "application/pdf"});
+    pdfCache[mk] = {
+      url: URL.createObjectURL(blob),
+      size: Math.max(1, Math.round(blob.size / 1024)) + " KB",
+      filename: built.filename
+    };
+    return pdfCache[mk];
+  }catch(e){
+    botSay("Não consegui gerar o PDF agora: " + (e.message || "erro") + ". Tente novamente.");
+    return null;
+  }
+}
+
+function generateReport(mm){
+  if(!mm) mm = {y: new Date().getFullYear(), m: new Date().getMonth()};
+  const mk = mkOf(mm);
+  botReply(() => {
+    const c = pdfCache[mk] || makePdfForMk(mk);
+    if(!c) return;
+    hideTyping();
+    history.push({r:"b", pdf:{mk, label: monthLabel(mm)}});
+    chatSave();
+    msgsEl.appendChild(pdfNode(history[history.length-1].pdf));
+    scrollBottom();
+    setChips(defaultChips());
+    downloadPdf(mk);   /* entrega o arquivo na hora + botão fica disponível */
+  }, 700);
+}
+
 /* Chips de sugestão */
 function setChips(list){
   chipsEl.innerHTML = "";
@@ -453,7 +590,7 @@ function defaultChips(){
   const chips = [];
   if(!state.accounts.length) chips.push("Criar conta no Nubank com 500", "O que você faz?");
   else if(!state.transactions.length) chips.push("Recebi 3000 de salário", "Cadastrar despesa de mercado 250,50", "O que você faz?");
-  else chips.push("Qual meu saldo?", "Resumo do mês", "Cadastrar despesa de mercado 250,50");
+  else chips.push("Qual meu saldo?", "Resumo do mês", "Relatório do mês em PDF", "Cadastrar despesa de mercado 250,50");
   return chips;
 }
 
@@ -617,7 +754,8 @@ function greet(){
     "- **Receita**: “recebi 3000 de salário”\n"+
     "- **Cartão**: “criar cartão Nubank com limite 5000”\n"+
     "- **Transferir**: “transferir 500 do Inter para a Poupança”\n"+
-    "- **Consultar**: “qual meu saldo?” · “resumo do mês”",
+    "- **Consultar**: “qual meu saldo?” · “resumo do mês”\n"+
+    "- **Relatório**: “relatório do mês em PDF”",
     {chips: defaultChips()});
 }
 
@@ -629,6 +767,7 @@ function helpText(){
     "- **Receitas**: “recebi 3000 de salário” · “cadastrar receita de freelance 800”\n"+
     "- **Transferências**: “transferir 500 da conta X para a Y”\n"+
     "- **Consultas**: “qual meu saldo?” · “resumo do mês” · “quanto gastei com alimentação?” · “o que falta pagar?”\n"+
+    "- **Relatório em PDF**: “relatório do mês em PDF” · “relatório de outubro”\n"+
     "- **Extras**: “orcamento 4000” · “modo escuro” · “abrir cartões” · “desfazer”\n"+
     "Se faltar alguma informação, eu pergunto antes de salvar nada.";
 }
@@ -833,8 +972,7 @@ function handle(text){
     return;
 
   case "report":
-    botSay("Já estou preparando o relatório em PDF… 📄");
-    setTimeout(()=>{ try{ generateReport(extractMonth(text)); }catch(e){ botSay("Não consegui gerar o PDF agora. Tente novamente."); } }, 500);
+    generateReport(extractMonth(text));
     return;
 
   case "pay_invoice": {
