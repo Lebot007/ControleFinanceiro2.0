@@ -25,8 +25,8 @@ Organizador financeiro pessoal completo que roda **100% no navegador**: contas, 
 - **PWA**: instala como aplicativo e funciona offline
 - **Tema claro/escuro**
 
-### 🤖 Assistente com IA (chat)
-Um assistente em português que entende comandos em linguagem natural e **faz tudo sem você tocar em menus**:
+### 🤖 Assistente com IA (chat, estilo Pierre)
+Um assistente em português que entende comandos em linguagem natural e **faz tudo sem você tocar em menus** — com **memória persistente**, **modo ensino** e **planejamento contextual**, na estética minimalista dark + verde-menta (inspirada no Pierre):
 
 | Você fala | Ele faz |
 |---|---|
@@ -34,16 +34,21 @@ Um assistente em português que entende comandos em linguagem natural e **faz tu
 | “criar cartão Nubank com limite 5000” | Cadastra o cartão |
 | “cadastrar despesa de mercado 250,50” | Lança a despesa (infere categoria, data e conta) |
 | “gastei 30 com uber ontem” | Lança ontem, categoria Transporte |
-| “recebi 3000 de salário” | Registra a receita |
+| “recebi 3000 de salário” | Registra a receita e **memoriza o salário** |
 | “comprei 200 no cartão Nubank” | Compra no cartão (pendente até a fatura) |
 | “transferir 500 do Inter para a Poupança” | Transfere entre contas |
 | “pagar fatura do Nubank” | Quita a fatura do ciclo atual |
-| “paguei o aluguel” | Marca o lançamento pendente como pago |
 | “relatório do mês em PDF” | **Gera e entrega o PDF no chat** |
 | “qual meu saldo?” / “resumo do mês” | Consulta tudo |
+| “lembre-se que meu salário é 3000” | **Memoriza** (“✓ Anotado! Vou lembrar que…”) |
+| “edite a memória: X para Y” / “esqueça X” | **Edita/apaga** fatos da memória |
+| “o que você sabe sobre mim?” | Abre a **Minha Memória** (ver/editar/apagar) |
+| “como recupero minha senha?” / “como cadastro um cartão?” | **Ensina o passo a passo** do site |
+| “tenho apenas 40 reais para gastar” | **Planeja** com o contexto e oferece reservar |
 | “orcamento 4000” / “meta de economia 500” | Define orçamento e metas |
-| “abrir cartões” / “modo escuro” | Navega e ajusta o app |
 | “desfazer” | Reverte a última ação |
+
+**Memória do assistente (arquitetura híbrida):** a conversa atual é a camada de sessão; os **fatos, preferências e perfil** ficam salvos no navegador (`localStorage`, chave `fluxo.memory.v1`) e são recuperados por relevância (padrão RAG) a cada interação — o módulo `memoria.js` também monta o **System Prompt** completo (persona + memória + contexto financeiro) pronto para ser enviado a um modelo como o GLM 5.3. Conflitos (ex.: salário antigo vs. novo) são sempre confirmados antes de atualizar, e fatos inúteis (“oi”) são rejeitados. Tudo apagável pelo usuário, a qualquer momento.
 
 Ele conversa: se faltar informação, pergunta (com sugestões clicáveis) e nada é salvo sem confirmação dos dados no cartão de resposta. O histórico da conversa fica salvo no navegador.
 
@@ -67,7 +72,8 @@ Ele conversa: se faltar informação, pergunta (com sugestões clicáveis) e nad
 | Arquivo | Papel |
 |---|---|
 | `index.html` | Aplicação principal (SPA em arquivo único) |
-| `ai.js` + `ai.css` | Assistente conversacional (NLP local + chat) |
+| `ai.js` + `ai.css` | Assistente conversacional (NLP local + chat estilo Pierre: dark + verde-menta) |
+| `memoria.js` | **Memória persistente do assistente** (CRUD + validação + conflitos + RAG + System Prompt) |
 | `relatorio-pdf.js` | Gerador de PDF sem dependências |
 | `login.html` | Tela de desbloqueio por senha |
 | `fluxo-cards.html` | “Grimório das Fortunas” — carta RPG gerada a partir de um backup |
