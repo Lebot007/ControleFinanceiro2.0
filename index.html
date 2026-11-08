@@ -1691,6 +1691,10 @@ refresh();
 q("#t-from").onchange = repaintSelects;
 q("#t-to").onchange   = repaintSelects;
 q("#t-value").addEventListener("input", refresh);
+/* A máscara monetária altera o valor em keydown/paste sem disparar "input";
+   escutamos também esses eventos para a prévia de saldo acompanhar a digitação. */
+q("#t-value").addEventListener("keydown", ()=>setTimeout(refresh,0));
+q("#t-value").addEventListener("paste", ()=>setTimeout(refresh,0));
 q("#t-date").onchange = refresh;
 q("[data-swap]").onclick = ()=>{
 const f = q("#t-from").value, t = q("#t-to").value;
