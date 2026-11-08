@@ -4,17 +4,22 @@
    Um AGENTE DE IA real com Tool Calling, rodando no navegador:
 
      1. O usuário escreve QUALQUER COISA em linguagem natural.
-     2. UMA ÚNICA chamada ao LLM gratuito e sem chave (Pollinations,
+     2. Uma chamada ao LLM gratuito e sem chave (Pollinations,
         GPT-OSS 20B, endpoint compatível com OpenAI, CORS aberto)
         decide o que fazer — o entendimento é 100% do modelo.
+        Mensagens com VÁRIOS itens geram VÁRIAS chamadas de
+        ferramenta em paralelo (multitarefa numa tacada só).
      3. As ferramentas (criar contas, lançar transações, consultar
         dados, memorizar...) executam AQUI, no navegador.
-     4. A resposta final é montada NA HORA, localmente (síntese
-        instantânea com a voz do Fluxo) — sem gastar uma segunda
-        chamada do serviço, que era o que deixava o chat lento.
+     4. Se TUDO deu certo: resposta final montada NA HORA, com a
+        voz do Fluxo (síntese local instantânea, sem 2ª chamada).
+        Se ALGO falhou: o modelo recebe os resultados e ganha até
+        2 rodadas para se corrigir sozinho (agente de verdade) —
+        trocar o nome da conta, escolher outra opção ou fazer a
+        pergunta certa ao usuário.
 
    VELOCIDADE (regra de ouro): o usuário nunca espera de graça.
-   - Uma geração do serviço por mensagem, no máximo.
+   - Caminho feliz = 1 geração do serviço por mensagem.
    - HTTP 402 (limite gratuito: ~1 geração/45s por IP): fila silenciosa
      que entrega sozinha quando a janela abre — sem contagem de segundos
      na tela; se a fila andar mal, resposta amigável imediata.
@@ -83,8 +88,9 @@ async function llmChat(messages, tools, onStatus){
           messages,
           tools: tools || undefined,
           tool_choice: tools ? "auto" : undefined,
-          max_tokens: 700,
-          reasoning_effort: "low"      /* raciocínio curto: decisão mais rápida */
+          max_tokens: 800,
+          temperature: 0.4,            /* decisões de ferramenta mais determinísticas */
+          reasoning_effort: "medium"   /* raciocínio completo: entende multitarefas */
         })
       });
       clearTimeout(tm);
@@ -216,11 +222,12 @@ const categoryNames = type => (state.categories || []).filter(c => !type || c.ty
 const TOOL_DEFS = [
   {type:"function", function:{
     name:"criar_conta",
-    description:"Cria uma conta ou carteira no app (banco, poupança, dinheiro, carteira digital, investimentos).",
+    description:"Cria uma conta ou carteira no app (banco, poupança, dinheiro, carteira digital como InfinitePay/PicPay/Mercado Pago, investimentos). Antes de criar, confira no contexto se a conta JÁ EXISTE — não duplique. Pedido com várias contas = uma chamada por conta, todas na mesma mensagem.",
     parameters:{type:"object", properties:{
-      nome:{type:"string", description:"Nome da conta (ex.: Inter, Nubank, Carteira)"},
+      nome:{type:"string", description:"Nome da conta (ex.: Inter, Nubank, InfinitePay)"},
       saldo_inicial:{type:"number", description:"Saldo inicial em reais (ex.: 1905.50). Padrão 0."},
-      tipo:{type:"string", enum:["corrente","poupanca","dinheiro","digital","investimento"], description:"Tipo da conta. Padrão corrente."}
+      tipo:{type:"string", enum:["corrente","poupanca","dinheiro","digital","investimento"], description:"Tipo da conta. Carteiras de aplicativo = digital. Padrão corrente."},
+      forcar:{type:"boolean", description:"true para criar mesmo existindo conta parecida — use SOMENTE se o usuário confirmar que quer a duplicata."}
     }, required:["nome"]}
   }},
   {type:"function", function:{
@@ -235,7 +242,7 @@ const TOOL_DEFS = [
   }},
   {type:"function", function:{
     name:"lancar_transacao",
-    description:"Registra uma despesa ou receita. Se o usuário não disser a conta/cartão, use a conta única ou pergunte antes.",
+    description:"Registra UMA despesa ou receita. Vários lançamentos na mesma mensagem = uma chamada por lançamento, todas em paralelo. Se o usuário não disser a conta/cartão, use a conta única ou pergunte antes.",
     parameters:{type:"object", properties:{
       tipo:{type:"string", enum:["despesa","receita"]},
       valor:{type:"number", description:"Valor em reais (ex.: 250.5)"},
@@ -349,6 +356,17 @@ const TOOL_DEFS = [
     name:"apagar_memoria",
     description:"Apaga definitivamente um fato da memória. Só use se o usuário pediu para esquecer.",
     parameters:{type:"object", properties:{ termo:{type:"string", description:"O fato a esquecer (ou algo bem parecido)"} }, required:["termo"]}
+  }},
+  {type:"function", function:{
+    name:"executar_lote",
+    description:"Executa VÁRIAS ações de uma vez, numa chamada só. USE SEMPRE que o pedido tiver 2 ou mais itens (ex.: criar 2 contas, lançar 3 despesas, criar conta e já lançar um valor nela). Cada ação segue o formato da ferramenta original. Pedido com 1 item só → use a ferramenta direto, sem lote.",
+    parameters:{type:"object", properties:{
+      acoes:{type:"array", description:"Ações a executar, em ordem", items:{type:"object", properties:{
+        ferramenta:{type:"string", enum:["criar_conta","criar_cartao","lancar_transacao","transferir","pagar_fatura","consultar_saldo","consultar_resumo","consultar_transacoes","definir_orcamento","definir_meta","salvar_memoria","editar_memoria","apagar_memoria"],
+          description:"Nome da ferramenta a executar"},
+        args:{type:"object", description:"Argumentos da ferramenta (mesmos campos da ferramenta original)"}
+      }, required:["ferramenta","args"]}}
+    }, required:["acoes"]}
   }}
 ];
 
@@ -363,13 +381,29 @@ const TOOL_LABEL = {
   gerar_relatorio_pdf:"gerar relatório", definir_orcamento:"definir orçamento",
   definir_meta:"definir meta", navegar:"abrir página", mudar_tema:"mudar tema",
   desfazer:"desfazer", salvar_memoria:"memorizar", buscar_memoria:"consultar memória",
-  editar_memoria:"atualizar memória", apagar_memoria:"apagar da memória"
+  editar_memoria:"atualizar memória", apagar_memoria:"apagar da memória",
+  executar_lote:"executar várias ações"
 };
 
 const TOOL_RUN = {
 
   criar_conta(a){
     if(!a.nome) return {ok:false, motivo:"faltou o nome"};
+    /* guarda anti-duplicata: conta parecida já existe → devolve ao
+       modelo, que decide (usar a existente, perguntar ou confirmar).
+       Matching ESTRITO (exato ou prefixo ≥3 letras) para não bloquear
+       nomes legítimos — ex.: “InfinitePay” NÃO é duplicata de “Inter”. */
+    if(a.forcar !== true){
+      const q = NORM(String(a.nome).slice(0,40));
+      const dup = (state.accounts || []).find(a2 => {
+        const n = NORM(a2.name), i = NORM(a2.institution);
+        if(q && (q === n || (i && q === i))) return true;
+        return !!(n.length >= 3 && q.length >= 3 && (n.startsWith(q) || q.startsWith(n)));
+      });
+      if(dup) return {ok:false, motivo:"já existe a conta “" + dup.name + "”",
+        dica:"não duplique. Se for lançar um valor nela, use lancar_transacao; se o usuário confirmar que quer outra conta com nome parecido, reforce com forcar:true",
+        disponiveis:accountNames()};
+    }
     const saldo = toCents(a.saldo_inicial ?? 0) || 0;
     const tipos = ["corrente","poupanca","dinheiro","digital","investimento"];
     const tipo  = tipos.includes(a.tipo) ? a.tipo : "corrente";
@@ -654,8 +688,51 @@ const TOOL_RUN = {
       return {ok:false, status:"ambiguo", motivo:"há vários fatos parecidos — confirme com o usuário qual apagar", candidatos:hits.slice(0,3).map(h=>h.fact.text)};
     const f = M.remove(hits[0].fact.id);
     return {ok:true, apagado:f ? f.text : a.termo};
+  },
+
+  /* LOTE: várias ações numa chamada só. O serviço gratuito devolve no
+     máximo 1 tool call por geração — então a multitarefa acontece com o
+     modelo montando uma LISTA de ações, e tudo roda aqui de uma vez. */
+  executar_lote(a){
+    const list = Array.isArray(a.acoes) ? a.acoes : (Array.isArray(a) ? a : null);
+    if(!list || !list.length) return {ok:false, motivo:"envie acoes: [{ferramenta, args}, …]"};
+    if(list.length > 12) return {ok:false, motivo:"máximo de 12 ações por lote"};
+    const seen = new Set();
+    const resultados = [], receipts = [];
+    for(const it of list){
+      const nome = cleanToolName(it && it.ferramenta);
+      const args = (it && it.args && typeof it.args === "object" && !Array.isArray(it.args)) ? it.args : parseArgs(it && it.args);
+      const fn = TOOL_RUN[nome];
+      if(!fn || nome === "executar_lote"){
+        resultados.push({ferramenta:String(nome || "?"), ok:false,
+          motivo:'ferramenta inválida no lote: "' + nome + '" — use as ferramentas definidas'});
+        continue;
+      }
+      const key = nome + "|" + JSON.stringify(args);
+      if(seen.has(key)){
+        resultados.push({ferramenta:nome, ok:false, motivo:"ação repetida no lote — não duplico"});
+        continue;
+      }
+      seen.add(key);
+      let out;
+      try{ out = fn(args); }
+      catch(e){ out = {ok:false, motivo:"erro ao executar: " + (e && e.message ? e.message : e)}; }
+      if(out && out.receipt){ receipts.push(out.receipt); delete out.receipt; }
+      resultados.push({ferramenta:nome, ...out});
+    }
+    const ok = resultados.every(r => r.ok !== false);
+    return {ok, acoes:resultadoCompacto(resultados), receipts};
   }
 };
+
+/* versão enxuta dos resultados do lote para o modelo (sem campos visuais) */
+function resultadoCompacto(rs){
+  return rs.map(r => {
+    const c = {...r};
+    delete c.receipt; delete c.receipts;
+    return c;
+  });
+}
 
 /* ---------- 6. System Prompt (persona + memória + contexto + conhecimento) ---------- */
 function buildSystemPrompt(userMsg){
@@ -692,9 +769,16 @@ function buildSystemPrompt(userMsg){
 "- Português do Brasil, amigável e DIRETO. Mentor paciente: quando ensinar, explique o porquê em 1 frase.",
 "- Respostas CURTAS: no máximo 3 frases ou 5 bullets curtos. Use **negrito** nos números-chave e listas com “- ”. Obs.: ao executar ações, o app já mostra cartões de confirmação automáticos — não repita todos os detalhes.",
 
+"## COMO PENSAR (regras de inteligência)",
+"- MULTITAREFA: pedido com 2 ou mais itens → use **executar_lote** com uma ação por item (mesmos argumentos da ferramenta original). Ex.: “Inter com 1905,00 e InfinitePay com 146,15” → executar_lote com 2 ações de criar_conta. Pedido de 1 item → use a ferramenta direto.",
+"- NUNCA invente nomes, bancos, valores ou ações que o usuário NÃO disse. Não soube o nome/banco → pergunte. Não está claro se um valor é saldo de conta ou gasto/receita → PERGUNTE antes de agir. Chutar é proibido.",
+"- Continuações (“e os outros?”, “sim”, “o resto”, “também”) falam da mensagem ANTERIOR: releia o histórico, faça SÓ o que ainda falta. NUNCA repita ação que o histórico mostra como já feita — se já está tudo feito, diga isso e confirme.",
+"- Antes de criar conta/cartão, confira no CONTEXTO se já existe uma parecida: existe → use-a ou pergunte; não duplique.",
+"- Carteiras digitais e bancos brasileiros (Nubank, InfinitePay, PicPay, Mercado Pago, Inter, Caixa, Itaú, Banco do Brasil…) são CONTAS; carteiras de aplicativo = tipo “digital”.",
+"- Números em português: “1905,00” e “1.905,00” são 1905.00 reais (vírgula = casas decimais).",
+
 "## COMO AGIR",
 "- Para executar qualquer coisa no app, use as ferramentas — nunca diga que fez algo sem chamar a ferramenta.",
-"- Pedidos compostos (ex.: criar 3 contas de uma vez): emita TODAS as chamadas de ferramenta NA MESMA mensagem (em paralelo).",
 "- Se faltar informação essencial (valor, conta, nome), faça UMA pergunta objetiva em vez de adivinhar.",
 "- NUNCA invente dados financeiros: consulte antes de afirmar saldos, gastos ou lançamentos.",
 "- Valores em REAIS; datas aaaa-mm-dd nas ferramentas e dd/mm nas respostas.",
@@ -747,7 +831,7 @@ facts.length ? facts.map(f => "- [" + ((M.KIND_LABEL[f.kind]) || f.kind) + "] " 
    confirma com a voz do Fluxo. Zero regras de ENTENDIMENTO aqui:
    quem decidiu o que fazer foi o modelo; isto é só apresentação. */
 function synthTool(name, out){
-  if(!out || out.ok === false){
+  if(name !== "executar_lote" && (!out || out.ok === false)){
     let s = "⚠️ Não deu certo: " + ((out && out.motivo) || "algo falhou") + ".";
     const d = out && (out.disponiveis || out.candidatos);
     if(d && d.length) s += "\nOpções que encontrei: **" + d.join("** · **") + "**.";
@@ -815,17 +899,33 @@ function synthTool(name, out){
       return "✅ Memória atualizada — agora sei: **" + out.depois + "**.";
     case "apagar_memoria":
       return "🗑️ Feito — apaguei **" + out.apagado + "** da memória.";
+    case "executar_lote": {
+      /* uma linha por ação do lote (os cartões mostram os detalhes) */
+      const partes = (out.acoes || []).map(r => {
+        const s = synthTool(r.ferramenta, r);
+        return s ? s.split("\n")[0] : null;   /* só a 1ª linha: o resto está nos cartões */
+      }).filter(Boolean);
+      return partes.length ? partes.join("\n") : "✅ Feito!";
+    }
     default:
       return "✅ Feito!";
   }
 }
 
 /* ---------- 8. O loop do agente ---------- */
-const MAX_STEPS = 3;   /* seguro contra respostas vazias do modelo (raro) */
+const MAX_STEPS = 3;   /* 1 decisão + até 2 rodadas de auto-correção (só se algo falhar) */
 
 /**
- * Executa um turno completo: mensagem → 1 chamada ao LLM → ferramentas
- * → resposta final (texto do modelo ou síntese local instantânea).
+ * Executa um turno completo: mensagem → LLM → ferramentas → resposta.
+ *
+ * CAMINHO FELIZ (o comum): 1 chamada ao LLM decide tudo, as ferramentas
+ * rodam e a resposta sai NA HORA (texto do modelo ou síntese local).
+ *
+ * AUTO-CORREÇÃO: se ALGUMA ferramenta falhou, os resultados voltam para
+ * o modelo, que ganha até 2 rodadas para se corrigir — ajustar o nome da
+ * conta, escolher uma opção válida ou fazer a pergunta certa ao usuário.
+ * Rodadas extras só acontecem quando são necessárias: nada de espera à toa.
+ *
  * @param {string} userText   a mensagem do usuário
  * @param {object} opts       {history:[{role,content}], onStatus:fn(string)}
  * @returns {Promise<{text:string, cards:object[]}>}
@@ -833,11 +933,17 @@ const MAX_STEPS = 3;   /* seguro contra respostas vazias do modelo (raro) */
 async function turn(userText, opts){
   opts = opts || {};
   const cards = [];
-  const messages = [
-    {role:"system", content: buildSystemPrompt(userText)},
-    ...(opts.history || []).slice(-8),
-    {role:"user", content: String(userText || "").slice(0, 500)}
-  ];
+  const cur   = String(userText || "").slice(0, 500);
+
+  /* o histórico enviado pela UI já termina com a própria mensagem do
+     usuário (ela é adicionada antes de chamar o agente) — não duplica */
+  const hist = (opts.history || []).slice(-8);
+  const messages = [{role:"system", content: buildSystemPrompt(cur)}, ...hist];
+  const lastMsg = messages[messages.length - 1];
+  if(!lastMsg || lastMsg.role !== "user" || String(lastMsg.content) !== cur)
+    messages.push({role:"user", content: cur});
+
+  const done = new Set();   /* (nome+args) já executados NESTE turno — corta repetição cega */
 
   for(let step = 0; step < MAX_STEPS; step++){
     const resp = await llmChat(messages, TOOL_DEFS, s => {
@@ -864,30 +970,54 @@ async function turn(userText, opts){
 
     /* executa TODAS as ferramentas chamadas (o modelo pode paralelizar) */
     const results = [];
+    let anyFailed = false;
     for(const c of calls){
       opts.onStatus && opts.onStatus(TOOL_LABEL[c.name] || c.name);
+      const key = c.name + "|" + JSON.stringify(c.args);
       let out;
-      const fn = TOOL_RUN[c.name];
-      if(!fn) out = {ok:false, motivo:'ferramenta desconhecida: "' + c.name + '" — use apenas as ferramentas definidas'};
-      else{
-        try{ out = fn(c.args); }
-        catch(e){ out = {ok:false, motivo:"erro ao executar: " + (e && e.message ? e.message : e)}; }
+      if(done.has(key)){
+        out = {ok:false, motivo:"essa ação acabou de ser executada neste turno — não repita; confira o histórico e faça só o que falta"};
+      }else{
+        const fn = TOOL_RUN[c.name];
+        if(!fn) out = {ok:false, motivo:'ferramenta desconhecida: "' + c.name + '" — use apenas as ferramentas definidas'};
+        else{
+          try{ out = fn(c.args); }
+          catch(e){ out = {ok:false, motivo:"erro ao executar: " + (e && e.message ? e.message : e)}; }
+        }
+        done.add(key);
       }
+      if(out && out.ok === false) anyFailed = true;
       if(out && out.receipt){ cards.push(out.receipt); delete out.receipt; }
-      results.push({name:c.name, out});
+      if(out && Array.isArray(out.receipts)){ cards.push(...out.receipts); delete out.receipts; }
+      results.push({call:c, out});
     }
 
-    /* resposta final IMEDIATA: o texto que o modelo escreveu junto das
-       chamadas (se houver e nada tiver falhado) ou a síntese local —
-       zero chamadas extras, zero espera a mais. */
-    const pre    = String(m.content || "").trim();
-    const synth  = results.map(r => synthTool(r.name, r.out)).join("\n\n");
-    const failed = results.some(r => r.out && r.out.ok === false);
-    let text;
-    if(pre && !failed)      text = pre;               /* o modelo já falou */
-    else if(pre && failed)  text = pre + "\n\n" + synth; /* garante que o erro apareça */
-    else                    text = synth;               /* síntese instantânea */
-    return {text, cards};
+    const pre   = String(m.content || "").trim();
+    const synth = results.map(r => synthTool(r.call.name, r.out)).join("\n\n");
+
+    /* TUDO certo → resposta IMEDIATA: o texto que o modelo escreveu junto
+       das chamadas ou a síntese local. Zero chamadas extras, zero espera. */
+    if(!anyFailed){
+      return {text: pre || synth, cards};
+    }
+
+    /* ALGO FALHOU → o modelo vê os resultados e se corrige (ou pergunta).
+       Isso é o que faz o agente aprender com o erro DENTRO do turno. */
+    if(step < MAX_STEPS - 1){
+      messages.push({
+        role:"assistant", content: m.content || null,
+        tool_calls: calls.map(c => ({id:c.id, type:"function", function:{name:c.name, arguments:JSON.stringify(c.args)}}))
+      });
+      results.forEach(r => messages.push({
+        role:"tool", tool_call_id: r.call.id,
+        content: JSON.stringify(r.out).slice(0, 1400)
+      }));
+      opts.onStatus && opts.onStatus("ajustando os detalhes…");
+      continue;
+    }
+
+    /* última rodada e ainda falhou: entrega o que deu, com honestidade */
+    return {text: (pre ? pre + "\n\n" : "") + synth, cards};
   }
 
   /* estourou o limite de rodadas: resume o que conseguiu fazer */
