@@ -1011,17 +1011,17 @@ body: `
 <button type="button" data-t="despesa">${icon("arrowDR",15)} Despesa</button>
 <button type="button" data-t="receita">${icon("arrowUR",15)} Receita</button>
 </div>
-<div class="field"><label>Descrição <b>*</b></label><input id="f-desc" maxlength="90" placeholder="Ex.: Supermercado, Salário, Aluguel…" value="${esc(edit?.desc||"")}"></div>
+<div class="field"><label>Descrição <b>*</b></label><input id="f-desc" maxlength="90" placeholder="Ex.: Supermercado, Salário, Aluguel…" value="${esc(edit?.desc||opts.desc||"")}"></div>
 <div class="grid2">
 <div class="field"><label>Valor <b>*</b></label><div class="money-wrap"><span>R$</span><input id="f-value" class="money" placeholder="0,00"></div></div>
-<div class="field"><label>Data <b>*</b></label><input type="date" id="f-date" value="${edit?.date||todayISO()}"></div>
+<div class="field"><label>Data <b>*</b></label><input type="date" id="f-date" value="${edit?.date||opts.date||todayISO()}"></div>
 </div>
 <div class="grid2">
 <div class="field"><label>Categoria <b>*</b></label><select id="f-cat"></select></div>
 <div class="field"><label>Forma de pagamento</label><select id="f-method"></select></div>
 </div>
 <div class="grid2">
-<div class="field" id="w-acc"><label>Conta <b>*</b></label><select id="f-acc">${accOptions(edit?.accountId)}</select>
+<div class="field" id="w-acc"><label>Conta <b>*</b></label><select id="f-acc">${accOptions(edit?.accountId ?? opts.accountId)}</select>
 ${state.accounts.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Cadastre uma conta em “Contas e carteiras”.</small>`}</div>
 <div class="field" id="w-card" style="display:none"><label>Cartão <b>*</b></label><select id="f-card">${cardOptions(edit?.cardId||opts.cardId)}</select>
 ${state.cards.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Cadastre um cartão em “Cartões”.</small>`}</div>
@@ -1031,7 +1031,7 @@ ${state.cards.length?'':`<small style="color:var(--warn)">${icon("alert",12)} Ca
 <button type="button" data-s="pendente">Pendente</button>
 <button type="button" data-s="pago">Pago / Recebido</button>
 </div></div>
-<div class="field"><label>Observação</label><textarea id="f-note" maxlength="240">${esc(edit?.note||"")}</textarea></div>
+<div class="field"><label>Observação</label><textarea id="f-note" maxlength="240">${esc(edit?.note||opts.note||"")}</textarea></div>
 ${edit ? (edit.recurrenceId ? `<div class="hint">${icon("repeat",14)} Este lançamento faz parte de uma recorrência. Alterações valem só para esta ocorrência.</div>` : "") : `
 <div class="toggle-row" id="tg-inst">${icon("copy",16)} Parcelar esta despesa <span style="margin-left:auto;font-size:11px;color:var(--ink2)">2x ou mais</span></div>
 <div class="reveal" id="pn-inst"><div class="grid2">
@@ -1060,7 +1060,7 @@ if(status==="vencido") status="pendente";
 const paintSeg = ()=>{
 q("#tx-seg").querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===type));
 const currentMethod = q("#f-method") ? q("#f-method").value : "Pix";
-q("#f-cat").innerHTML = catOptions(type, edit?.categoryId);
+q("#f-cat").innerHTML = catOptions(type, edit?.categoryId ?? opts.categoryId);
 q("#f-method").innerHTML = methodOptions(type, edit ? edit.payMethod : currentMethod);
 const _tg = q("#tg-inst");
 if(_tg){ _tg.style.display = type==="despesa" ? "flex" : "none";
@@ -1086,6 +1086,7 @@ q("#w-enddate").style.display = v==="date"?"":"none"; q("#w-endcount").style.dis
 }
 paintSeg();
 if(opts.presetCard){ q("#f-method").value = "Cartão de crédito"; }
+else if(opts.method){ q("#f-method").value = opts.method; }
 paintPay(); paintStatus();
 const presetCardId = edit?.cardId || opts.cardId;
 if(presetCardId && q("#f-card")) q("#f-card").value = presetCardId;
@@ -2799,6 +2800,7 @@ case "catlimit": openCatLimitModal(id); break;
 case "goal-edit": openGoalModal(el.dataset.g); break;
 case "tx-pay": if(tx) payTransaction(tx); break;
 case "tx-edit": if(tx) openTxModal({tx}); break;
+case "tx-dup": if(tx) openTxModal({type:tx.type, desc:tx.desc, value:tx.value, date:tx.date, categoryId:tx.categoryId, accountId:tx.accountId, cardId:tx.cardId, method:tx.payMethod, presetCard: !!tx.cardId, status: tx.status, note:tx.note}); break;
 case "show-note": { const nt=tx||transfById(id); if(nt && nt.note){ const ov=openModal({title:"Observação — "+esc(nt.desc||"Transferência"),
 body:`<p style="font-size:14px;line-height:1.7;color:var(--ink2);white-space:pre-wrap">${esc(nt.note)}</p>`,
 foot:`<button class="btn btn-ghost" data-x>Fechar</button>`});
