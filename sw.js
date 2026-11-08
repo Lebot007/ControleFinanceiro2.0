@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fluxo-v7';
+const CACHE_NAME = 'fluxo-v8';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
