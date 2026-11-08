@@ -561,6 +561,10 @@ if (!t.payMethod) t.payMethod = "Transferência";
 if (typeof t.note !== "string") t.note = "";
 });
 }
+/* Higieniza cores e ícones vindos de backups importados (evita CSS inválido) */
+state.categories.forEach(c=>{ if(!/^#[0-9a-fA-F]{3,8}$/.test(c.color||"")){ c.color="#8d99ae"; fixes++; }
+if(!ICONS[c.icon]){ c.icon="dots"; fixes++; } });
+state.cards.forEach(c=>{ if(!/^#[0-9a-fA-F]{3,8}$/.test(c.color||"")){ c.color="#0e6b4f"; fixes++; } });
 const groups = {};
 state.transactions.forEach(t => {
 if (t.groupId) {
@@ -660,12 +664,18 @@ if(anchor < s) s.setMonth(s.getMonth()-1);
 const e = new Date(s.getFullYear(), s.getMonth()+1, ms-1);
 return [isoOf(s), isoOf(e)];
 }
+/* Mês da fatura a que a compra pertence: compras feitas APÓS o dia de fechamento
+   entram na fatura do mês seguinte (ex.: fecha dia 27 → compra dia 28 = próxima fatura). */
+function invoiceMonthKey(iso, closeDay){
+const cd = Math.min(Math.max(+closeDay||1,1),28);
+return fromISO(iso).getDate() > cd ? monthKey(addMonths(iso,1)) : monthKey(iso);
+}
 function cardStats(card){
 const inst = state.transactions.filter(t=>t.cardId===card.id && t.type==="despesa");
 const open = inst.filter(t=>t.status!=="pago");
 const used = open.reduce((s,t)=>s+t.value,0);
-const now = todayISO(), mk = monthKey(now);
-const invoiceNow = inst.filter(t=>monthKey(t.date)===mk).reduce((s,t)=>s+t.value,0);
+const now = todayISO(), mk = invoiceMonthKey(now, card.closeDay);
+const invoiceNow = inst.filter(t=>invoiceMonthKey(t.date, card.closeDay)===mk).reduce((s,t)=>s+t.value,0);
 const overdue = open.filter(t=>t.date<now).reduce((s,t)=>s+t.value,0);
 return {used, open:open.length, invoiceNow, overdue, available:Math.max(0,(card.limit||0)-used)};
 }
@@ -1228,6 +1238,15 @@ Object.assign(rec,data);
 if(oldStart!==start){
 state.transactions = state.transactions.filter(t=>!(t.recurrenceId===rec.id && t.date>=todayISO()));
 rec.nextDate=start; rec.generated=0;
+} else {
+/* Editou valor/descrição/etc. sem mudar a data inicial: replica também para as
+   ocorrências futuras ainda pendentes, para não ficarem com dados defasados. */
+state.transactions.forEach(t=>{
+if(t.recurrenceId===rec.id && t.status!=="pago" && t.date>=todayISO()){
+Object.assign(t,{type:data.type,desc:data.desc,value:data.value,categoryId:data.categoryId,
+payMethod:data.payMethod,accountId:data.accountId,cardId:data.cardId,note:data.note});
+}
+});
 }
 materializeRecurrence(rec);
 } else {
@@ -1474,7 +1493,7 @@ const catSpend = {};
 txCyc.filter(t => t.type === 'despesa').forEach(t => {
 catSpend[t.categoryId] = (catSpend[t.categoryId] || 0) + t.value;
 });
-const last3Months = lastMonths(4).slice(1, 4);
+const last3Months = lastMonths(4).slice(0, 3); /* [m-3, m-2, m-1] — média sem o mês corrente */
 const avgCatSpend = {};
 last3Months.forEach(m => {
 state.transactions.filter(t => monthKey(t.date) === m.key && t.type === 'despesa' && t.status === 'pago').forEach(t => {
@@ -2075,10 +2094,11 @@ return `<div class="card lift" style="padding:16px">
 function openCardDetail(card){
 const buildBody=()=>{
 const inst=state.transactions.filter(t=>t.cardId===card.id&&t.type==="despesa");
-const months=[...new Set(inst.map(t=>monthKey(t.date)))].sort();
+const ik=iso=>invoiceMonthKey(iso, card.closeDay);
+const months=[...new Set(inst.map(t=>ik(t.date)))].sort();
 const s=cardStats(card);
 const block=(mk,label)=>{
-const rows=inst.filter(t=>monthKey(t.date)===mk).sort((a,b)=>a.date.localeCompare(b.date));
+const rows=inst.filter(t=>ik(t.date)===mk).sort((a,b)=>a.date.localeCompare(b.date));
 if(!rows.length) return "";
 const total=rows.reduce((x,t)=>x+t.value,0), open=rows.some(t=>t.status!=="pago");
 return `<div class="invoice-block">
@@ -2091,7 +2111,7 @@ ${rows.map(t=>`<div class="inv-row"><span class="iv-d num">${fmtDate(t.date)}</s
 ${t.status!=="pago"?`<button class="icon-btn" title="Pagar parcela" aria-label="Pagar parcela" data-action="tx-pay" data-id="${t.id}">${icon("check",14)}</button>`:""}
 </div>`).join("")}</div>`;
 };
-const nowMk=monthKey(todayISO());
+const nowMk=ik(todayISO());
 const past=months.filter(m=>m<nowMk), future=months.filter(m=>m>nowMk);
 return `
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;font-size:13px">
@@ -2112,7 +2132,7 @@ const bindPay=()=>ov.querySelectorAll("[data-payinv]").forEach(b=>b.onclick=()=>
 const mk=b.dataset.payinv;
 accountPickModal(accId=>{
 let n=0,sum=0;
-state.transactions.forEach(t=>{ if(t.cardId===card.id&&t.status!=="pago"&&monthKey(t.date)===mk){
+state.transactions.forEach(t=>{ if(t.cardId===card.id&&t.status!=="pago"&&invoiceMonthKey(t.date, card.closeDay)===mk){
 t.status="pago"; t.accountId=accId; t.paidDate=todayISO(); n++; sum+=t.value; } });
 save(); render(); toast(`Fatura paga: ${n} parcela(s), ${fmtMoney(sum)}.`);
 refresh();
@@ -2495,17 +2515,19 @@ const byDate=(a,b)=>a.date.localeCompare(b.date)||String(a.id).localeCompare(Str
 const list=[...state.transactions].filter(t=>t.date>=ps&&t.date<=pe).sort(byDate);
 const trList=withTransfers?[...state.transfers].filter(t=>t.date>=ps&&t.date<=pe).sort(byDate):[];
 const byDateW=(x,y)=>byDate(x.o,y.o);
-const merged=[...list.map(t=>({k:"tx",d:t.date,o:t})),...trList.map(t=>({k:"tf",d:t.date,o:t}))].sort(byDateW).map(x=>x.o);
-list.forEach(t=>{
-const c=catById(t.categoryId), a=accById(t.accountId), k=cardById(t.cardId);
+/* Intercala transações e transferências em ordem cronológica no CSV */
+const merged=[...list.map(t=>({k:"tx",o:t})),...trList.map(t=>({k:"tf",o:t}))].sort(byDateW);
+merged.forEach(({k,o:t})=>{
+if(k==="tx"){
+const c=catById(t.categoryId), a=accById(t.accountId), kd=cardById(t.cardId);
 rows.push([fmtDate(t.date), t.desc, t.type==="receita"?"Receita":"Despesa", c?c.name:"",
-money(t.value), a?a.name:"", k?k.name:"", t.payMethod||"",
+money(t.value), a?a.name:"", kd?kd.name:"", t.payMethod||"",
 txStatus(t), t.installment?`${t.installment}/${t.installments}`:"", t.note||""]);
-});
-trList.forEach(t=>{
+} else {
 const a=accById(t.from), b=accById(t.to);
 rows.push([fmtDate(t.date), transferLabel(t), "Transferência", "",
 money(t.value), a?a.name:"", b?b.name:"", t.payMethod||"Transferência", "efetivada", "", t.note||""]);
+}
 });
 download(`lancamentos-${todayISO()}.csv`, "\uFEFF"+rows.map(r=>r.map(q).join(";")).join("\r\n"), "text/csv;charset=utf-8");
 toast(`CSV exportado (${list.length} lançamento(s)${trList.length?` + ${trList.length} transferência(s)`:""}).`);
@@ -2938,9 +2960,9 @@ render(); return;
 }
 if(tg.dataset && tg.dataset.ckall && ui.sel[tg.dataset.ckall]){
 const key=tg.dataset.ckall, set=ui.sel[key];
-/* "Selecionar todos" marca apenas lançamentos; transferências têm exclusão própria. */
-if(tg.checked){ (_viewIds.lanc||[]).forEach(i=>set.add(i)); }
-else { (_viewIds.lanc||[]).forEach(i=>set.delete(i)); }
+/* "Selecionar todas" marca os itens da própria página (lançamentos, contas ou receitas). */
+if(tg.checked){ (_viewIds[key]||[]).forEach(i=>set.add(i)); }
+else { (_viewIds[key]||[]).forEach(i=>set.delete(i)); }
 render(); return;
 }
 });

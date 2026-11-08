@@ -639,7 +639,7 @@ Voltar ao Fluxo
 </svg>
 <p>Arrastai e soltai aqui o pergaminho <strong>.json</strong> exportado pelo Fluxo</p>
 <span class="ou">— ou —</span>
-<label class="btn" for="fileInput"><svg class="ic"><use href="#i-scrollx"/></svg>📜 Entregar backup (.json)</label>
+<label class="btn" for="fileInput"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Entregar backup (.json)</label>
 <input type="file" id="fileInput" accept=".json,application/json">
 <div class="ornament-line" aria-hidden="true">⚜<span class="dot"></span>⚔<span class="dot"></span>⚜</div>
 </div>
@@ -1080,7 +1080,7 @@ return cv;
 function blobDoCanvas(cv){return new Promise((res,rej)=>{try{cv.toBlob(b=>b?res(b):rej(new Error('sem blob')),'image/png');}catch(e){rej(e);}});}
 async function baixarPNG(){
 if(!state)return;
-btnPng.disabled=true;btnPng.textContent='⚒ Forjando…';
+btnPng.disabled=true;if(!btnPng.dataset.html)btnPng.dataset.html=btnPng.innerHTML;btnPng.textContent='⚒ Forjando…';
 try{
 const nome='fluxo-carta-'+state.rank.key.toLowerCase()+'.png';
 let cv=await pintarCarta(state,state.hasArt);
@@ -1097,7 +1097,7 @@ a.href=URL.createObjectURL(blob);a.download=nome;
 document.body.appendChild(a);a.click();a.remove();
 setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }catch(e){showError('A forja do PNG falhou: '+(e&&e.message?e.message:'erro desconhecido'));}
-finally{btnPng.disabled=false;btnPng.textContent='⬇ Baixar carta (PNG)';}
+finally{btnPng.disabled=false;btnPng.innerHTML=btnPng.dataset.html||'⬇ Baixar carta (PNG)';}
 }
 /* ---------- upload / drag&drop ---------- */
 function handleFile(file){
