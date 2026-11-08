@@ -1,0 +1,270 @@
+/* ============================================================
+   Fluxo — Assistente Financeiro (estilo Pierre: dark + menta)
+   ------------------------------------------------------------
+   O painel do assistente é SEMPRE escuro (independente do tema
+   do app), com detalhes em verde-menta neon — inspirado no
+   minimalismo conversacional do Pierre (CloudWalk): o chat é o
+   centro, sem dashboards, ícones minimalistas e fonte limpa.
+   ============================================================ */
+
+/* ---------- Bolha flutuante (FAB) ---------- */
+#ai-fab{
+  position:fixed; right:20px; bottom:22px; z-index:70;
+  width:56px; height:56px; border-radius:18px; cursor:pointer;
+  display:grid; place-items:center; color:#2bffa3;
+  background:linear-gradient(160deg,#152119,#0a100d);
+  border:1px solid rgba(43,255,163,.38);
+  box-shadow:0 14px 34px -10px rgba(0,0,0,.65), 0 0 22px -6px rgba(43,255,163,.35);
+  transition:transform .2s, box-shadow .2s;
+}
+#ai-fab:hover{transform:scale(1.06); box-shadow:0 14px 34px -10px rgba(0,0,0,.65), 0 0 30px -4px rgba(43,255,163,.55)}
+#ai-fab.pulse{animation:aiPulse 2.6s ease-out 2}
+@keyframes aiPulse{
+  0%{box-shadow:0 14px 34px -10px rgba(0,0,0,.65), 0 0 0 0 rgba(43,255,163,.45)}
+  70%{box-shadow:0 14px 34px -10px rgba(0,0,0,.65), 0 0 0 16px rgba(43,255,163,0)}
+  100%{box-shadow:0 14px 34px -10px rgba(0,0,0,.65), 0 0 0 0 rgba(43,255,163,0)}
+}
+#ai-fab .ai-fab-badge{
+  position:absolute; top:-4px; right:-4px; width:14px; height:14px; border-radius:50%;
+  background:var(--down); border:2.5px solid var(--surface); display:none;
+}
+#ai-fab.has-news .ai-fab-badge{display:block}
+
+/* ---------- Painel do chat (sempre escuro) ---------- */
+#ai-panel{
+  /* paleta local “Pierre”: fundo escuro + verde-menta neon */
+  --p-bg:#0a100d; --p-card:#111a15; --p-card2:#0d1611;
+  --p-ink:#e7f5ee; --p-ink2:#8fac9f;
+  --p-mint:#2bffa3; --p-mint-dk:#12b981;
+  --p-line:rgba(148,255,199,.12); --p-line2:rgba(148,255,199,.22);
+  position:fixed; right:20px; bottom:92px; z-index:75;
+  width:min(400px, calc(100vw - 32px));
+  height:min(620px, calc(100dvh - 130px));
+  background:linear-gradient(180deg,#0d1712 0%, var(--p-bg) 100%);
+  border:1px solid var(--p-line2); border-radius:22px;
+  box-shadow:0 34px 90px -24px rgba(0,0,0,.75), 0 0 46px -20px rgba(43,255,163,.28);
+  display:flex; flex-direction:column; overflow:hidden;
+  opacity:0; transform:translateY(14px) scale(.98); pointer-events:none;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.3,.9,.3,1);
+  color:var(--p-ink); font-size:13.5px;
+}
+#ai-panel.open{opacity:1; transform:none; pointer-events:auto}
+@supports not (height:1dvh){ #ai-panel{height:min(620px, calc(100vh - 130px))} }
+
+/* Cabeçalho minimalista */
+.ai-head{
+  display:flex; align-items:center; gap:11px; padding:14px 14px 13px 16px;
+  border-bottom:1px solid var(--p-line);
+  background:linear-gradient(120deg, #0e1a14 0%, #0a130e 130%);
+}
+.ai-avatar{
+  width:38px; height:38px; border-radius:12px; flex-shrink:0; display:grid; place-items:center;
+  background:linear-gradient(135deg,#123527,#0c2419); color:var(--p-mint);
+  border:1px solid rgba(43,255,163,.35);
+  box-shadow:0 0 18px -4px rgba(43,255,163,.45), inset 0 0 12px rgba(43,255,163,.12);
+}
+.ai-title{flex:1; min-width:0}
+.ai-title b{display:block; font-size:14.5px; font-family:var(--disp); letter-spacing:-.2px; color:#f2fbf7}
+.ai-title span{display:block; font-size:10.5px; color:var(--p-ink2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ai-head .icon-btn{color:#9fc4b2; width:32px; height:32px; border-radius:9px; display:grid; place-items:center}
+.ai-head .icon-btn:hover{background:rgba(43,255,163,.12); color:var(--p-mint)}
+.ai-head .icon-btn:disabled{opacity:.4}
+
+/* ---------- Mensagens ---------- */
+#ai-msgs{flex:1; overflow-y:auto; padding:16px 14px 8px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth}
+#ai-msgs::-webkit-scrollbar{width:8px}
+#ai-msgs::-webkit-scrollbar-thumb{background:#1d2c24; border-radius:8px}
+.ai-row{display:flex; gap:8px; align-items:flex-end; max-width:100%}
+.ai-row.user{justify-content:flex-end}
+.ai-bub{
+  max-width:82%; padding:10px 13px; border-radius:14px; font-size:13.5px; line-height:1.55;
+  background:var(--p-card); border:1px solid var(--p-line); color:var(--p-ink);
+  border-bottom-left-radius:5px; overflow-wrap:anywhere;
+}
+.ai-row.user .ai-bub{
+  background:linear-gradient(135deg,#2bffa3,#12b981); color:#04241a; border:none;
+  border-radius:14px; border-bottom-right-radius:5px; font-weight:600;
+  box-shadow:0 6px 18px -8px rgba(43,255,163,.55);
+}
+.ai-bot-ic{
+  width:26px; height:26px; border-radius:9px; flex-shrink:0; display:grid; place-items:center;
+  background:#0f1c15; color:var(--p-mint); margin-bottom:2px;
+  border:1px solid rgba(43,255,163,.25);
+}
+.ai-msg-text b{color:var(--p-mint)}
+.ai-msg-text .ai-li{display:flex; gap:7px; margin-top:5px}
+.ai-msg-text .ai-li::before{content:"•"; color:var(--p-mint); flex-shrink:0}
+
+/* Digitação */
+.ai-typing{display:inline-flex; gap:4px; padding:12px 14px}
+.ai-typing i{width:6px; height:6px; border-radius:50%; background:var(--p-mint); animation:aiDot 1.2s infinite}
+.ai-typing i:nth-child(2){animation-delay:.15s}
+.ai-typing i:nth-child(3){animation-delay:.3s}
+@keyframes aiDot{0%,60%,100%{transform:translateY(0); opacity:.35}30%{transform:translateY(-4px); opacity:1}}
+
+/* ---------- Cartão de confirmação (ação executada) ---------- */
+.ai-card{
+  max-width:88%; border:1px solid var(--p-line2); border-radius:14px; overflow:hidden;
+  background:var(--p-card2); box-shadow:0 10px 26px -14px rgba(0,0,0,.8);
+}
+.ai-card-h{
+  display:flex; align-items:center; gap:8px; padding:10px 13px;
+  background:rgba(43,255,163,.1); color:var(--p-mint); font-weight:700; font-size:12.5px;
+  border-bottom:1px solid var(--p-line);
+}
+.ai-card-h .ic{flex-shrink:0}
+.ai-card-b{padding:9px 13px 11px}
+.ai-kv{display:flex; justify-content:space-between; gap:14px; font-size:12.8px; padding:3.5px 0; border-bottom:1px dashed var(--p-line)}
+.ai-kv:last-of-type{border-bottom:none}
+.ai-kv span{color:var(--p-ink2)}
+.ai-kv b{text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; color:#dff3ea}
+.ai-card-f{display:flex; gap:8px; padding:0 13px 11px; flex-wrap:wrap}
+/* botões do app dentro do painel escuro recebem a identidade menta */
+.ai-card-f .btn, .ai-pdf .btn{padding:5px 11px; font-size:12px; border-radius:9px}
+.ai-card .btn-ghost, .ai-pdf .btn-ghost{background:transparent; border:1px solid rgba(43,255,163,.35); color:var(--p-mint)}
+.ai-card .btn-ghost:hover, .ai-pdf .btn-ghost:hover{background:rgba(43,255,163,.1)}
+.ai-card .btn-primary, .ai-pdf .btn-primary{background:linear-gradient(135deg,#2bffa3,#0f9f6c); color:#04241a; box-shadow:none}
+
+/* ---------- Mensagem de PDF ---------- */
+.ai-pdf{display:flex; align-items:center; gap:11px; padding:11px 13px}
+.ai-pdf .ai-file{
+  width:40px; height:40px; border-radius:11px; flex-shrink:0; display:grid; place-items:center;
+  background:rgba(43,255,163,.12); color:var(--p-mint); font-size:9.5px; font-weight:800; letter-spacing:.02em;
+  font-family:var(--disp); border:1px solid rgba(43,255,163,.25);
+}
+.ai-pdf .ai-pmeta{flex:1; min-width:0}
+.ai-pdf .ai-pname{font-size:12.8px; font-weight:700; overflow-wrap:anywhere; color:#dff3ea}
+.ai-pdf .ai-psub{font-size:11px; color:var(--p-ink2); margin-top:1px}
+
+/* ---------- Sugestões (chips) ---------- */
+#ai-chips{
+  display:flex; gap:7px; padding:8px 12px 4px; overflow-x:auto; scrollbar-width:none;
+  border-top:1px solid var(--p-line);
+  background:linear-gradient(180deg,rgba(10,16,13,.4),rgba(10,16,13,.9));
+}
+#ai-chips::-webkit-scrollbar{display:none}
+#ai-chips:empty{display:none; padding:0; border:none}
+.ai-chip{
+  flex-shrink:0; padding:6px 12px; border-radius:99px; font-size:12px; font-weight:600;
+  background:rgba(43,255,163,.07); color:#9fe8c8; border:1px solid rgba(43,255,163,.28);
+  cursor:pointer; transition:all .15s; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ai-chip:hover{border-color:var(--p-mint); color:var(--p-mint); transform:translateY(-1px)}
+
+/* ---------- Entrada ---------- */
+#ai-form{display:flex; gap:8px; padding:10px 12px 12px; border-top:1px solid var(--p-line); background:var(--p-bg)}
+#ai-input{
+  flex:1; min-width:0; padding:10px 13px; border:1px solid var(--p-line2); border-radius:12px;
+  background:var(--p-card2); font-size:13.5px; color:var(--p-ink); transition:border-color .15s, box-shadow .15s;
+}
+#ai-input::placeholder{color:#5f7a6d}
+#ai-input:focus{outline:none; border-color:rgba(43,255,163,.55); box-shadow:0 0 0 3px rgba(43,255,163,.12); background:#0f1a14}
+#ai-send{
+  width:42px; height:42px; border-radius:12px; border:none; cursor:pointer; flex-shrink:0;
+  display:grid; place-items:center; color:#04241a;
+  background:linear-gradient(135deg,#2bffa3,#0f9f6c);
+  box-shadow:0 8px 20px -8px rgba(43,255,163,.6);
+  transition:transform .15s, opacity .15s;
+}
+#ai-send:hover{transform:translateY(-1px)}
+#ai-send:disabled{opacity:.5; transform:none; cursor:default}
+
+/* ============================================================
+   Minha Memória — modal de gestão (ver / editar / apagar fatos)
+   ============================================================ */
+#ai-mem-overlay{
+  position:fixed; inset:0; z-index:88; display:flex; align-items:center; justify-content:center;
+  padding:18px; background:rgba(3,7,5,.66); backdrop-filter:blur(5px);
+  opacity:0; transition:opacity .18s ease;
+}
+#ai-mem-overlay.show{opacity:1}
+.ai-mem-card{
+  width:100%; max-width:470px; max-height:min(80vh,660px); display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#0f1913,#0a100d); border:1px solid rgba(148,255,199,.24); border-radius:20px;
+  box-shadow:0 40px 90px -20px rgba(0,0,0,.85), 0 0 44px -18px rgba(43,255,163,.3);
+  color:#e7f5ee; overflow:hidden;
+  transform:translateY(10px) scale(.98); transition:transform .2s cubic-bezier(.3,.9,.3,1);
+}
+#ai-mem-overlay.show .ai-mem-card{transform:none}
+.ai-mem-head{display:flex; align-items:center; gap:11px; padding:15px 16px 13px; border-bottom:1px solid rgba(148,255,199,.14)}
+.ai-mem-ic{
+  width:36px; height:36px; border-radius:11px; display:grid; place-items:center; flex-shrink:0;
+  background:linear-gradient(135deg,#123527,#0c2419); color:#2bffa3;
+  border:1px solid rgba(43,255,163,.35); box-shadow:0 0 16px -4px rgba(43,255,163,.4);
+}
+.ai-mem-tt{flex:1; min-width:0}
+.ai-mem-tt b{display:block; font-family:var(--disp); font-size:15px; color:#f2fbf7; letter-spacing:-.2px}
+.ai-mem-tt span{display:block; font-size:11px; color:#8fac9f; margin-top:1px}
+.ai-mem-x{
+  width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+  color:#9fc4b2; cursor:pointer; transition:all .15s;
+}
+.ai-mem-x:hover{background:rgba(43,255,163,.12); color:#2bffa3}
+.ai-mem-sub{padding:11px 16px 4px; font-size:12px; line-height:1.55; color:#8fac9f}
+.ai-mem-sub b{color:#c9e5d8}
+.ai-mem-list{flex:1; overflow-y:auto; padding:10px 12px 12px; display:flex; flex-direction:column; gap:7px}
+.ai-mem-list::-webkit-scrollbar{width:8px}
+.ai-mem-list::-webkit-scrollbar-thumb{background:#1d2c24; border-radius:8px}
+.ai-mem-row{
+  display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:12px;
+  background:#0e1712; border:1px solid rgba(148,255,199,.1); transition:border-color .15s;
+}
+.ai-mem-row:hover{border-color:rgba(148,255,199,.26)}
+.ai-mem-tag{
+  font-size:9px; font-weight:800; letter-spacing:.09em; text-transform:uppercase;
+  padding:3px 8px; border-radius:99px; flex-shrink:0;
+}
+.ai-mem-tag.fato{background:rgba(43,255,163,.13); color:#2bffa3}
+.ai-mem-tag.preferencia{background:rgba(122,167,217,.15); color:#8fb7e8}
+.ai-mem-tag.perfil{background:rgba(232,169,74,.14); color:#e8b95c}
+.ai-mem-text{flex:1; min-width:0; font-size:13px; line-height:1.45; color:#dff3ea; overflow-wrap:anywhere}
+.ai-mem-act{
+  width:29px; height:29px; border-radius:8px; flex-shrink:0; display:grid; place-items:center;
+  color:#7d9a8c; cursor:pointer; transition:all .15s; font-size:11px; font-weight:700;
+}
+.ai-mem-act:hover{background:rgba(43,255,163,.12); color:#2bffa3}
+.ai-mem-act.ok{color:#2bffa3}
+.ai-mem-act.armed, .ai-mem-wipe.armed{background:rgba(240,115,115,.16); color:#f07373 !important; width:auto; padding:0 9px}
+.ai-mem-input{
+  flex:1; min-width:0; padding:7px 10px; border-radius:9px; font-size:13px; color:#e7f5ee;
+  background:#0a120e; border:1px solid rgba(43,255,163,.4);
+}
+.ai-mem-input:focus{outline:none; box-shadow:0 0 0 3px rgba(43,255,163,.12)}
+.ai-mem-input.err{border-color:#f07373; box-shadow:0 0 0 3px rgba(240,115,115,.15)}
+.ai-mem-empty{
+  display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+  padding:30px 18px; color:#8fac9f;
+}
+.ai-mem-empty b{color:#c9e5d8; font-size:14px}
+.ai-mem-empty span{font-size:12.5px; line-height:1.5; max-width:280px}
+.ai-mem-empty .ic{color:#2bffa3; opacity:.85}
+.ai-mem-foot{padding:11px 14px 13px; border-top:1px solid rgba(148,255,199,.14); display:flex; justify-content:center}
+.ai-mem-wipe{
+  padding:7px 14px; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer;
+  background:transparent; border:1px solid rgba(240,115,115,.35); color:#f0a3a3; transition:all .15s;
+}
+.ai-mem-wipe:hover{background:rgba(240,115,115,.1); color:#f07373}
+
+/* ---------- Ajustes responsivos ---------- */
+@media (max-width:960px){
+  #ai-fab{bottom:94px} /* fica acima do FAB "novo lançamento" */
+  #ai-panel{bottom:164px; height:min(560px, calc(100dvh - 190px))}
+  @supports not (height:1dvh){ #ai-panel{height:min(560px, calc(100vh - 190px))} }
+}
+@media (max-width:480px){
+  #ai-fab{right:14px}
+  #ai-panel{
+    left:8px; right:8px; bottom:158px; width:auto; height:min(70vh, calc(100dvh - 190px));
+  }
+  @supports not (height:1dvh){ #ai-panel{height:min(70vh, calc(100vh - 190px))} }
+  .ai-bub{max-width:90%}
+  #ai-mem-overlay{padding:10px}
+  .ai-mem-card{max-height:86vh}
+  .ai-mem-text{font-size:12.5px}
+}
+@media print{ #ai-fab, #ai-panel, #ai-mem-overlay{display:none !important} }
+@media (prefers-reduced-motion:reduce){
+  #ai-fab.pulse{animation:none}
+  #ai-msgs{scroll-behavior:auto}
+  #ai-mem-card, .ai-mem-card{transition:none}
+}
