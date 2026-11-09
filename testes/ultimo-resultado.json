@@ -1,0 +1,2441 @@
+{
+  "geradoEm": "2026-11-09T01:53:58.069Z",
+  "bateria": "100 cenários de conversa — LLM real (GPT-OSS via Pollinations), usuários simulados de 14 a 75 anos",
+  "total": 100,
+  "passou": 100,
+  "porGrupo": {
+    "Adolescentes": {
+      "total": 18,
+      "ok": 18
+    },
+    "Jovens": {
+      "total": 20,
+      "ok": 20
+    },
+    "Adultos": {
+      "total": 25,
+      "ok": 25
+    },
+    "Meia-idade": {
+      "total": 19,
+      "ok": 19
+    },
+    "Idosos": {
+      "total": 18,
+      "ok": 18
+    }
+  },
+  "duracaoTotalMin": 27,
+  "resultados": [
+    {
+      "id": 1,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "cumprimenta sem mexer em nada",
+      "msg": "oi",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8139,
+      "resposta": "Oi! Como posso ajudar você a organizar suas finanças hoje?",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 2,
+      "grupo": "Adolescentes",
+      "idade": 14,
+      "titulo": "cria carteira da mesada (R$ 50)",
+      "msg": "cria uma conta pro meu dinheiro de mesada com 50 reais",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8319,
+      "resposta": "✅ Conta **Mesada** criada com saldo **R$ 50,00**.",
+      "acoes": [
+        "criar conta"
+      ],
+      "estado": {
+        "contas": [
+          "Mesada(50)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 3,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "recebeu R$ 20 de mesada",
+      "msg": "recebi 20 de mesada",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 18915,
+      "resposta": "✅ Receita **mesada** de **R$ 20,00** registrada.\n🧠 Anotado! Vou lembrar que **recebi 20 de mesada**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "r:mesada=20"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "recebi 20 de mesada"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "grupo": "Adolescentes",
+      "idade": 16,
+      "titulo": "gastou R$ 15 no lanche da escola",
+      "msg": "gastei 15 no lanche da escola",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 23524,
+      "resposta": "✅ Despesa **lanche da escola** de **R$ 15,00** registrada.\n🧠 Anotado! Vou lembrar que **gastei 15 no lanche da escola**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:lanche da escola=15"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "gastei 15 no lanche da escola"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "grupo": "Adolescentes",
+      "idade": 14,
+      "titulo": "comprou skin de R$ 25 no jogo",
+      "msg": "comprei uma skin de 25 reais no jogo",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 13419,
+      "resposta": "✅ Despesa **skin de 25 reais no jogo** de **R$ 25,00** registrada.",
+      "acoes": [
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:skin de 25 reais no jogo=25"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 6,
+      "grupo": "Adolescentes",
+      "idade": 16,
+      "titulo": "multitarefa: lanche R$ 10 + jogo R$ 25",
+      "msg": "gastei 10 no lanche e 25 no jogo hoje",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15008,
+      "resposta": "✅ Despesa **lanche** de **R$ 10,00** registrada.\n✅ Despesa **jogo** de **R$ 25,00** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:lanche=10",
+          "d:jogo=25"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 7,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "pergunta quanto tem (R$ 95)",
+      "msg": "quanto eu tenho?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 37120,
+      "resposta": "💰 **Saldo total: R$ 95,00**\n- Dinheiro: **R$ 95,00**",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…",
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(75)"
+        ],
+        "txs": [
+          "r:Mesada=20"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 8,
+      "grupo": "Adolescentes",
+      "idade": 14,
+      "titulo": "pai deu R$ 30",
+      "msg": "meu pai me deu 30 conto",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 26013,
+      "resposta": "✅ Receita **Pai deu 30 conto** de **R$ 30,00** registrada.\n🧠 Anotado! Vou lembrar que **Meu pai me deu 30 conto**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "r:Pai deu 30 conto=30"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu pai me deu 30 conto"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "grupo": "Adolescentes",
+      "idade": 17,
+      "titulo": "gíria: '30 paus' no Inter",
+      "msg": "cria conta inter com 30 paus",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8848,
+      "resposta": "✅ Conta **Inter** criada com saldo **R$ 30,00**.",
+      "acoes": [
+        "criar conta"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(30)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 10,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "meta: juntar R$ 100 pro fone",
+      "msg": "quero juntar 100 reais pra comprar um fone",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11589,
+      "resposta": "✅ Meta definida: **R$ 100,00**.\n🧠 Anotado! Vou lembrar que **Quero juntar 100 reais para comprar um fone**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "100/0",
+        "memoria": [
+          "Quero juntar 100 reais para comprar um fone"
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "grupo": "Adolescentes",
+      "idade": 16,
+      "titulo": "pede pra apagar gasto (não há ferramenta)",
+      "msg": "apaga o gasto do jogo aí",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8383,
+      "resposta": "Achei **1 lançamento(s)** (todo o histórico), total **R$ 25,00**:\n- 09/11/2026 · Skin do jogo — **R$ 25,00** (Lazer)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:Skin do jogo=25"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 12,
+      "grupo": "Adolescentes",
+      "idade": 14,
+      "titulo": "pergunta como ver os gastos",
+      "msg": "como eu vejo meus gastos?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10423,
+      "resposta": "Para ver os seus gastos no Fluxo:\n\n- Abra o app e toque na aba **Lançamentos** (ícone de lista ou + no canto inferior direito).  \n- Na tela de lançamentos, escolha o filtro **Tipo = Despesa** ou use a busca para digitar palavras-chave.  \n- O app mostrará a lista de todas as despesas, com data, descr",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 13,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "CONTEXTO: 'e a outra?' usa o histórico",
+      "msg": "e a outra?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8911,
+      "resposta": "✅ Conta **Lanche** criada com saldo **R$ 50,00**.",
+      "acoes": [
+        "criar conta"
+      ],
+      "estado": {
+        "contas": [
+          "PicPay(20)",
+          "Lanche(50)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 14,
+      "grupo": "Adolescentes",
+      "idade": 16,
+      "titulo": "mensagem com emoji: R$ 12 no Bob's",
+      "msg": "💸💸 gastei 12 no bob's",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 18001,
+      "resposta": "✅ Despesa **bob's** de **R$ 12,00** registrada.",
+      "acoes": [
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:bob's=12"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 15,
+      "grupo": "Adolescentes",
+      "idade": 17,
+      "titulo": "deve R$ 5 pro amigo",
+      "msg": "tô devendo 5 pro meu amigo",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 17786,
+      "resposta": "✅ Despesa **Devido a amigo** de **R$ 5,00** registrada.\n🧠 Anotado! Vou lembrar que **Eu devo 5 reais ao meu amigo**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:Devido a amigo=5 pend"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Eu devo 5 reais ao meu amigo"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "grupo": "Adolescentes",
+      "idade": 15,
+      "titulo": "quanto gastou no mês (R$ 40)",
+      "msg": "quanto gastei esse mês?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 27932,
+      "resposta": "📊 **01/11/2026 a 30/11/2026**\n- Receitas: **R$ 0,00**\n- Despesas: **R$ 40,00**\n- Resultado: **- R$ 40,00**\n- Saldo hoje: **R$ 10,00**\n\nOnde mais saiu dinheiro:\n- Lazer: R$ 25,00\n- Alimentação: R$ 15,00",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…",
+        "consultar resumo"
+      ],
+      "estado": {
+        "contas": [
+          "Dinheiro(50)"
+        ],
+        "txs": [
+          "d:Lanche=15",
+          "d:Jogo=25"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 17,
+      "grupo": "Adolescentes",
+      "idade": 16,
+      "titulo": "gíria: 'bora modo escuro'",
+      "msg": "bora modo escuro",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6865,
+      "resposta": "🎨 Tema **escuro** ativado.",
+      "acoes": [
+        "mudar tema"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 18,
+      "grupo": "Adolescentes",
+      "idade": 14,
+      "titulo": "quem é você?",
+      "msg": "quem é você?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 7809,
+      "resposta": "Sou o Fluxo, seu assistente financeiro pessoal dentro do app Fluxo. Estou aqui para organizar suas contas, registrar despesas e receitas, ajudar a planejar metas e responder qualquer dúvida sobre suas finanças. 🚀",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 19,
+      "grupo": "Jovens",
+      "idade": 22,
+      "titulo": "primeiro salário R$ 2.200",
+      "msg": "recebi meu primeiro salário de 2200",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 13268,
+      "resposta": "✅ Receita **Salário** de **R$ 2.200,00** registrada.\n🧠 Anotado! Vou lembrar que **Meu salário é 2200**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "r:Salário=2200"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu salário é 2200"
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "grupo": "Jovens",
+      "idade": 21,
+      "titulo": "Spotify R$ 44,90",
+      "msg": "paguei 44,90 do spotify",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 24367,
+      "resposta": "✅ Despesa **Spotify** de **R$ 44,90** registrada.\n🧠 Anotado! Vou lembrar que **paguei 44,90 do Spotify**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Spotify=44.9"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "paguei 44,90 do Spotify"
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "grupo": "Jovens",
+      "idade": 23,
+      "titulo": "Netflix R$ 55,90 no cartão Nubank",
+      "msg": "assinei netflix de 55,90 no cartão nubank",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15512,
+      "resposta": "✅ Despesa **Netflix** de **R$ 55,90** registrada.",
+      "acoes": [
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Netflix=55.9 pend"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 22,
+      "grupo": "Jovens",
+      "idade": 20,
+      "titulo": "multitarefa: Uber R$ 60 + iFood R$ 35 ontem",
+      "msg": "botei 60 de uber e 35 de ifood ontem",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 59211,
+      "resposta": "✅ Despesa **Uber** de **R$ 60,00** registrada.\n✅ Despesa **iFood** de **R$ 35,00** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Uber=60",
+          "d:iFood=35"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 23,
+      "grupo": "Jovens",
+      "idade": 24,
+      "titulo": "renda extra R$ 300 vendendo doces",
+      "msg": "renda extra de 300 vendendo doces",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15187,
+      "resposta": "✅ Receita **vendendo doces** de **R$ 300,00** registrada.\n🧠 Anotado! Vou lembrar que **Tenho renda extra de 300 vendendo doces**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "r:vendendo doces=300"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Tenho renda extra de 300 vendendo doces"
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "grupo": "Jovens",
+      "idade": 25,
+      "titulo": "multitarefa: aluguel R$ 900 + condomínio R$ 250",
+      "msg": "aluguel 900 e condominio 250",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 22923,
+      "resposta": "✅ Despesa **Aluguel** de **R$ 900,00** registrada.\n✅ Despesa **Condomínio** de **R$ 250,00** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Aluguel=900",
+          "d:Condomínio=250"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 25,
+      "grupo": "Jovens",
+      "idade": 23,
+      "titulo": "transferiu R$ 200 Inter → Caixa",
+      "msg": "transferi 200 da inter pra caixa",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10484,
+      "resposta": "✅ Transferência de **R$ 200,00** de **Inter** para **Caixa** registrada.",
+      "acoes": [
+        "transferir"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)",
+          "Caixa(0)"
+        ],
+        "txs": [],
+        "transf": [
+          "->200"
+        ],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 26,
+      "grupo": "Jovens",
+      "idade": 22,
+      "titulo": "cadastra cartão Nubank limite R$ 3.500",
+      "msg": "cadastra meu cartao nubank com limite 3500",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 12646,
+      "resposta": "✅ Cartão **Nubank** cadastrado — limite **R$ 3.500,00**.",
+      "acoes": [
+        "criar cartão"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 27,
+      "grupo": "Jovens",
+      "idade": 24,
+      "titulo": "quanto sobra do salário (R$ 2.105)",
+      "msg": "quanto sobrou do meu salario?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 12855,
+      "resposta": "📊 **01/11/2026 a 30/11/2026**\n- Receitas: **R$ 2.200,00**\n- Despesas: **R$ 95,00**\n- Resultado: **R$ 2.105,00**\n- Saldo hoje: **R$ 3.305,00**\n\nOnde mais saiu dinheiro:\n- Transporte: R$ 60,00\n- Alimentação: R$ 35,00",
+      "acoes": [
+        "consultar resumo"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "r:Salário=2200",
+          "d:Uber=60",
+          "d:iFood=35"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 28,
+      "grupo": "Jovens",
+      "idade": 21,
+      "titulo": "meta: juntar R$ 500/mês",
+      "msg": "minha meta é juntar 500 por mes",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 18199,
+      "resposta": "✅ Meta definida: **R$ 500,00**.\n🧠 Anotado! Vou lembrar que **Minha meta é juntar 500 por mês**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "500/0",
+        "memoria": [
+          "Minha meta é juntar 500 por mês"
+        ]
+      }
+    },
+    {
+      "id": 29,
+      "grupo": "Jovens",
+      "idade": 20,
+      "titulo": "teto de gastos R$ 1.500",
+      "msg": "teto de gastos 1500",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8593,
+      "resposta": "✅ Orçamento mensal definido: **R$ 1.500,00**.",
+      "acoes": [
+        "definir orçamento"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 30,
+      "grupo": "Jovens",
+      "idade": 23,
+      "titulo": "paga a fatura do Nubank",
+      "msg": "paga a fatura do nubank",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8987,
+      "resposta": "✅ Fatura do **Nubank** quitada: **R$ 55,90** (1 compra), debitado de **Inter**.",
+      "acoes": [
+        "pagar fatura"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Netflix=55.9"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 31,
+      "grupo": "Jovens",
+      "idade": 19,
+      "titulo": "memoriza bolsa da faculdade",
+      "msg": "lembra que eu recebo 100 de bolsa da faculdade",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10102,
+      "resposta": "🧠 Anotado! Vou lembrar que **Eu recebo 100 de bolsa da faculdade**.",
+      "acoes": [
+        "memorizar"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Eu recebo 100 de bolsa da faculdade"
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "grupo": "Jovens",
+      "idade": 22,
+      "titulo": "o que você sabe sobre mim?",
+      "msg": "o que você sabe sobre mim?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10484,
+      "resposta": "**O que já sei sobre você:**\n\n- Salário de **R$ 2.200**, que cai no dia **5** de cada mês.  \n- Você **odeia gastar com fast food**.  \n\nSe precisar de mais alguma coisa, é só falar!",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu salário é 2.200 e cai dia 5",
+          "Odeio gastar com fast food"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "grupo": "Jovens",
+      "idade": 19,
+      "titulo": "conflito de memória: bolsa 100 → 150",
+      "msg": "na verdade minha bolsa agora é 150",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8868,
+      "resposta": "✅ Memória atualizada — agora sei: **Recebo 150 de bolsa da faculdade**.",
+      "acoes": [
+        "atualizar memória"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Recebo 150 de bolsa da faculdade"
+        ]
+      }
+    },
+    {
+      "id": 34,
+      "grupo": "Jovens",
+      "idade": 24,
+      "titulo": "CONTEXTO: 'faltou a internet de 99'",
+      "msg": "faltou a internet de 99",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 16998,
+      "resposta": "✅ Despesa **Internet** de **R$ 99,00** registrada.\n🧠 Anotado! Vou lembrar que **Internet de 99 foi gasto**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:Luz=120",
+          "d:Água=80",
+          "d:Internet=99"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Internet de 99 foi gasto"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "grupo": "Jovens",
+      "idade": 19,
+      "titulo": "esquece a bolsa da memória",
+      "msg": "esquece que eu recebo bolsa",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9537,
+      "resposta": "🗑️ Feito — apaguei **Recebo 100 de bolsa da faculdade** da memória.",
+      "acoes": [
+        "apagar da memória"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 36,
+      "grupo": "Jovens",
+      "idade": 25,
+      "titulo": "relatório do mês em PDF",
+      "msg": "gera o relatorio do mes em pdf",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8277,
+      "resposta": "📄 Relatório de **01/11/2026 a 30/11/2026** pronto — o download já começou.",
+      "acoes": [
+        "gerar relatório"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 37,
+      "grupo": "Jovens",
+      "idade": 21,
+      "titulo": "quanto gastou com iFood (R$ 83)",
+      "msg": "quanto gastei com ifood?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 21437,
+      "resposta": "Achei **2 lançamento(s)** (01/11/2026 a 30/11/2026), total **R$ 83,00**:\n- 09/11/2026 · iFood sexta — **R$ 35,00** (Alimentação)\n- 09/11/2026 · iFood fds — **R$ 48,00** (Alimentação)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1200)"
+        ],
+        "txs": [
+          "d:iFood sexta=35",
+          "d:iFood fds=48"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 38,
+      "grupo": "Jovens",
+      "idade": 23,
+      "titulo": "resumo do mês passado",
+      "msg": "resumo do mes passado",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9124,
+      "resposta": "📊 **01/10/2026 a 31/10/2026**\n- Receitas: **R$ 1.000,00**\n- Despesas: **R$ 430,00**\n- Resultado: **R$ 570,00**\n- Saldo hoje: **R$ 2.070,00**\n\nOnde mais saiu dinheiro:\n- Alimentação: R$ 430,00",
+      "acoes": [
+        "consultar resumo"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1500)"
+        ],
+        "txs": [
+          "r:Salário=1000",
+          "d:Mercado=430"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 39,
+      "grupo": "Adultos",
+      "idade": 32,
+      "titulo": "clássico: Inter 1905,00 + InfinitePay 146,15",
+      "msg": "Crie as contas Inter com 1905,00 e InfinitePay com 146,15",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8843,
+      "resposta": "✅ Conta **Inter** criada com saldo **R$ 1.905,00**.\n✅ Conta **InfinitePay** criada com saldo **R$ 146,15**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "InfinitePay(146.15)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 40,
+      "grupo": "Adultos",
+      "idade": 35,
+      "titulo": "salário sem dizer a conta (3 contas) → perguntar",
+      "msg": "meu salário de 5400 caiu",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11879,
+      "resposta": "Qual conta devo depositar o salário?",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "Caixa(755)",
+          "InfinitePay(146.15)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 41,
+      "grupo": "Adultos",
+      "idade": 30,
+      "titulo": "mercado R$ 412,67 no débito da Inter",
+      "msg": "mercado 412,67 no debito da inter",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 84322,
+      "resposta": "✅ Despesa **mercado** de **R$ 412,67** registrada.",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…",
+        "fila do serviço gratuito — respondendo já…",
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "Caixa(755)",
+          "InfinitePay(146.15)"
+        ],
+        "txs": [
+          "d:mercado=412.67"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 42,
+      "grupo": "Adultos",
+      "idade": 34,
+      "titulo": "multitarefa: 3 contas da casa na Inter",
+      "msg": "lança na inter: aluguel 1800, escola 950 e plano de saude 420",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 13717,
+      "resposta": "✅ Despesa **aluguel** de **R$ 1.800,00** registrada.\n✅ Despesa **escola** de **R$ 950,00** registrada.\n✅ Despesa **plano de saude** de **R$ 420,00** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)"
+        ],
+        "txs": [
+          "d:aluguel=1800",
+          "d:escola=950",
+          "d:plano de saude=420"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 43,
+      "grupo": "Adultos",
+      "idade": 33,
+      "titulo": "notebook 3200 em 10x (sem chute)",
+      "msg": "comprei um notebook de 3200 em 10x no cartao nubank",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 17908,
+      "resposta": "✅ Despesa **notebook** de **R$ 3.200,00** registrada.",
+      "acoes": [
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(500)"
+        ],
+        "txs": [
+          "d:notebook=3200 pend"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 44,
+      "grupo": "Adultos",
+      "idade": 36,
+      "titulo": "paga fatura Nubank usando a Inter",
+      "msg": "paga a fatura do nubank usando a inter",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8993,
+      "resposta": "✅ Fatura do **Nubank** quitada: **R$ 412,67** (1 compra), debitado de **Inter**.",
+      "acoes": [
+        "pagar fatura"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "Caixa(755)"
+        ],
+        "txs": [
+          "d:Mercado=412.67"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 45,
+      "grupo": "Adultos",
+      "idade": 31,
+      "titulo": "transfere R$ 500 Inter → Poupança",
+      "msg": "transfere 500 da inter pra poupanca",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8027,
+      "resposta": "✅ Transferência de **R$ 500,00** de **Inter** para **Poupança** registrada.",
+      "acoes": [
+        "transferir"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "Poupança(0)"
+        ],
+        "txs": [],
+        "transf": [
+          "->500"
+        ],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 46,
+      "grupo": "Adultos",
+      "idade": 29,
+      "titulo": "saldo total (R$ 1.500)",
+      "msg": "qual meu saldo total?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15372,
+      "resposta": "💰 **Saldo total: R$ 1.500,00**\n- Inter: **R$ 1.000,00**\n- Caixa: **R$ 500,00**",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)",
+          "Caixa(500)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 47,
+      "grupo": "Adultos",
+      "idade": 38,
+      "titulo": "contas em aberto (R$ 200)",
+      "msg": "quanto tenho de contas em aberto?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6712,
+      "resposta": "Você tem **2 contas em aberto**, totalizando **R$ 200,00**.",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [
+          "d:Luz=120 pend",
+          "d:Água=80 pend",
+          "d:Mercado=50"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 48,
+      "grupo": "Adultos",
+      "idade": 37,
+      "titulo": "orçamento R$ 3.800",
+      "msg": "define orcamento de 3800",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 7591,
+      "resposta": "✅ Orçamento mensal definido: **R$ 3.800,00**.",
+      "acoes": [
+        "definir orçamento"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 49,
+      "grupo": "Adultos",
+      "idade": 39,
+      "titulo": "meta de patrimônio R$ 50.000",
+      "msg": "meta de patrimonio de 50000",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 17514,
+      "resposta": "✅ Meta definida: **R$ 50.000,00**.\n🧠 Anotado! Vou lembrar que **Meu objetivo de patrimônio é 50.000 reais**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/50000",
+        "memoria": [
+          "Meu objetivo de patrimônio é 50.000 reais"
+        ]
+      }
+    },
+    {
+      "id": 50,
+      "grupo": "Adultos",
+      "idade": 30,
+      "titulo": "gastos com mercado em outubro (R$ 430)",
+      "msg": "quanto gastei com mercado em outubro?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 32169,
+      "resposta": "Achei **2 lançamento(s)** (01/10/2026 a 31/10/2026), total **R$ 430,00**:\n- 20/10/2026 · Mercado — **R$ 180,00** (Alimentação)\n- 10/10/2026 · Mercado — **R$ 250,00** (Alimentação)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [
+          "d:Mercado=250",
+          "d:Mercado=180",
+          "d:Mercado=412.67"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 51,
+      "grupo": "Adultos",
+      "idade": 34,
+      "titulo": "memoriza o aluguel",
+      "msg": "lembre que meu aluguel é 1800",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6933,
+      "resposta": "🧠 Anotado! Vou lembrar que **Meu aluguel é 1800**.",
+      "acoes": [
+        "memorizar"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu aluguel é 1800"
+        ]
+      }
+    },
+    {
+      "id": 52,
+      "grupo": "Adultos",
+      "idade": 31,
+      "titulo": "CONTEXTO: 'e uma poupança com 2000'",
+      "msg": "e uma poupanca com 2000",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9288,
+      "resposta": "✅ Conta **Poupança** criada com saldo **R$ 2.000,00**.",
+      "acoes": [
+        "criar conta"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)",
+          "Caixa(500)",
+          "Poupança(2000)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 53,
+      "grupo": "Adultos",
+      "idade": 36,
+      "titulo": "ensina recuperação de senha",
+      "msg": "esqueci minha senha, como recupero?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10628,
+      "resposta": "Para recuperar a senha do Fluxo, siga estes passos:\n\n1. Na tela de bloqueio, toque em **“Esqueci minha senha”**.  \n2. Se você já criou um arquivo de recuperação (`fluxo-chave-recuperacao.json`) ao definir a senha, faça o download desse arquivo e use-o para gerar a nova senha.  \n3. Se não tiver o arq",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 54,
+      "grupo": "Adultos",
+      "idade": 33,
+      "titulo": "ensina backup",
+      "msg": "como faco backup dos meus dados?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9466,
+      "resposta": "Para fazer backup dos seus dados no Fluxo, siga esses passos:\n\n- Abra **Configurações** (ícone de engrenagem).\n- Selecione **Exportar** → escolha **JSON** (tudo) ou **CSV** (somente lançamentos).\n- Salve o arquivo no seu dispositivo ou em um serviço de nuvem.  \n\nAssim você mantém um registro complet",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 55,
+      "grupo": "Adultos",
+      "idade": 35,
+      "titulo": "desfaz a última ação",
+      "msg": "desfaz o que você acabou de fazer",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6744,
+      "resposta": "Pronto, ação desfeita e saldos atualizados.",
+      "acoes": [
+        "desfazer"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 56,
+      "grupo": "Adultos",
+      "idade": 30,
+      "titulo": "volta para o tema claro",
+      "msg": "volta pro tema claro",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8096,
+      "resposta": "🎨 Tema **claro** ativado.",
+      "acoes": [
+        "mudar tema"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 57,
+      "grupo": "Adultos",
+      "idade": 28,
+      "titulo": "PDF do mês atual",
+      "msg": "quero o pdf deste mes",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8203,
+      "resposta": "📄 Relatório de **01/11/2026 a 30/11/2026** pronto — o download já começou.",
+      "acoes": [
+        "gerar relatório"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 58,
+      "grupo": "Adultos",
+      "idade": 32,
+      "titulo": "multitarefa mista: receita + despesa",
+      "msg": "recebi 3000 de adiantamento e paguei 150 de luz",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 116173,
+      "resposta": "✅ Receita **Adiantamento** de **R$ 3.000,00** registrada.\n✅ Despesa **Luz** de **R$ 150,00** registrada.\n🧠 Anotado! Vou lembrar que **Recebi adiantamento de 3000**.",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…",
+        "fila do serviço gratuito — respondendo já…",
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [
+          "r:Adiantamento=3000",
+          "d:Luz=150"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Recebi adiantamento de 3000"
+        ]
+      }
+    },
+    {
+      "id": 59,
+      "grupo": "Adultos",
+      "idade": 27,
+      "titulo": "pede um resumo",
+      "msg": "me da um resumo",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8051,
+      "resposta": "📊 **01/11/2026 a 30/11/2026**\n- Receitas: **R$ 1.000,00**\n- Despesas: **R$ 300,00**\n- Resultado: **R$ 700,00**\n- Saldo hoje: **R$ 1.700,00**\n\nOnde mais saiu dinheiro:\n- Alimentação: R$ 300,00",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [
+          "r:Salário=1000",
+          "d:Mercado=300"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 60,
+      "grupo": "Adultos",
+      "idade": 29,
+      "titulo": "quais são as minhas contas?",
+      "msg": "quais são as minhas contas?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8637,
+      "resposta": "💰 **Saldo total: R$ 2.806,15**\n- Inter: **R$ 1.905,00**\n- Caixa: **R$ 755,00**\n- InfinitePay: **R$ 146,15**",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Inter(1905)",
+          "Caixa(755)",
+          "InfinitePay(146.15)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 61,
+      "grupo": "Adultos",
+      "idade": 34,
+      "titulo": "AMBIGUIDADE: 'gastei 50' com 2 contas → perguntar",
+      "msg": "gastei 50 ontem",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 10356,
+      "resposta": "Qual conta você usou para esse gasto de R$ 50,00? (Inter ou Caixa)",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Inter(1000)",
+          "Caixa(500)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 62,
+      "grupo": "Adultos",
+      "idade": 33,
+      "titulo": "AMBIGUIDADE: sem valor → perguntar",
+      "msg": "lança um gasto aí",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11526,
+      "resposta": "Qual valor e descrição do gasto? (ex.: “R$ 45,00 – Mercado”)",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Inter(1000)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 63,
+      "grupo": "Adultos",
+      "idade": 37,
+      "titulo": "ANTI-DUPLICATA: Inter já existe",
+      "msg": "cria a conta Inter com 500",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11165,
+      "resposta": "Você já tem uma conta “Inter” com saldo de R$ 1.905,00.  \nDeseja criar outra conta “Inter” com R$ 500,00?",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Inter(1905)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 64,
+      "grupo": "Meia-idade",
+      "idade": 47,
+      "titulo": "formal: salário R$ 7.500 no Itaú",
+      "msg": "Bom dia. Gostaria de registrar meu salário de 7.500 na conta Itaú.",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 25229,
+      "resposta": "✅ Receita **Salário** de **R$ 7.500,00** registrada.\n🧠 Anotado! Vou lembrar que **Meu salário é 7.500**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)",
+          "Investimentos(35000)"
+        ],
+        "txs": [
+          "r:Salário=7500"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu salário é 7.500"
+        ]
+      }
+    },
+    {
+      "id": 65,
+      "grupo": "Meia-idade",
+      "idade": 52,
+      "titulo": "financiamento do carro R$ 1.230,45",
+      "msg": "Registre o pagamento do financiamento do carro: 1.230,45 no Itaú.",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 14114,
+      "resposta": "✅ Despesa **pagamento do financiamento do carro** de **R$ 1.230,45** registrada.",
+      "acoes": [
+        "lançar transação"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)",
+          "Investimentos(35000)"
+        ],
+        "txs": [
+          "d:pagamento do financiamento do carro=1230.45"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 66,
+      "grupo": "Meia-idade",
+      "idade": 45,
+      "titulo": "multitarefa formal: luz, água e internet",
+      "msg": "Registre as despesas: luz 189,90; água 95,30; internet 149,90",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9760,
+      "resposta": "✅ Despesa **Luz** de **R$ 189,90** registrada.\n✅ Despesa **Água** de **R$ 95,30** registrada.\n✅ Despesa **Internet** de **R$ 149,90** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Luz=189.9",
+          "d:Água=95.3",
+          "d:Internet=149.9"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 67,
+      "grupo": "Meia-idade",
+      "idade": 50,
+      "titulo": "meta de economia R$ 2.000",
+      "msg": "defina uma meta de economia mensal de 2.000",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9513,
+      "resposta": "✅ Meta definida: **R$ 2.000,00**.",
+      "acoes": [
+        "definir meta"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "2000/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 68,
+      "grupo": "Meia-idade",
+      "idade": 48,
+      "titulo": "maior gasto do mês (mercado R$ 412,67)",
+      "msg": "Qual foi meu maior gasto este mês?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 17514,
+      "resposta": "Achei **2 lançamento(s)** (01/11/2026 a 30/11/2026), total **R$ 712,67**:\n- 09/11/2026 · Mercado — **R$ 412,67** (Alimentação)\n- 09/11/2026 · Combustível — **R$ 300,00** (Transporte)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Mercado=412.67",
+          "d:Combustível=300"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 69,
+      "grupo": "Meia-idade",
+      "idade": 44,
+      "titulo": "saldo da conta Itaú (R$ 12.500)",
+      "msg": "Mostre o saldo da conta Itaú",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8165,
+      "resposta": "💰 **Saldo total: R$ 12.500,00**\n- Itaú: **R$ 12.500,00**",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 70,
+      "grupo": "Meia-idade",
+      "idade": 55,
+      "titulo": "transfere R$ 3.000 para investimentos",
+      "msg": "Transfira 3.000 do Itaú para a conta de investimentos",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9314,
+      "resposta": "✅ Transferência de **R$ 3.000,00** de **Itaú** para **Investimentos** registrada.",
+      "acoes": [
+        "transferir"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)",
+          "Investimentos(35000)"
+        ],
+        "txs": [],
+        "transf": [
+          "->3000"
+        ],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 71,
+      "grupo": "Meia-idade",
+      "idade": 49,
+      "titulo": "paga fatura do Azul debitando do Itaú",
+      "msg": "Paguei a fatura do cartão Azul debitando do Itaú",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 13860,
+      "resposta": "✅ Fatura do **Azul** quitada: **R$ 439,90** (2 compras), debitado de **Itaú**.",
+      "acoes": [
+        "pagar fatura"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)",
+          "Investimentos(35000)"
+        ],
+        "txs": [
+          "d:Farmácia=189.9",
+          "d:Posto=250"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 72,
+      "grupo": "Meia-idade",
+      "idade": 53,
+      "titulo": "ensina exportar dados p/ contador",
+      "msg": "Como exporto meus dados para o contador?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 12888,
+      "resposta": "Para exportar tudo que você tem no Fluxo e entregar ao seu contador:\n\n1. Vá em **Configurações** (ícone de engrenagem no canto superior direito).  \n2. Selecione **Exportar** → escolha **.json** (tudo) ou **.csv** (apenas lançamentos).  \n3. Salve o arquivo no seu dispositivo e envie ao contador.  \n\nS",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 73,
+      "grupo": "Meia-idade",
+      "idade": 46,
+      "titulo": "abre a página de relatórios",
+      "msg": "abra a página de relatórios",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8107,
+      "resposta": "👀 Já te levei para **relatorios**.",
+      "acoes": [
+        "abrir página"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 74,
+      "grupo": "Meia-idade",
+      "idade": 51,
+      "titulo": "farmácia no ano (R$ 285,20)",
+      "msg": "quanto gastamos de farmácia este ano?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9601,
+      "resposta": "Achei **2 lançamento(s)** (ano 2026), total **R$ 285,20**:\n- 09/11/2026 · Farmácia — **R$ 189,90** (—)\n- 15/10/2026 · Farmácia — **R$ 95,30** (—)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Farmácia=189.9",
+          "d:Farmácia=95.3"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 75,
+      "grupo": "Meia-idade",
+      "idade": 43,
+      "titulo": "teto mensal R$ 5.000",
+      "msg": "Defina o teto mensal de gastos em 5.000",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6946,
+      "resposta": "✅ Orçamento mensal definido: **R$ 5.000,00**.",
+      "acoes": [
+        "definir orçamento"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 76,
+      "grupo": "Meia-idade",
+      "idade": 54,
+      "titulo": "memoriza ano da aposentadoria",
+      "msg": "Guarde que minha aposentadoria será em 2035",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8128,
+      "resposta": "🧠 Anotado! Vou lembrar que **Minha aposentadoria será em 2035**.",
+      "acoes": [
+        "memorizar"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Minha aposentadoria será em 2035"
+        ]
+      }
+    },
+    {
+      "id": 77,
+      "grupo": "Meia-idade",
+      "idade": 47,
+      "titulo": "pede conselho de economia (mentor)",
+      "msg": "Estou gastando muito. Onde posso economizar?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 16376,
+      "resposta": "Para começar a economizar, sugiro:\n\n- **Analise suas despesas por categoria** – veja onde mais sai (ex.: Alimentação, Lazer, Assinaturas).  \n- **Defina um teto mensal** no app (Planejamento → Teto Mensal) e acompanhe se não ultrapassa.  \n- **Reduza gastos não essenciais**: experimente cortar cafés f",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Mercado=412.67",
+          "d:Combustível=300"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 78,
+      "grupo": "Meia-idade",
+      "idade": 50,
+      "titulo": "CONTEXTO formal: 'adicione também…'",
+      "msg": "Adicione também uma conta de investimentos com 10.000.",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9877,
+      "resposta": "✅ Conta **Investimentos** criada com saldo **R$ 10.000,00**.",
+      "acoes": [
+        "criar conta"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(1000)",
+          "Poupança(500)",
+          "Investimentos(10000)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 79,
+      "grupo": "Meia-idade",
+      "idade": 54,
+      "titulo": "esquece a aposentadoria",
+      "msg": "esqueça que minha aposentadoria será em 2035",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 7674,
+      "resposta": "🗑️ Feito — apaguei **Minha aposentadoria será em 2035** da memória.",
+      "acoes": [
+        "apagar da memória"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 80,
+      "grupo": "Meia-idade",
+      "idade": 56,
+      "titulo": "consórcio 12x R$ 120 (sem chute)",
+      "msg": "quero lançar um consórcio de 12 parcelas de 120",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 18516,
+      "resposta": "Você quer registrar as 12 parcelas agora?",
+      "acoes": [],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 81,
+      "grupo": "Meia-idade",
+      "idade": 45,
+      "titulo": "lista transações pendentes",
+      "msg": "Mostre as transações pendentes",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6165,
+      "resposta": "Achei **2 lançamento(s)** (01/11/2026 a 30/11/2026), total **R$ 339,80**:\n- 09/11/2026 · Luz — **R$ 189,90** (Contas)\n- 09/11/2026 · Internet — **R$ 149,90** (Contas)",
+      "acoes": [
+        "buscar lançamentos"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Luz=189.9 pend",
+          "d:Internet=149.9 pend",
+          "d:Mercado=200"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 82,
+      "grupo": "Meia-idade",
+      "idade": 49,
+      "titulo": "fatura do cartão Azul (R$ 439,90)",
+      "msg": "quanto está a fatura do cartão azul?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8273,
+      "resposta": "💰 **Saldo total: R$ 12.500,00**\n- Itaú: **R$ 12.500,00**\n- Azul · fatura **R$ 439,90** (disponível R$ 11.560,10)",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Itaú(12500)"
+        ],
+        "txs": [
+          "d:Farmácia=189.9 pend",
+          "d:Posto=250 pend"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 83,
+      "grupo": "Idosos",
+      "idade": 68,
+      "titulo": "CAPS LOCK: INSS R$ 3.200",
+      "msg": "GANHEI MEU INSS DE 3200",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11574,
+      "resposta": "✅ Receita **INSS** de **R$ 3.200,00** registrada.\n🧠 Anotado! Vou lembrar que **Ganhei INSS de 3200**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "r:INSS=3200"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Ganhei INSS de 3200"
+        ]
+      }
+    },
+    {
+      "id": 84,
+      "grupo": "Idosos",
+      "idade": 72,
+      "titulo": "CAPS: remédio R$ 240 na farmácia",
+      "msg": "PAGUEI 240 DE REMÉDIO NA FARMACIA",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15550,
+      "resposta": "✅ Despesa **Remédio na farmácia** de **R$ 240,00** registrada.\n🧠 Anotado! Vou lembrar que **Paguei 240 de remédio na farmácia**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "d:Remédio na farmácia=240"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Paguei 240 de remédio na farmácia"
+        ]
+      }
+    },
+    {
+      "id": 85,
+      "grupo": "Idosos",
+      "idade": 66,
+      "titulo": "erros de digitação: aluguél 1500",
+      "msg": "reccebi 1500 do alugel do apartamento",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 22949,
+      "resposta": "✅ Receita **Aluguel do apartamento** de **R$ 1.500,00** registrada.\n🧠 Anotado! Vou lembrar que **Recebi 1500 do aluguel do apartamento**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "r:Aluguel do apartamento=1500"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Recebi 1500 do aluguel do apartamento"
+        ]
+      }
+    },
+    {
+      "id": 86,
+      "grupo": "Idosos",
+      "idade": 70,
+      "titulo": "linguagem formal e rebuscada: saldo",
+      "msg": "Boa tarde. Eu gostaria muito de saber qual é o meu saldo, por favor.",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 27935,
+      "resposta": "💰 **Saldo total: R$ 2.800,00**\n- Caixa: **R$ 2.800,00**",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 87,
+      "grupo": "Idosos",
+      "idade": 64,
+      "titulo": "como ver os gastos do mês",
+      "msg": "como eu faço pra ver meus gastos do mês?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9766,
+      "resposta": "Para ver seus gastos do mês atual:\n\n1. Abra o app Fluxo e vá para a página **Lançamentos** (ícone de lista na barra inferior).  \n2. No topo, selecione o filtro **“Este mês”** (ou escolha “01/11/2026 a 30/11/2026”).  \n3. A tela mostrará todas as despesas listadas, já classificadas por categoria e dat",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 88,
+      "grupo": "Idosos",
+      "idade": 74,
+      "titulo": "neto deu R$ 100 de presente",
+      "msg": "meu neto me deu 100 de presente",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 15881,
+      "resposta": "✅ Receita **Presente do neto** de **R$ 100,00** registrada.\n🧠 Anotado! Vou lembrar que **Meu neto me deu 100 de presente**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "r:Presente do neto=100"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Meu neto me deu 100 de presente"
+        ]
+      }
+    },
+    {
+      "id": 89,
+      "grupo": "Idosos",
+      "idade": 67,
+      "titulo": "multitarefa devagar: gás e luz",
+      "msg": "primeiro registra 45 de gás e depois 120 de luz",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 9154,
+      "resposta": "✅ Despesa **gás** de **R$ 45,00** registrada.\n✅ Despesa **luz** de **R$ 120,00** registrada.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "d:gás=45",
+          "d:luz=120"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 90,
+      "grupo": "Idosos",
+      "idade": 62,
+      "titulo": "não acha a página dos cartões",
+      "msg": "não consigo achar onde vejo meus cartões",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 8403,
+      "resposta": "Para ver seus cartões no Fluxo:\n\n- Abra o app e toque no ícone **Cartões** na barra inferior (ou vá em **Navegar → Cartões**).  \n- Lá você verá a lista de cartões cadastrados, faturas e saldo disponível.  \n\nSe ainda não tiver nenhum cartão, pode adicionar em **Contas e carteiras → Novo cartão**.",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 91,
+      "grupo": "Idosos",
+      "idade": 69,
+      "titulo": "quer guardar R$ 300 todo mês",
+      "msg": "quero guardar 300 reais todo mês",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 24064,
+      "resposta": "✅ Meta definida: **R$ 300,00**.\n🧠 Anotado! Vou lembrar que **Meu objetivo é guardar 300 reais todo mês**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "300/0",
+        "memoria": [
+          "Meu objetivo é guardar 300 reais todo mês"
+        ]
+      }
+    },
+    {
+      "id": 92,
+      "grupo": "Idosos",
+      "idade": 71,
+      "titulo": "perdeu a senha e não tem o arquivo",
+      "msg": "perdi minha senha e não tenho o arquivo de recuperação",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 11473,
+      "resposta": "Para recuperar o acesso, siga estes passos:\n\n1. Abra o app Fluxo e toque em **“Esqueci minha senha”** na tela de bloqueio.  \n2. Se você não tem o arquivo *fluxo‑chave‑recuperação.json*, será necessário **resetar totalmente a conta**.  \n3. Na tela de recuperação, digite **APAGAR** (com todas as letra",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 93,
+      "grupo": "Idosos",
+      "idade": 73,
+      "titulo": "CONTEXTO: repete a mesma pergunta",
+      "msg": "qual é o meu saldo de novo?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 5958,
+      "resposta": "💰 **Saldo total: R$ 2.800,00**\n- Caixa: **R$ 2.800,00**",
+      "acoes": [
+        "consultar saldo"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 94,
+      "grupo": "Idosos",
+      "idade": 65,
+      "titulo": "repete explicação de backup",
+      "msg": "Pode repetir como eu salvo meus dados?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 59330,
+      "resposta": "Para salvar tudo que você tem no Fluxo, vá em **Configurações → Exportar**.  \n- Se quiser um backup completo, escolha **.json** (todas as contas, cartões, lançamentos e metas).  \n- Se preferir apenas os lançamentos, escolha **.csv**.  \n- O arquivo pode ser guardado no seu computador ou em nuvem e, q",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 95,
+      "grupo": "Idosos",
+      "idade": 68,
+      "titulo": "frase solta: 'a conta de luz subiu pra 180'",
+      "msg": "a conta de luz subiu pra 180",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 17284,
+      "resposta": "✅ Despesa **Conta de luz** de **R$ 180,00** registrada.\n🧠 Anotado! Vou lembrar que **Conta de luz é 180**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "d:Luz=150",
+          "d:Conta de luz=180"
+        ],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": [
+          "Conta de luz é 180"
+        ]
+      }
+    },
+    {
+      "id": 96,
+      "grupo": "Idosos",
+      "idade": 75,
+      "titulo": "elogio: 'você é um amor'",
+      "msg": "obrigado, você é um amor!",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 6549,
+      "resposta": "De nada! Se precisar de algo mais, é só chamar. 🌟",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 97,
+      "grupo": "Idosos",
+      "idade": 63,
+      "titulo": "quem é você e o que faz?",
+      "msg": "quem é você e o que você faz?",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 7216,
+      "resposta": "Sou o **Fluxo**, seu assistente financeiro pessoal dentro do app Fluxo.  \nAjudo a organizar contas, lançar despesas e receitas, acompanhar faturas, criar metas e gerar relatórios, tudo direto do seu navegador.  \nBasta me dizer o que precisa e eu faço as ações no app para você.",
+      "acoes": [],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 98,
+      "grupo": "Idosos",
+      "idade": 70,
+      "titulo": "'tira o escuro' → tema claro",
+      "msg": "tira o escuro que está difícil de ler",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 7472,
+      "resposta": "🎨 Tema **claro** ativado.",
+      "acoes": [
+        "mudar tema"
+      ],
+      "estado": {
+        "contas": [],
+        "txs": [],
+        "transf": [],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 99,
+      "grupo": "Idosos",
+      "idade": 66,
+      "titulo": "CONTEXTO: 'transfere pra ela' (coreferência)",
+      "msg": "e transfere 2000 da caixa pra ela",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 37315,
+      "resposta": "✅ Transferência de **R$ 2.000,00** de **Caixa** para **Poupança** registrada.",
+      "acoes": [
+        "fila do serviço gratuito — respondendo já…",
+        "transferir"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)",
+          "Poupança(10000)"
+        ],
+        "txs": [],
+        "transf": [
+          "->2000"
+        ],
+        "meta": "0/0",
+        "memoria": []
+      }
+    },
+    {
+      "id": 100,
+      "grupo": "Idosos",
+      "idade": 67,
+      "titulo": "MULTITAREFA MÁXIMA: 4 pedidos numa frase",
+      "msg": "Pra fechar o mês: recebi 3200 do INSS, paguei 240 de remédio, 180 de luz e quero guardar 300 por mês",
+      "ok": true,
+      "falhas": [],
+      "duracaoMs": 26555,
+      "resposta": "✅ Receita **INSS** de **R$ 3.200,00** registrada.\n✅ Despesa **Remédio** de **R$ 240,00** registrada.\n✅ Despesa **Luz** de **R$ 180,00** registrada.\n✅ Meta definida: **R$ 300,00**.\n🧠 Anotado! Vou lembrar que **Recebi 3200 do INSS**.\n🧠 Anotado! Vou lembrar que **Quero guardar 300 por mês**.",
+      "acoes": [
+        "executar várias ações"
+      ],
+      "estado": {
+        "contas": [
+          "Caixa(2800)"
+        ],
+        "txs": [
+          "r:INSS=3200",
+          "d:Remédio=240",
+          "d:Luz=180"
+        ],
+        "transf": [],
+        "meta": "300/0",
+        "memoria": [
+          "Recebi 3200 do INSS",
+          "Quero guardar 300 por mês"
+        ]
+      }
+    }
+  ]
+}

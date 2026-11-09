@@ -37,7 +37,7 @@ if(window.FluxoAgente) return;   /* evita instância dupla */
 const ENDPOINT = "https://text.pollinations.ai/openai";
 const MODEL    = "openai";              /* GPT-OSS 20B — tier anônimo, com tools */
 const REFERRER = "lebot007-fluxo";      /* identificação do app (não é chave) */
-const TIMEOUT_MS  = 30000;              /* por tentativa — falha rápido, nunca trava o usuário */
+const TIMEOUT_MS  = 45000;              /* por tentativa — raciocínios longos (multitarefa) precisam de folga */
 const MAX_RETRIES = 2;                  /* retentativas por chamada (rede/5xx/timeout) */
 
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
@@ -48,15 +48,32 @@ function cleanToolName(name){
   return String(name || "").split("<|")[0].replace(/\s+/g, "").trim();
 }
 
-/* Extrai o JSON dos argumentos mesmo se vier com lixo em volta */
+/* Extrai o JSON dos argumentos mesmo se vier com lixo em volta.
+   Também LIMPA os vazamentos do formato interno do GPT-OSS
+   (tokens <|channel|>commentary e afins) de dentro dos valores —
+   sem isso, um "tipo":"receita<|channel|>commentary" quebraria
+   a ferramenta sem culpa do modelo. */
+function sanitizeDeep(v){
+  if(typeof v === "string") return v.replace(/<\|[a-z]+\|>\s*\w*/gi, "").trim();
+  if(Array.isArray(v)) return v.map(sanitizeDeep);
+  if(v && typeof v === "object"){
+    const o = {};
+    for(const k in v) o[k] = sanitizeDeep(v[k]);
+    return o;
+  }
+  return v;
+}
 function parseArgs(raw){
   if(raw == null) return {};
-  if(typeof raw === "object") return raw;
-  try{ return JSON.parse(raw); }catch(e){}
-  const s = String(raw);
-  const a = s.indexOf("{"), b = s.lastIndexOf("}");
-  if(a >= 0 && b > a){ try{ return JSON.parse(s.slice(a, b+1)); }catch(e){} }
-  return {};
+  if(typeof raw === "object") return sanitizeDeep(raw);
+  let out;
+  try{ out = JSON.parse(raw); }catch(e){}
+  if(out === undefined){
+    const s = String(raw);
+    const a = s.indexOf("{"), b = s.lastIndexOf("}");
+    if(a >= 0 && b > a){ try{ out = JSON.parse(s.slice(a, b+1)); }catch(e){} }
+  }
+  return (out && typeof out === "object") ? sanitizeDeep(out) : {};
 }
 
 /**
@@ -69,7 +86,9 @@ function parseArgs(raw){
  * - 429/5xx: retentativas ágeis. Timeout curto por tentativa.
  * @returns {object} corpo da resposta ({choices:[{message}]})
  */
-const PATIENCE_MS = 55000;   /* espera máxima total na fila gratuita por mensagem */
+const PATIENCE_MS = 120000;  /* espera máxima total na fila gratuita por mensagem
+                                (IPs compartilhados — faculdade, escritório — esbarram
+                                mais no limite de 1 geração/45s por IP) */
 
 async function llmChat(messages, tools, onStatus){
   let retries = 0, queued = 0;
@@ -88,18 +107,33 @@ async function llmChat(messages, tools, onStatus){
           messages,
           tools: tools || undefined,
           tool_choice: tools ? "auto" : undefined,
-          max_tokens: 800,
+          max_tokens: 4000,             /* o raciocínio do GPT-OSS consome tokens ANTES do tool call:
+                                        800 truncava lotes; 2200 estourava em multitarefas complexas
+                                        (output_token_limit_exceeded). 4000 dá folga sem custo extra:
+                                        o limite é teto, não alvo. */
           temperature: 0.4,            /* decisões de ferramenta mais determinísticas */
-          reasoning_effort: "medium"   /* raciocínio completo: entende multitarefas */
+          reasoning_effort: "medium",  /* raciocínio completo: entende multitarefas */
+          seed: Math.floor(Math.random() * 1e9)  /* cada tentativa é única: o serviço
+                                        cacheia respostas E ERROS por corpo idêntico —
+                                        sem isso, um 400 ficaria “colado” o dia todo */
         })
       });
       clearTimeout(tm);
+
+      /* 400/422 = o modelo entrou em loop de raciocínio e estourou o próprio
+         limite de tokens. Semente nova a cada tentativa costuma resolver. */
+      if(res.status === 400 || res.status === 422){
+        if(retries >= MAX_RETRIES) throw new Error("HTTP " + res.status);
+        retries++;
+        await sleep(900);
+        continue;
+      }
 
       /* limite gratuito atingido (~1 geração/45s por IP): fila silenciosa */
       if(res.status === 402){
         const ra = parseInt(res.headers.get("retry-after") || "0", 10) || 0;
         const waitMs = Math.min(Math.max(ra * 1000, 8000), 50000);
-        if(queued >= 2 || Date.now() - t0 + waitMs > PATIENCE_MS)
+        if(queued >= 3 || Date.now() - t0 + waitMs > PATIENCE_MS)
           throw new Error("serviço gratuito ocupado");
         queued++;
         if(onStatus) onStatus("fila do serviço gratuito — respondendo já…");
@@ -166,12 +200,20 @@ function toISO(v){
   return null;
 }
 
-/* "atual" | "anterior"/"mês passado" | "aaaa-mm" | "junho 2025" → {label, cs, ce, mm} */
+/* "atual" | "anterior"/"mês passado" | "aaaa-mm" | "aaaa" (ano) | "junho 2025" → {label, cs, ce, mm} */
 function periodRange(p){
   const t = NORM(p || "atual");
   const now = new Date();
   let anchor = now;
   if(/^(anterior|mes passado|passado|ultimo mes)$/.test(t)) anchor = new Date(now.getFullYear(), now.getMonth()-1, 15);
+  else if(/^(\d{4}|este ano|ano atual|ano corrente)$/.test(t)){   /* ano inteiro */
+    const y = /^\d{4}$/.test(t) ? +t : now.getFullYear();
+    return {label: "ano " + y, cs: y + "-01-01", ce: y + "-12-31", mm:{y, m:0}};
+  }
+  else if(/^(ano passado|ultimo ano)$/.test(t)){
+    const y = now.getFullYear() - 1;
+    return {label: "ano " + y, cs: y + "-01-01", ce: y + "-12-31", mm:{y, m:0}};
+  }
   else if(/^\d{4}-\d{2}$/.test(t)) anchor = new Date(+t.slice(0,4), +t.slice(5,7)-1, 15);
   else{
     const MN = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
@@ -283,7 +325,7 @@ const TOOL_DEFS = [
     name:"consultar_resumo",
     description:"Resumo financeiro de um período: receitas, despesas, resultado, maiores categorias e contas em aberto.",
     parameters:{type:"object", properties:{
-      periodo:{type:"string", description:"\"atual\" (padrão), \"anterior\", \"aaaa-mm\" ou \"junho 2025\""}
+      periodo:{type:"string", description:"\"atual\" (padrão), \"anterior\", \"aaaa-mm\", \"aaaa\" (ano) ou \"junho 2025\""}
     }}
   }},
   {type:"function", function:{
@@ -293,7 +335,7 @@ const TOOL_DEFS = [
       busca:{type:"string", description:"Texto da descrição/categoria/conta (ex.: mercado, aluguel, salário)"},
       tipo:{type:"string", enum:["despesa","receita"]},
       status:{type:"string", enum:["pago","pendente"]},
-      periodo:{type:"string", description:"\"atual\" (padrão), \"anterior\", \"aaaa-mm\" ou \"tudo\" para todo o histórico"},
+      periodo:{type:"string", description:"\"atual\" (padrão), \"anterior\", \"aaaa-mm\", \"aaaa\" (ano inteiro, ex.: 2026), \"este ano\" ou \"tudo\" para todo o histórico"},
       limite:{type:"integer", description:"Máximo de lançamentos a listar (padrão 12, máx 30)"}
     }}
   }},
@@ -385,6 +427,25 @@ const TOOL_LABEL = {
   executar_lote:"executar várias ações"
 };
 
+/* Chave SEMÂNTICA de uma ação (p/ o lote não duplicar): iguala tentativas
+   do modelo que diferem só em detalhes (categoria, descrição completa…)
+   mas pedem a MESMA coisa — ex.: reenvio de um lote após uma ação falhar. */
+function acaoKey(nome, args){
+  const a = args || {};
+  const p1 = s => (NORM(String(s || "")).split(/[^a-z0-9]+/).find(w => w.length >= 3) || "");
+  switch(nome){
+    case "lancar_transacao":  return nome + "|" + (a.tipo || "") + "|" + (a.valor ?? "") + "|" + (a.data || today()) + "|" + p1(a.descricao);
+    case "criar_conta":       return nome + "|" + p1(a.nome) + NORM(String(a.nome || "")).slice(0, 12);
+    case "criar_cartao":      return nome + "|" + p1(a.nome);
+    case "transferir":        return nome + "|" + (a.valor ?? "") + "|" + p1(a.de) + "|" + p1(a.para);
+    case "definir_orcamento": return nome + "|" + (a.valor ?? "");
+    case "definir_meta":      return nome + "|" + (a.tipo || "") + "|" + (a.valor ?? "");
+    case "salvar_memoria":    return nome + "|" + NORM(String(a.fato || "")).slice(0, 40);
+    case "pagar_fatura":      return nome + "|" + p1(a.cartao);
+    default:                  return nome + "|" + JSON.stringify(a);
+  }
+}
+
 const TOOL_RUN = {
 
   criar_conta(a){
@@ -406,7 +467,8 @@ const TOOL_RUN = {
     }
     const saldo = toCents(a.saldo_inicial ?? 0) || 0;
     const tipos = ["corrente","poupanca","dinheiro","digital","investimento"];
-    const tipo  = tipos.includes(a.tipo) ? a.tipo : "corrente";
+    const tReq = NORM(String(a.tipo || "")).replace(/\s+/g, "");   /* "Poupança" → "poupanca" */
+    const tipo  = tipos.includes(tReq) ? tReq : "corrente";
     const acc = {
       id: uid(), createdAt: today(),
       name: String(a.nome).slice(0,40), type: tipo,
@@ -443,14 +505,22 @@ const TOOL_RUN = {
   },
 
   lancar_transacao(a){
-    const tipo = a.tipo === "receita" ? "receita" : (a.tipo === "despesa" ? "despesa" : null);
+    /* normaliza tipo e status: aceita sinônimos naturais (entrada/saída,
+       paid/quitado…) e é imune a sujeira no valor — o modelo decide,
+       a execução tolera variantes sem virar bug */
+    const tN = NORM(String(a.tipo || ""));
+    const tipo = /^(receita|entrada|credito|renda|ganho|income|salario|deposito)/.test(tN) ? "receita"
+               : /^(despesa|saida|debito|gasto|expense|pagamento|conta|compra)/.test(tN) ? "despesa" : null;
     if(!tipo) return {ok:false, motivo:'tipo deve ser "despesa" ou "receita"'};
+    const sN = NORM(String(a.status || ""));
+    const stNormalizado = /^(pago|paid|quitado|efetuado|ok)/.test(sN) ? "pago"
+                        : /^(pendente|pending|aberto|futuro|previsto)/.test(sN) ? "pendente" : null;
     const valor = toCents(a.valor);
     if(!valor || valor <= 0) return {ok:false, motivo:"valor inválido"};
     const desc = String(a.descricao || "").slice(0,60).trim() || (tipo === "receita" ? "Receita" : "Despesa");
     const data = toISO(a.data) || today();
 
-    let accountId = null, cardId = null, payMethod = a.forma_pagamento || null, status = a.status || null;
+    let accountId = null, cardId = null, payMethod = a.forma_pagamento || null, status = stNormalizado;
 
     if(a.cartao){
       const card = resolveCard(a.cartao);
@@ -692,7 +762,10 @@ const TOOL_RUN = {
 
   /* LOTE: várias ações numa chamada só. O serviço gratuito devolve no
      máximo 1 tool call por geração — então a multitarefa acontece com o
-     modelo montando uma LISTA de ações, e tudo roda aqui de uma vez. */
+     modelo montando uma LISTA de ações, e tudo roda aqui de uma vez.
+     Se o pedido for GRANDE demais e o JSON vier cortido, a ação afetada
+     falha, o modelo reenvia na rodada de auto-correção — e as ações que
+     JÁ DERAM CERTO não repetem (memória de sucesso do turno). */
   executar_lote(a){
     const list = Array.isArray(a.acoes) ? a.acoes : (Array.isArray(a) ? a : null);
     if(!list || !list.length) return {ok:false, motivo:"envie acoes: [{ferramenta, args}, …]"};
@@ -708,15 +781,22 @@ const TOOL_RUN = {
           motivo:'ferramenta inválida no lote: "' + nome + '" — use as ferramentas definidas'});
         continue;
       }
-      const key = nome + "|" + JSON.stringify(args);
+      const key = acaoKey(nome, args);
       if(seen.has(key)){
         resultados.push({ferramenta:nome, ok:false, motivo:"ação repetida no lote — não duplico"});
         continue;
       }
       seen.add(key);
+      /* já executada com sucesso antes NESTE turno (ex.: reenvio do lote
+         após uma ação ter falhado)? → não repete, conta como feita */
+      if(TURN_DONE && TURN_DONE.has(key)){
+        resultados.push({ferramenta:nome, ok:true, status:"já executada antes neste turno — não repetida"});
+        continue;
+      }
       let out;
       try{ out = fn(args); }
       catch(e){ out = {ok:false, motivo:"erro ao executar: " + (e && e.message ? e.message : e)}; }
+      if(out && out.ok !== false && TURN_DONE) TURN_DONE.add(key);
       if(out && out.receipt){ receipts.push(out.receipt); delete out.receipt; }
       resultados.push({ferramenta:nome, ...out});
     }
@@ -771,14 +851,17 @@ function buildSystemPrompt(userMsg){
 
 "## COMO PENSAR (regras de inteligência)",
 "- MULTITAREFA: pedido com 2 ou mais itens → use **executar_lote** com uma ação por item (mesmos argumentos da ferramenta original). Ex.: “Inter com 1905,00 e InfinitePay com 146,15” → executar_lote com 2 ações de criar_conta. Pedido de 1 item → use a ferramenta direto.",
-"- NUNCA invente nomes, bancos, valores ou ações que o usuário NÃO disse. Não soube o nome/banco → pergunte. Não está claro se um valor é saldo de conta ou gasto/receita → PERGUNTE antes de agir. Chutar é proibido.",
+"- NUNCA invente bancos, valores ou ações que o usuário NÃO disse. Chutar valores, bancos e contas é proibido.",
+"- Seja ESPERTO, não burocrático: nome de conta implícito no pedido (ex.: “conta da mesada”, “carteira do lanche”, “poupança”) → USE o nome que o usuário deu (Mesada, Lanche, Poupança) e crie — não pergunte o óbvio. Descrição de lançamento: use as palavras do usuário. Categoria → escolha sozinho a mais óbvia da lista do CONTEXTO (lanche/mercado → Alimentação; salário/mesada → Salário; remédio → Saúde; uber/combustível → Transporte; netflix/spotify → Assinaturas); se nenhuma combinar, OMITA o campo — o app usa “Outros”. Nunca pergunte categoria. Conta: o CONTEXTO mostra as contas — se existe UMA, use-a sem perguntar; só pergunte qual conta usar quando há VÁRIAS e o usuário não disse. Pergunte SOMENTE o que é essencial e impossível de deduzir (qual banco, valor ausente). Não está claro se um valor é saldo de conta ou gasto/receita → PERGUNTE antes de agir.",
 "- Continuações (“e os outros?”, “sim”, “o resto”, “também”) falam da mensagem ANTERIOR: releia o histórico, faça SÓ o que ainda falta. NUNCA repita ação que o histórico mostra como já feita — se já está tudo feito, diga isso e confirme.",
 "- Antes de criar conta/cartão, confira no CONTEXTO se já existe uma parecida: existe → use-a ou pergunte; não duplique.",
 "- Carteiras digitais e bancos brasileiros (Nubank, InfinitePay, PicPay, Mercado Pago, Inter, Caixa, Itaú, Banco do Brasil…) são CONTAS; carteiras de aplicativo = tipo “digital”.",
-"- Números em português: “1905,00” e “1.905,00” são 1905.00 reais (vírgula = casas decimais).",
+"- Números em português: “1905,00” e “1.905,00” são 1905.00 reais (vírgula = casas decimais). Gírias de dinheiro: “30 paus”, “30 conto”, “30 pila”, “30 mangos” = 30 reais (uso cotidiano — nunca multiplique por mil).",
+"- “Quero juntar/poupar/guardar X” → definir_meta(tipo economia_mensal, valor X) DIRETO, sem perguntar prazo nem finalidade — a meta mensal é o caminho do app.",
 
 "## COMO AGIR",
 "- Para executar qualquer coisa no app, use as ferramentas — nunca diga que fez algo sem chamar a ferramenta.",
+"- Pergunta de QUANTO (quanto tenho/gastei/sobrou, qual meu saldo, me dá o resumo…) → CHAME a ferramenta de consulta (consultar_saldo / consultar_resumo / consultar_transacoes) e responda com os números REAIS do app. NUNCA pergunte ao usuário algo que o app já sabe. Ex.: “quanto sobrou do meu salário?” → consultar_resumo: as **Receitas** do ciclo são o salário e o **Resultado** é o que sobrou — responda com esses números, sem perguntar. Mas se a pergunta é COMO FAZER / COMO VEJO / ONDE ACHO algo no app → ENSINE o caminho (seção ENSINO), sem executar nem consultar.",
 "- Se faltar informação essencial (valor, conta, nome), faça UMA pergunta objetiva em vez de adivinhar.",
 "- NUNCA invente dados financeiros: consulte antes de afirmar saldos, gastos ou lançamentos.",
 "- Valores em REAIS; datas aaaa-mm-dd nas ferramentas e dd/mm nas respostas.",
@@ -786,8 +869,9 @@ function buildSystemPrompt(userMsg){
 
 "## MEMÓRIA (autônoma)",
 "- Fato duradouro (salário, dia de pagamento, aluguel, preferências, objetivos, nome) → chame salvar_memoria, MESMO sem pedido.",
+"- Memória é ADICIONAL, nunca substituta: se a mensagem descreve dinheiro entrando ou saindo AGORA (ganhei, recebi, paguei, gastei, comprei) → LANCE a transação primeiro (a ação principal); guardar o fato é bônus, junto no mesmo lote.",
 "- Não salve conversa fiada, perguntas nem compras pontuais.",
-"- Retornou “conflito” → pergunte ao usuário; se ele confirmar, use editar_memoria. “lembre-se que X” → salvar_memoria(X). “esqueça X” → confirme e use apagar_memoria.",
+"- Retornou “conflito” → pergunte ao usuário; se ele confirmar, use editar_memoria. “lembre-se que X” → salvar_memoria(X). “esqueça X” → apagar_memoria(X) DIRETO (o pedido já é explícito, não confirme antes) e confirme na resposta o que foi apagado.",
 "- Use a memória de forma proativa: se ele disse que odeia fast food e pedir sugestão de economia, mencione isso.",
 
 "## ENSINO DO APP (se perguntarem “como…”, ENSINE — não execute)",
@@ -900,10 +984,13 @@ function synthTool(name, out){
     case "apagar_memoria":
       return "🗑️ Feito — apaguei **" + out.apagado + "** da memória.";
     case "executar_lote": {
-      /* uma linha por ação do lote (os cartões mostram os detalhes) */
+      /* uma linha por AÇÃO do lote (os cartões mostram os detalhes) —
+         mas CONSULTAS não têm cartão: o texto completo É a resposta */
+      const CONSULTAS = {"consultar_saldo":1, "consultar_resumo":1, "consultar_transacoes":1, "buscar_memoria":1};
       const partes = (out.acoes || []).map(r => {
         const s = synthTool(r.ferramenta, r);
-        return s ? s.split("\n")[0] : null;   /* só a 1ª linha: o resto está nos cartões */
+        if(!s) return null;
+        return CONSULTAS[r.ferramenta] ? s : s.split("\n")[0];   /* só a 1ª linha: o resto está nos cartões */
       }).filter(Boolean);
       return partes.length ? partes.join("\n") : "✅ Feito!";
     }
@@ -914,6 +1001,7 @@ function synthTool(name, out){
 
 /* ---------- 8. O loop do agente ---------- */
 const MAX_STEPS = 3;   /* 1 decisão + até 2 rodadas de auto-correção (só se algo falhar) */
+let TURN_DONE = null;  /* ações já bem-sucedidas neste turno (o lote consulta p/ não duplicar) */
 
 /**
  * Executa um turno completo: mensagem → LLM → ferramentas → resposta.
@@ -944,6 +1032,7 @@ async function turn(userText, opts){
     messages.push({role:"user", content: cur});
 
   const done = new Set();   /* (nome+args) já executados NESTE turno — corta repetição cega */
+  TURN_DONE = done;
 
   for(let step = 0; step < MAX_STEPS; step++){
     const resp = await llmChat(messages, TOOL_DEFS, s => {
