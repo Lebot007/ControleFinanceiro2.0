@@ -21,7 +21,10 @@ if(localStorage.getItem("fluxo.lock.v1")&&localStorage.getItem("fluxo.unlocked")
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="ai.css">
+<!-- Assistente de IA: DESATIVADO temporariamente (a pedido do dono). A lógica e os
+     arquivos continuam no repositório, intactos. Para reativar, descomente a linha
+     abaixo e os 4 <script> no fim do <body>. -->
+<!-- <link rel="stylesheet" href="ai.css"> -->
 <style>
 :root{
 --bg:#f1f3ee; --surface:#ffffff; --surface2:#f7f8f4; --ink:#16241e; --ink2:#5d6d64;
@@ -3086,9 +3089,18 @@ if(!location.hash) location.hash="#/dashboard";
 render();
 })();
 </script>
-<script src="relatorio-pdf.js"></script>
-<script src="memoria.js"></script>
-<script src="agente.js"></script>
-<script src="ai.js"></script>
+<!-- ============================================================
+     Assistente de IA (Fluxo) — ACESSO DESATIVADO temporariamente.
+     Nada foi apagado: toda a lógica continua intacta em
+     ai.js · agente.js · memoria.js · relatorio-pdf.js · ai.css.
+     Este bloco era o único ponto de entrada da IA na página (é o
+     ai.js quem cria o botão flutuante e o painel do chat).
+     Para reativar o assistente no site: descomente as 4 linhas
+     abaixo e o <link> do ai.css no <head>, e publique de novo.
+     ============================================================ -->
+<!-- <script src="relatorio-pdf.js"></script> -->
+<!-- <script src="memoria.js"></script> -->
+<!-- <script src="agente.js"></script> -->
+<!-- <script src="ai.js"></script> -->
 </body>
 </html>
